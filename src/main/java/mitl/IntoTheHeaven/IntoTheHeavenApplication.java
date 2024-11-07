@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class IntoTheHeavenApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(IntoTheHeavenApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(IntoTheHeavenApplication.class, args);
+  }
 }
