@@ -2,6 +2,14 @@
 
 ---
 
+## 프로젝트에 관하여
+
+- Hexagonal Architecture로 개발되었습니다.
+- CQRS 패턴을 사용하여, Read Model과 Write Model을 분리하였습니다.
+- 공부중인 DDD를 적용하였습니다.
+
+---
+
 ## 로컬 셋팅
 
 1. 로컬 테스트 DB 셋팅
