@@ -7,7 +7,7 @@ import mitl.IntoTheHeaven.global.domain.BaseId;
 @Embeddable
 public class MemberId extends BaseId {
 
-  protected MemberId() {
+  public MemberId() {
     super(UUID.randomUUID());
   }
 
