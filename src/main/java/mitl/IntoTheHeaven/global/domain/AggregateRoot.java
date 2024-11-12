@@ -1,10 +1,12 @@
 package mitl.IntoTheHeaven.global.domain;
 
-public abstract class AggregateRoot<T extends DomainEntity<T, TID>, TID> extends
-    DomainEntity<T, TID> {
+import jakarta.persistence.MappedSuperclass;
 
-  public AggregateRoot() {
+@MappedSuperclass
+public abstract class AggregateRoot<T extends DomainEntity<T, ID>, ID extends BaseId> extends
+    DomainEntity<T, ID> {
+
+  protected AggregateRoot() {
+    super();
   }
-
 }
-
