@@ -18,7 +18,7 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "member")
 @Where(clause = "deleted_at IS NULL")
-public class MemberEntity extends AggregateRoot<MemberEntity, MemberId> {
+public class Member extends AggregateRoot<Member, MemberId> {
 
   @Comment("멤버 아이디")
   @EmbeddedId
