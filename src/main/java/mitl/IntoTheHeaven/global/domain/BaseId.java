@@ -11,7 +11,7 @@ import lombok.Getter;
 @MappedSuperclass
 public abstract class BaseId implements Serializable {
 
-  @Column(columnDefinition = "BINARY(16)")
+  @Column(columnDefinition = "CHAR(36)")
   private final UUID value;
 
   protected BaseId(UUID value) {

@@ -1,83 +1,131 @@
-# IntoTheHeaven
+# 🙏 IntoTheHeaven
+
+> A platform for managing prayer topics and life sharing in church small groups.
 
 ---
 
-## 프로젝트에 관하여
+## 📚 Philosophy
 
-- Hexagonal Architecture로 개발되었습니다.
-- CQRS 패턴을 사용하여, Read Model과 Write Model을 분리하였습니다.
-- 공부중인 DDD를 적용하였습니다.
+> _"A record of community's walk with God."_
 
----
+- What have we prayed for as a group?
+- What themes keep reappearing?
+- How has God answered over time?
 
-## 로컬 셋팅
-
-1. 로컬 테스트 DB 셋팅
-    1. docker 설치
-    2. mysql 8.0 image 설치
-       ```
-       docker pull mysql:8.0
-       ```
-    3. docker mysql container 백그라운드 실행
-       ```
-       docker run --name into_the_heaven -e MYSQL_ROOT_PASSWORD=intotheheaven -e MYSQL_DATABASE=into_the_heaven -d -p 3306:3306 mysql:8.0
-       ```
-
-2. 서버 구동
-    1. profile 분리하여 실행 (intelliJ)
-       ```
-       // application-local.yml 파일을 읽게 설정합니다.   
-       active profiles >> local
-       ```
-3. 초기 Data seeding
-    - 개발 예정
+This is not just a utility — it's a **spiritual reflection tool**.
 
 ---
 
-## 협업툴
+## 🎯 Purpose
 
-1. SwaggerUI
-    - Frontend <-> Backend 소통을 위해서 만들었습니다.
-    - https://github.com/mitl-feedmysheep/api-spec
-    - 해당 프로젝트의 README를 읽어보시면 사용방법을 알 수 있습니다.
-2. Postman
-    - 함께 사용할 수 있는 Workspace가 있습니다.
-    - 초기작업 / 앱 / 어드민 각 폴더가 분리되어 있으며 도메인별로 하위 폴더가 존재합니다.
-3. ERD
-    - https://www.erdcloud.com/d/7PhCjKPXwjPcS5uiP
-4. 지라
-    - 태스크를 관리해요.
-5. 노션
-    - 각종 문서작업을 해요.
-6. 슬랙
-    - 소통할 때 사용해요.
-7. 구글밋 or 줌
-    - 일주일에 한번 회의할 때 사용해요.
-      **따로 요청하시면 됩니다!**
+**IntoTheHeaven** exists to help small groups in churches record, organize, and reflect on what was shared and prayed in each meeting.
+
+Unlike sermon-based journaling tools, this platform focuses on **group-centered spiritual history**.
 
 ---
 
-## 포맷팅
+## 👥 Target Users
 
-- google-styleguide를 사용합니다.
-    - https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml
-- https://kangyb.tistory.com/26 참고
+### 🟦 Group Leaders
 
----
+- Organize and lead small group meetings
+- Record each member's sharing and prayer topics
+- Track spiritual growth over time
 
-## 기타 로직
+### 🟨 Regular Members
 
-1. 토큰 로직
-    - 로그인 시, "refreshToken"과 "accessToken"을 함께 발행해준다.
-    - accessToken 완료될 시
-        - invalidToken이라는 status와 토큰이 완료되었다라는 메시지를 함께 보낸다.
-        - /app/token 으로 refresh 토큰을 보내면, 새로운 refreshToken과 accessToken을 발급해준다.
-        - 다시 요청한다.
-    - refreshToken 완료될 시
-        - 로그인을 다시해야한다.
+- Participate in meetings
+- Look back on what they shared or prayed
+- Prefer minimal, focused interaction
 
 ---
 
-## 테스트 케이스
+## 🧩 Core Features (MVP)
 
-코어한 도메인 로직만 작성 예정입니다.
+- Login via email/password
+- View past group meetings
+- Create new meetings
+- Record member attendance, sharing, and prayer topics
+
+---
+
+## 🧱 Tech Stack
+
+| Layer    | Stack                                   |
+| -------- | --------------------------------------- |
+| Frontend | React Native (TypeScript)               |
+| Backend  | Spring Boot (Java 17+)                  |
+| Database | MySQL (UUID as `CHAR(36)`)              |
+| Auth     | JWT                                     |
+| Infra    | Vercel (FE), HomeServer(Later AWS) (BE) |
+| Docs     | Swagger via SpringDoc (auto-generated)  |
+
+---
+
+## 📐 Architecture
+
+- Hexagonal Clean Architecture
+- Focus on RESTful
+- Incorporates principles of Domain-Driven Design (DDD).
+
+---
+
+## 🏁 Getting Started
+
+### Local Setup
+
+1.  **Set up the local test database:**
+
+    - Install Docker.
+    - Pull the MySQL 8.0 image:
+      ```bash
+      docker pull mysql:8.0
+      ```
+    - Run the MySQL container in the background:
+      ```bash
+      docker run --name into_the_heaven -e MYSQL_ROOT_PASSWORD=intotheheaven -e MYSQL_DATABASE=intotheheaven -d -p 3306:3306 mysql:8.0
+      ```
+
+2.  **Run the server:**
+
+    - Activate the `local` profile in your IDE (e.g., IntelliJ) to use `application-local.yml`.
+
+3.  **Initial Data Seeding:**
+    - This feature is under development.
+
+---
+
+## 🤝 Collaboration Tools
+
+- **SwaggerUI**: For API documentation and communication between Frontend and Backend.
+- **ERD**: The database schema is available on
+  - `into-the-heaven.erd.json`
+  - Expanded version: [ERDCloud](https://www.erdcloud.com/d/7PhCjKPXwjPcS5uiP).
+- **Notion**: For project documentation.
+
+- @deprecated
+  - **Slack**: For team communication.
+  - **Google Meet/Zoom**: For weekly meetings.
+
+---
+
+## ✨ Code Style
+
+- We follow the [Google Java Style Guide](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml).
+
+---
+
+## 🔐 API Logic
+
+### Token Refresh Flow
+
+1.  Upon successful login, the server issues an `accessToken` only.
+2.  When the `accessToken` expires, the user is asked to re-login by being redirected to the login page.
+
+---
+
+## 🧪 Testing
+
+- Unit and integration tests will focus on the core domain logic.
+
+---

@@ -1,0 +1,128 @@
+# IntoTheHeaven Project Development Convention
+
+This document defines the development conventions for the IntoTheHeaven project to maintain a consistent code style and architecture.
+
+## 1. Architecture: Hexagonal Architecture
+
+This project is based on Hexagonal Architecture. The roles and responsibilities of each layer are as follows.
+
+- **`domain`**: Contains the core business logic. It must not have dependencies on any frameworks or external technologies.
+
+  - `model`: Core domain models such as Aggregate Roots, Entities, and Value Objects (VOs).
+  - `enums`: Enum types used within the domain.
+  - `exception`: Custom business exceptions related to the domain.
+
+- **`application`**: Handles user requests and orchestrates domain services to control the business flow.
+
+  - `port.in`: Ports for requests coming from outside (Adapters) into the Application layer. Typically named as `UseCase` interfaces.
+  - `port.out`: Ports for requests going from the Application layer to the outside (Adapters).
+  - `service`: Service classes that implement the `UseCase` interfaces. Application-level technologies like `@Transactional` can be used here.
+
+- **`adapter`**: Responsible for interacting with the outside world.
+
+  - `in`: Delivers external requests to the application layer.
+    - `web`: Spring MVC controllers (`@RestController`).
+  - `out`: Delivers application requests to external systems (DB, API, etc.) and returns the results.
+    - `persistence`: DB-related logic such as JPA Entities and Repository implementations.
+    - `client`: External API clients.
+
+- **`global`**: Common modules used throughout the project.
+  - `config`: Configuration files for Spring, QueryDSL, etc.
+  - `util`: Common utility classes.
+  - `exception`: Global exception handlers.
+
+### Core Architectural Principles
+
+- **CQS (Command and Query Separation)**: We apply CQS starting from the `application` layer. The `port.in` (UseCases) and `service` packages are separated into `command` and `query` sub-packages. This separation recognizes that commands (state changes) and queries (data retrieval) have different requirements and optimization strategies.
+
+- **Domain Logic Placement**:
+  - **Domain Model**: Logic that operates on a single domain aggregate and its internal state (e.g., calculating a member's age from their birthdate) should be placed within the domain model class itself. This follows the Information Expert principle and increases cohesion.
+  - **Application Service**: Logic that coordinates between different domain models or aggregates (e.g., calculating the average age of a group) belongs in the `application` service. The service is responsible for orchestrating the flow, fetching necessary data from ports, and calling domain methods.
+
+## 2. Package Structure
+
+The package structure is organized based on the hexagonal architecture layers and CQS pattern.
+
+```
+src/main/java/mitl/IntoTheHeaven
+├── domain
+│   ├── model
+│   └── enums
+├── application
+│   ├── port
+│   │   ├── in
+│   │   │   ├── command
+│   │   │   │   └── dto
+│   │   │   └── query
+│   │   └── out
+│   └── service
+│       ├── command
+│       └── query
+├── adapter
+│   ├── in
+│   │   └── web
+│   │       ├── controller
+│   │       └── dto
+│   └── out
+│       └── persistence
+│           ├── entity
+│           ├── mapper
+│           └── repository
+└── global
+    └── config
+```
+
+## 3. Naming Convention
+
+- **UseCase (In-Port)**: `[Domain]QueryUseCase`, `[Domain]CommandUseCase`
+  - _Example_: `MemberQueryUseCase`, `MemberCommandUseCase`
+- **Service (UseCase Impl)**: `[Domain]QueryService`, `[Domain]CommandService`
+  - _Example_: `MemberQueryService`, `MemberCommandService`
+- **Port (Out-Port)**: `[Domain]Port`
+  - _Example_: `MemberPort`
+- **Adapter (Out-Adapter)**: `[Domain]PersistenceAdapter`
+  - _Example_: `MemberPersistenceAdapter`
+- **Controller**: `[Domain]Controller`
+  - _Example_: `MemberController`
+- **Request/Response DTO**: `[Action][Domain]Request`, `[Action][Domain]Response`
+  - _Example_: `SignUpRequest`, `FindMemberResponse`
+- **Command/Query DTO**: `[Action]Command`, `[Data]Query`
+  - _Example_: `SignUpCommand`
+- **JPA Entity**: `[Domain]JpaEntity`
+  - _Example_: `MemberJpaEntity`
+- **Mapper**: `[Domain]PersistenceMapper`
+  - _Example_: `MemberPersistenceMapper`
+
+## 4. API Design Principles (RESTful)
+
+- **URI**: Resources should be represented by nouns (plural). (`/api/v1/members`, `/api/v1/groups/{groupId}/gatherings`)
+- **HTTP Method**: Actions on resources are expressed by HTTP Methods.
+  - `POST`: Create a resource.
+  - `GET`: Retrieve a resource.
+  - `PUT` / `PATCH`: Update a resource (full/partial).
+  - `DELETE`: Delete a resource.
+- **Response Format**: Use JSON as the default, with `camelCase` for keys.
+- **Success Responses**: `200 OK`, `201 Created`, `204 No Content`
+- **Error Responses**: `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error`
+
+## 5. Commit Message Convention
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+
+- **Format**: `type(scope): subject`
+- **`type`**:
+  - `feat`: A new feature
+  - `fix`: A bug fix
+  - `docs`: Documentation only changes
+  - `refactor`: A code change that neither fixes a bug nor adds a feature
+  - `test`: Adding missing tests or correcting existing tests
+- **Example**:
+  - `feat(member): add user signup API`
+  - `refactor(group): refactor Group domain model`
+
+## 6. Code Style
+
+- **Lombok**: Actively use annotations like `@Getter`, `@Builder`, `@RequiredArgsConstructor` to minimize boilerplate code.
+- **Immutability**: Design DTOs and Value Objects to be immutable where possible.
+- **Validation**: Perform primary validation at the Controller DTO level using `@Valid`.
+- **Exception Handling**: Define business exceptions in the `domain` or `application` layer and handle them globally using `@RestControllerAdvice`.

@@ -1,8 +1,9 @@
 package mitl.IntoTheHeaven.application.port.in.query;
 
-import mitl.IntoTheHeaven.adapter.out.persistence.entity.Member;
+import mitl.IntoTheHeaven.domain.model.Member;
+
+import java.util.UUID;
 
 public interface MemberQueryUseCase {
-
-  Member findByEmail(String email);
-}
+    Member findMemberById(UUID memberId);
+} 

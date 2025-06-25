@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum Gender {
-    MALE("M"),
-    FEMALE("F");
+public enum GroupMemberRole {
+    LEADER("리더"),
+    MEMBER("멤버");
 
-    private final String value;
+    private final String description;
 } 
