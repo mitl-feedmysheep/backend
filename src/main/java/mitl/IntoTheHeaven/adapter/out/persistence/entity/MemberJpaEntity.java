@@ -6,27 +6,17 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import mitl.IntoTheHeaven.domain.enums.Gender;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import mitl.IntoTheHeaven.global.common.BaseEntity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "member")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class MemberJpaEntity {
-
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
+public class MemberJpaEntity extends BaseEntity {
 
     @Column(nullable = false, length = 20)
     private String name;
@@ -55,19 +45,12 @@ public class MemberJpaEntity {
     @Column(length = 100)
     private String description;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @OneToMany(mappedBy = "member")
+    private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    private LocalDateTime deletedAt;
 
     @Builder
-    public MemberJpaEntity(UUID id, String name, String email, String password, Gender sex, LocalDate birthday, String phone, String profileUrl, String address, String description, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        this.id = id;
+    public MemberJpaEntity(String name, String email, String password, Gender sex, LocalDate birthday, String phone, String profileUrl, String address, String description) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -77,8 +60,5 @@ public class MemberJpaEntity {
         this.profileUrl = profileUrl;
         this.address = address;
         this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
     }
-} 
+}

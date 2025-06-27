@@ -1,3 +1,9 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
 # IntoTheHeaven Project Development Convention
 
 This document defines the development conventions for the IntoTheHeaven project to maintain a consistent code style and architecture.
@@ -32,6 +38,8 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
   - `exception`: Global exception handlers.
 
 ### Core Architectural Principles
+
+- **Data Consistency with ERD**: All `domain.model` classes and `adapter.out.persistence.entity` classes must be designed based on the `into-the-heaven.erd.json` file. This ERD serves as the single source of truth for the data model, ensuring consistency between the database schema and the application code. Any changes to the data structure should be reflected in the ERD first.
 
 - **CQS (Command and Query Separation)**: We apply CQS starting from the `application` layer. The `port.in` (UseCases) and `service` packages are separated into `command` and `query` sub-packages. This separation recognizes that commands (state changes) and queries (data retrieval) have different requirements and optimization strategies.
 
@@ -107,7 +115,7 @@ src/main/java/mitl/IntoTheHeaven
 
 ## 5. Commit Message Convention
 
-Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+Follow the [Conventional Commits](mdc:https:/www.conventionalcommits.org/en/v1.0.0) specification.
 
 - **Format**: `type(scope): subject`
 - **`type`**:

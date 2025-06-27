@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class FindMemberResponse {
+public class MeResponse {
 
     private final UUID id;
     private final String name;
@@ -20,8 +20,8 @@ public class FindMemberResponse {
     private final String phone;
     private final String profileUrl;
 
-    public static FindMemberResponse from(Member member) {
-        return FindMemberResponse.builder()
+    public static MeResponse from(Member member) {
+        return MeResponse.builder()
                 .id(member.getId().getValue())
                 .name(member.getName())
                 .email(member.getEmail())

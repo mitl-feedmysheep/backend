@@ -19,6 +19,6 @@ public class MemberQueryService implements MemberQueryUseCase {
   @Override
   public Member findMemberById(UUID memberId) {
     return memberPort.findById(memberId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다.")); // TODO: Custom Exception으로 변경
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
   }
 } 
