@@ -10,4 +10,6 @@ public interface MemberPort {
   Optional<Member> findById(UUID memberId);
 
   Member save(Member member);
+
+  Optional<Member> findByEmail(String email);
 } 

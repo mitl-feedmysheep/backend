@@ -5,6 +5,7 @@ import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.model.Member;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +22,8 @@ public class MemberCommandService implements MemberCommandUseCase {
     public Member signUp(SignUpCommand command) {
         // In a real application, you should check for duplicate username/email here.
 
-        Member newMember = Member.builder()
-                .id(UUID.randomUUID()) // Generate a new UUID for the member
+        Member member = Member.builder()
+                .id(new MemberId(UUID.randomUUID())) // Generate a new UUID for the member
                 .name(command.getName())
                 .email(command.getEmail())
                 // Passwords should be encoded using a password encoder like BCryptPasswordEncoder
@@ -31,6 +32,6 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .birthday(command.getBirthdate())
                 .build();
 
-        return memberPort.save(newMember);
+        return memberPort.save(member);
     }
 } 

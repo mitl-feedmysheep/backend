@@ -1,18 +1,18 @@
 package mitl.IntoTheHeaven.global.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 
 @Getter
-@MappedSuperclass
 public abstract class BaseId implements Serializable {
 
-  @Column(columnDefinition = "CHAR(36)")
-  private final UUID value;
+  private UUID value;
+
+  protected BaseId() {
+    this.value = UUID.randomUUID();
+  }
 
   protected BaseId(UUID value) {
     this.value = value;

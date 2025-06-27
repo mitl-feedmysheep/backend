@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.domain.model.Member;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +13,7 @@ public class MemberPersistenceMapper {
             return null;
         }
         return Member.builder()
-                .id(entity.getId())
+                .id(new MemberId(entity.getId()))
                 .name(entity.getName())
                 .email(entity.getEmail())
                 .password(entity.getPassword())
@@ -33,7 +34,7 @@ public class MemberPersistenceMapper {
             return null;
         }
         return MemberJpaEntity.builder()
-                .id(domain.getId())
+                .id(domain.getId().getValue())
                 .name(domain.getName())
                 .email(domain.getEmail())
                 .password(domain.getPassword())

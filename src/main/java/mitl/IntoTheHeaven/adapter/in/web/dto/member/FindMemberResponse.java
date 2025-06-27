@@ -20,9 +20,9 @@ public class FindMemberResponse {
     private final String phone;
     private final String profileUrl;
 
-    public static FindMemberResponse fromDomain(Member member) {
+    public static FindMemberResponse from(Member member) {
         return FindMemberResponse.builder()
-                .id(member.getId())
+                .id(member.getId().getValue())
                 .name(member.getName())
                 .email(member.getEmail())
                 .sex(member.getSex())

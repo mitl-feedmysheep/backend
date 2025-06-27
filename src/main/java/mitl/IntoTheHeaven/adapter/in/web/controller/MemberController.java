@@ -24,7 +24,7 @@ public class MemberController {
     @GetMapping("/{memberId}")
     public ResponseEntity<FindMemberResponse> findMemberById(@PathVariable UUID memberId) {
         Member member = memberQueryUseCase.findMemberById(memberId);
-        FindMemberResponse response = FindMemberResponse.fromDomain(member);
+        FindMemberResponse response = FindMemberResponse.from(member);
         return ResponseEntity.ok(response);
     }
 

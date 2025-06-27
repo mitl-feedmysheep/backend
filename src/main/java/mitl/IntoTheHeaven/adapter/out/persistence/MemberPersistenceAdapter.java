@@ -30,4 +30,10 @@ public class MemberPersistenceAdapter implements MemberPort {
     MemberJpaEntity savedEntity = memberJpaRepository.save(entity);
     return memberPersistenceMapper.toDomain(savedEntity);
   }
+
+  @Override
+  public Optional<Member> findByEmail(String email) {
+    return memberJpaRepository.findByEmail(email)
+            .map(memberPersistenceMapper::toDomain);
+  }
 } 
