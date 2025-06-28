@@ -9,9 +9,13 @@ import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "gathering_member")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @SuperBuilder(toBuilder = true)
 @SQLRestriction("deleted_at is null")
@@ -48,4 +52,7 @@ public class GatheringMemberJpaEntity extends BaseEntity {
      */
     @Column(length = 500)
     private String story;
+
+    @OneToMany(mappedBy = "gatheringMember")
+    private List<PrayerJpaEntity> prayers = new ArrayList<>();
 } 

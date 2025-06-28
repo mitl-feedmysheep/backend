@@ -16,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "`group`")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @SuperBuilder(toBuilder = true)
 @SQLRestriction("deleted_at is null")
@@ -60,4 +61,7 @@ public class GroupJpaEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "group")
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "group")
+    private List<GatheringJpaEntity> gatherings = new ArrayList<>();
 } 

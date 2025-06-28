@@ -64,7 +64,7 @@ public class MemberJpaEntity extends BaseEntity {
      * 프로필 URL
      */
     @Column(name = "profile_url", length = 200)
-    private String profile_url;
+    private String profileUrl;
 
     /**
      * 주소
@@ -80,4 +80,7 @@ public class MemberJpaEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "member")
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member")
+    private List<PrayerJpaEntity> prayers = new ArrayList<>();
 }

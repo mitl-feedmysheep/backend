@@ -12,6 +12,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(name = "prayer")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @SuperBuilder(toBuilder = true)
 @SQLRestriction("deleted_at is null")

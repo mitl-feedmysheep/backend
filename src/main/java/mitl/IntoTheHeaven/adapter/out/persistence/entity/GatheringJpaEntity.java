@@ -10,12 +10,14 @@ import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "gathering")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @SuperBuilder(toBuilder = true)
 @SQLRestriction("deleted_at is null")
@@ -38,6 +40,18 @@ public class GatheringJpaEntity extends BaseEntity {
      */
     @Column(nullable = false)
     private LocalDate date;
+
+    /**
+     * 시작 시간
+     */
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    /**
+     * 종료 시간
+     */
+    @Column(name = "ended_at")
+    private LocalDateTime endedAt;
 
     /**
      * 장소

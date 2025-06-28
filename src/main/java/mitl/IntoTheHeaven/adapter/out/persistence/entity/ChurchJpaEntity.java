@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
+import jakarta.persistence.OneToMany;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "church")
@@ -29,8 +32,8 @@ public class ChurchJpaEntity extends BaseEntity {
     /**
      * 로고 URL
      */
-    @Column(length = 200)
-    private String logo_url;
+    @Column(name = "logo_url", length = 200)
+    private String logoUrl;
 
     /**
      * 위치
@@ -47,12 +50,15 @@ public class ChurchJpaEntity extends BaseEntity {
     /**
      * 홈페이지 URL
      */
-    @Column(length = 200)
-    private String homepage_url;
+    @Column(name = "homepage_url", length = 200)
+    private String homepageUrl;
 
     /**
      * 설명
      */
     @Column(length = 100)
     private String description;
+
+    @OneToMany(mappedBy = "church")
+    private List<GroupJpaEntity> groups = new ArrayList<>();
 } 
