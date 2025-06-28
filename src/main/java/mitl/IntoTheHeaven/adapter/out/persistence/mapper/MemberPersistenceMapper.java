@@ -13,7 +13,7 @@ public class MemberPersistenceMapper {
             return null;
         }
         return Member.builder()
-                .id(new MemberId(entity.getId()))
+                .id(MemberId.from(entity.getId()))
                 .name(entity.getName())
                 .email(entity.getEmail())
                 .password(entity.getPassword())

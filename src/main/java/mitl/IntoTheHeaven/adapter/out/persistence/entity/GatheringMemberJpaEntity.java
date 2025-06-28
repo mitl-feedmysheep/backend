@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -17,7 +18,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @SQLRestriction("deleted_at is null")
 public class GatheringMemberJpaEntity extends BaseEntity {
 
@@ -53,6 +54,7 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     @Column(length = 500)
     private String story;
 
-    @OneToMany(mappedBy = "gatheringMember")
+    @OneToMany(mappedBy = "gatheringMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
 } 

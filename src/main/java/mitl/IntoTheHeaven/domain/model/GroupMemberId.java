@@ -5,11 +5,11 @@ import mitl.IntoTheHeaven.global.domain.BaseId;
 import java.util.UUID;
 
 public class GroupMemberId extends BaseId {
-    public GroupMemberId(UUID value) {
+    private GroupMemberId(UUID value) {
         super(value);
     }
 
-    public static GroupMemberId newId() {
-        return new GroupMemberId(UUID.randomUUID());
+    public static GroupMemberId from(UUID value) {
+        return new GroupMemberId(value);
     }
 } 

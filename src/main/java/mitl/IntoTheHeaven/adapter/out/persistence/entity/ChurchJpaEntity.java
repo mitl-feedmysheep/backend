@@ -11,15 +11,17 @@ import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import java.util.List;
 import java.util.ArrayList;
+import lombok.Builder;
 
 @Entity
 @Table(name = "church")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @SQLRestriction("deleted_at is null")
 public class ChurchJpaEntity extends BaseEntity {
 
@@ -59,6 +61,7 @@ public class ChurchJpaEntity extends BaseEntity {
     @Column(length = 100)
     private String description;
 
-    @OneToMany(mappedBy = "church")
+    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<GroupJpaEntity> groups = new ArrayList<>();
 } 

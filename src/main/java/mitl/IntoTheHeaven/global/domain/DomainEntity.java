@@ -1,7 +1,12 @@
 package mitl.IntoTheHeaven.global.domain;
 
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+
 import java.util.Objects;
 
+@Getter
+@SuperBuilder
 public abstract class DomainEntity<T extends DomainEntity<T, ID>, ID extends BaseId> {
 
   private final ID id;

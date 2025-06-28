@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Getter
 @MappedSuperclass
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)

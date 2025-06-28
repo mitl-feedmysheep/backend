@@ -1,25 +1,22 @@
 package mitl.IntoTheHeaven.domain.model;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
+@SuperBuilder
 public class Gathering extends AggregateRoot<Gathering, GatheringId> {
 
-    private final GroupId groupId;
-    private String name;
-    private LocalDate date;
-    private String place;
-
-    @Builder
-    public Gathering(GatheringId id, GroupId groupId, String name, LocalDate date, String place) {
-        super(id);
-        this.groupId = groupId;
-        this.name = name;
-        this.date = date;
-        this.place = place;
-    }
+    private final String name;
+    private final String description;
+    private final LocalDate date;
+    private final LocalDateTime startedAt;
+    private final LocalDateTime endedAt;
+    private final String place;
+    private final List<GatheringMember> gatheringMembers;
 } 

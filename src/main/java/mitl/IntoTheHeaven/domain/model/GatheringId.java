@@ -1,18 +1,16 @@
 package mitl.IntoTheHeaven.domain.model;
 
-import lombok.NoArgsConstructor;
 import mitl.IntoTheHeaven.global.domain.BaseId;
 
 import java.util.UUID;
 
-@NoArgsConstructor
 public class GatheringId extends BaseId {
 
-    public GatheringId(UUID id) {
-        super(id);
+    private GatheringId(UUID value) {
+        super(value);
     }
 
-    public static GatheringId newId() {
-        return new GatheringId(UUID.randomUUID());
+    public static GatheringId from(UUID value) {
+        return new GatheringId(value);
     }
 } 

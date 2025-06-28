@@ -1,10 +1,14 @@
 package mitl.IntoTheHeaven.application.port.out;
 
 import mitl.IntoTheHeaven.domain.model.Gathering;
-import mitl.IntoTheHeaven.domain.model.GroupId;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface GatheringPort {
-    List<Gathering> findAllByGroupId(GroupId groupId);
+
+    List<Gathering> findAllByGroupId(UUID groupId);
+
+    Optional<Gathering> findDetailById(UUID gatheringId);
 } 

@@ -5,10 +5,11 @@ import mitl.IntoTheHeaven.adapter.out.persistence.mapper.GatheringPersistenceMap
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GatheringJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.domain.model.Gathering;
-import mitl.IntoTheHeaven.domain.model.GroupId;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -19,9 +20,15 @@ public class GatheringPersistenceAdapter implements GatheringPort {
     private final GatheringPersistenceMapper gatheringPersistenceMapper;
 
     @Override
-    public List<Gathering> findAllByGroupId(GroupId groupId) {
-        return gatheringJpaRepository.findAllByGroupId(groupId.getValue()).stream()
+    public List<Gathering> findAllByGroupId(UUID groupId) {
+        return gatheringJpaRepository.findAllByGroupId(groupId).stream()
                 .map(gatheringPersistenceMapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Gathering> findDetailById(UUID gatheringId) {
+        return gatheringJpaRepository.findWithDetailsById(gatheringId)
+                .map(gatheringPersistenceMapper::toDomain);
     }
 } 

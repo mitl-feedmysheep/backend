@@ -11,6 +11,8 @@ import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
 import mitl.IntoTheHeaven.domain.model.Member;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,14 +34,14 @@ public class GroupController {
 
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
-        List<Group> groups = groupQueryUseCase.getGroupsByMemberId(UUID.fromString(memberId));
-        List<GroupResponse> response = GroupResponse.from(groups);
+        List<Group> groups = groupQueryUseCase.getGroupsByMemberId(MemberId.from(UUID.fromString(memberId)));
+        List<GroupResponse> response = GroupResponse.from(groups);  
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{groupId}/gatherings")
     public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
-        List<Gathering> gatherings = gatheringQueryUseCase.getGatheringsByGroupId(new GroupId(groupId));
+        List<Gathering> gatherings = gatheringQueryUseCase.getGatheringsByGroupId(GroupId.from(groupId));
         List<GatheringResponse> response = GatheringResponse.from(gatherings);
         return ResponseEntity.ok(response);
     }

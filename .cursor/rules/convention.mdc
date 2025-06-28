@@ -66,6 +66,32 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
     return ResponseEntity.ok(response);
     ```
 
+### Value Object ID (Domain ID) Handling
+
+To enhance type safety and clarify domain intent, the application core must use Value Object IDs (e.g., `GatheringId`) instead of primitive types (`UUID`). The conversion between these types is strictly managed at the architecture's boundaries.
+
+-   **Principle**: Conversion happens at the boundaries. The application core remains pure, exclusively handling domain-specific ID objects.
+
+-   **Inbound Flow (`Adapter In`)**: The `Controller` is responsible for **wrapping** primitive types received from external requests (e.g., `UUID` from `@PathVariable`) into Value Object IDs before passing them to the `UseCase`.
+    ```java
+    // In SomeController.java
+    public ResponseEntity<SomeResponse> getSomething(@PathVariable UUID id) {
+        // Wrap primitive UUID into a domain-specific ID
+        SomeDomainObject domainObject = useCase.findSomething(new SomeId(id));
+        // ...
+    }
+    ```
+
+-   **Outbound Flow (`Adapter Out`)**: The `Persistence Adapter` is responsible for **unwrapping** the primitive value from the Value Object ID before interacting with external infrastructure like a database.
+    ```java
+    // In SomePersistenceAdapter.java
+    public Optional<SomeDomainObject> findById(SomeId domainId) {
+        // Unwrap the primitive value for the repository
+        UUID rawId = domainId.getValue();
+        return someJpaRepository.findById(rawId).map(mapper::toDomain);
+    }
+    ```
+
 ## 2. Package Structure
 
 The package structure is organized based on the hexagonal architecture layers and CQS pattern.
@@ -188,11 +214,35 @@ To ensure consistency, maintainability, and alignment with our architecture, all
 
 -   **Base Entity Inheritance**: All entities must extend a common `BaseEntity` class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
 
--   **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), a mechanism that supports parent class fields (like Lombok's `@SuperBuilder`) must be used. This provides a readable and fluent API for object creation.
-    -   **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` for JPA's internal use, and the all-arguments constructor should be `private`, making it accessible only to the builder.
+-   **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), **`@SuperBuilder`** must be used.
+    -   **Usage**: The `@SuperBuilder` annotation should be used *without* the `toBuilder = true` option. JPA entities are mutable and managed by the persistence context, so the `toBuilder()` pattern, which implies immutability, is not appropriate.
+    -   **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` (`@NoArgsConstructor(access = AccessLevel.PROTECTED)`) for JPA's internal use, and an all-arguments constructor should be made `private` (`@AllArgsConstructor(access = AccessLevel.PRIVATE)`) to be used by the builder.
 
 -   **Global Soft-Delete Filter**: To ensure that queries only return active records, a global filter (like Hibernate's `@SQLRestriction`) should be applied at the entity level to automatically exclude records where `deleted_at` is not null. This simplifies application logic, as individual queries do not need to concern themselves with filtering for soft-deleted records.
 
 -   **Standard-Compliant Field Documentation**: Field descriptions should be documented using standard JavaDoc comments (`/** ... */`) rather than implementation-specific annotation properties (like `comment` in Hibernate's `@Column`). This improves code portability and ensures that documentation is independent of the underlying persistence provider.
 
 -   **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD (`into-the-heaven.erd.json`). The ERD is the single source of truth for the data model.
+
+-   **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
+    -   **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
+    -   **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
+    -   **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
+
+### d. Domain Model Design Conventions
+
+To build a robust and expressive core domain, all domain models (`domain.model` package) must follow these conventions:
+
+-   **Immutability by Default**: All fields must be declared as `private final`. This ensures that domain objects are immutable, making their state predictable and safe for concurrent use.
+
+-   **Consistent and Safe Instantiation**
+
+    -   Explicit constructors should not be defined; rely on the builder provided by `@SuperBuilder`.
+
+-   **Minimal and Purposeful Annotations**:
+    -   **`@Getter`**: Use on all domain models to provide read-access to state.
+    -   **Prohibited Annotations**: To protect model integrity and enforce the builder pattern, the use of `@Setter`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, and `@RequiredArgsConstructor` is strictly forbidden on domain models.
+
+-   **Clear Hierarchy (`DomainEntity` vs. `AggregateRoot`)**:
+    -   **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
+    -   **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).

@@ -1,9 +1,13 @@
 package mitl.IntoTheHeaven.global.domain;
 
-public abstract class AggregateRoot<T extends DomainEntity<T, ID>, ID extends BaseId> extends
-    DomainEntity<T, ID> {
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
-  protected AggregateRoot(ID id) {
-    super(id);
-  }
+@Getter
+@SuperBuilder
+public abstract class AggregateRoot<T extends AggregateRoot<T, ID>, ID extends BaseId> extends DomainEntity<T, ID> {
+
+    protected AggregateRoot(ID id) {
+        super(id);
+    }
 }

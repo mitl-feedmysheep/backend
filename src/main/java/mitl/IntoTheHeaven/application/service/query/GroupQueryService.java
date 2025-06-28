@@ -5,11 +5,12 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.model.Group;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -19,7 +20,7 @@ public class GroupQueryService implements GroupQueryUseCase {
     private final GroupPort groupPort;
 
     @Override
-    public List<Group> getGroupsByMemberId(UUID memberId) {
-        return groupPort.findGroupsByMemberId(memberId);
+    public List<Group> getGroupsByMemberId(MemberId memberId) {
+        return groupPort.findGroupsByMemberId(memberId.getValue());
     }
 } 

@@ -1,10 +1,10 @@
 package mitl.IntoTheHeaven.application.port.in.query;
 
 import mitl.IntoTheHeaven.domain.model.Group;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface GroupQueryUseCase {
-    List<Group> getGroupsByMemberId(UUID memberId);
+    List<Group> getGroupsByMemberId(MemberId memberId);
 } 

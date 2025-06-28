@@ -6,27 +6,21 @@ import mitl.IntoTheHeaven.domain.model.Gathering;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
+@Builder
 public class GatheringResponse {
 
-    private final String id;
+    private final UUID id;
     private final String name;
     private final LocalDate date;
     private final String place;
 
-    @Builder
-    public GatheringResponse(String id, String name, LocalDate date, String place) {
-        this.id = id;
-        this.name = name;
-        this.date = date;
-        this.place = place;
-    }
-
     public static GatheringResponse from(Gathering gathering) {
         return GatheringResponse.builder()
-                .id(gathering.getId().getValue().toString())
+                .id(gathering.getId().getValue())
                 .name(gathering.getName())
                 .date(gathering.getDate())
                 .place(gathering.getPlace())

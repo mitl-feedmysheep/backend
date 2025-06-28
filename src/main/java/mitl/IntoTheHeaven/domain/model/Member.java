@@ -2,12 +2,13 @@ package mitl.IntoTheHeaven.domain.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.Gender;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
 @Getter
+@SuperBuilder
 public class Member extends AggregateRoot<Member, MemberId> {
 
     private final String name;
@@ -22,21 +23,4 @@ public class Member extends AggregateRoot<Member, MemberId> {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime deletedAt;
-
-    @Builder
-    public Member(MemberId id, String name, String email, String password, Gender sex, LocalDate birthday, String phone, String profileUrl, String address, String description, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        super(id);
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.sex = sex;
-        this.birthday = birthday;
-        this.phone = phone;
-        this.profileUrl = profileUrl;
-        this.address = address;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-    }
 } 

@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -11,20 +12,21 @@ public class GroupPersistenceMapper {
 
     public Group toDomain(GroupJpaEntity entity) {
         return Group.builder()
-                .id(new GroupId(entity.getId()))
+                .id(GroupId.from(entity.getId()))
                 .name(entity.getName())
                 .description(entity.getDescription())
-                .churchId(new ChurchId(entity.getChurchId()))
+                .churchId(ChurchId.from(entity.getChurch().getId()))
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .build();
     }
 
-    public GroupJpaEntity toJpaEntity(Group domain) {
+    public GroupJpaEntity toEntity(Group domain) {
         return GroupJpaEntity.builder()
+                .id(domain.getId().getValue())
                 .name(domain.getName())
                 .description(domain.getDescription())
-                .churchId(domain.getChurchId().getValue())
+                .church(ChurchJpaEntity.builder().id(domain.getChurchId().getValue()).build())
                 .startDate(domain.getStartDate())
                 .endDate(domain.getEndDate())
                 .build();
