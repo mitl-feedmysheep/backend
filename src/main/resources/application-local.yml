@@ -1,3 +1,0 @@
-jwt:
-  secret: OThlYjM0MjMtYjQ1Mi00ZGNhLTg2YjgtN2YyYjQ1NjE3YjM0OThlYjM0MjMtYjQ1Mi00ZGNhLTg2YjgtN2YyYjQ1NjE3YjM0Cg==
-  access-token-validity-in-seconds: 86400 # 24 hours

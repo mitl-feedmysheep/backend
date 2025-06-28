@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return memberPort.findByEmail(username)
                 .map(this::createUserDetails)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " -> 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException(username + " -> User not found."));
     }
 
     private UserDetails createUserDetails(Member member) {

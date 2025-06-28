@@ -179,6 +179,7 @@ Follow the [Conventional Commits](mdc:https:/www.conventionalcommits.org/en/v1.0
 - **Immutability**: Design DTOs and Value Objects to be immutable where possible.
 - **Validation**: Perform primary validation at the Controller DTO level using `@Valid`.
 - **Exception Handling**: Define business exceptions in the `domain` or `application` layer and handle them globally using `@RestControllerAdvice`.
+- **Error Messages**: All error messages thrown in exceptions must be written in English. This ensures consistency for developers and simplifies integration with logging and monitoring systems.
 
 ## 7. Key Implementation Patterns and Conventions
 
@@ -246,3 +247,41 @@ To build a robust and expressive core domain, all domain models (`domain.model` 
 -   **Clear Hierarchy (`DomainEntity` vs. `AggregateRoot`)**:
     -   **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
     -   **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).
+
+### e. API Documentation with Swagger (OpenAPI)
+
+To ensure all APIs are clearly documented and easily testable, every `Controller` must be annotated with Swagger (OpenAPI) annotations. This practice is mandatory for maintaining a consistent and understandable API specification.
+
+-   **Controller-Level (`@Tag`)**: Every controller class must have a `@Tag` annotation. This groups all APIs within that controller under a common name in the Swagger UI.
+    -   `name`: A short, descriptive name for the API group (e.g., "Group", "Member").
+    -   `description`: A brief explanation of what the APIs in this group are for.
+
+-   **Method-Level (`@Operation`)**: Every public endpoint method within a controller must have an `@Operation` annotation. This describes the specific purpose of that API.
+    -   `summary`: A short, verb-first summary of the API's function (e.g., "Get My Groups", "Create New Gathering").
+    -   `description`: A more detailed explanation of what the API does, what it returns, and any important notes.
+
+-   **Language**: All descriptions must be written in **English**.
+
+-   **Example (`GroupController.java`)**:
+    ```java
+    @Tag(name = "Group", description = "APIs for Group Management")
+    @RestController
+    @RequestMapping("/groups")
+    @RequiredArgsConstructor
+    public class GroupController {
+
+        // ... dependencies
+
+        @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
+        @GetMapping
+        public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
+            // ...
+        }
+
+        @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
+        @GetMapping("/{groupId}/gatherings")
+        public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
+            // ...
+        }
+    }
+    ```

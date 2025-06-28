@@ -1,5 +1,7 @@
 package mitl.IntoTheHeaven.adapter.in.web.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Group", description = "APIs for Group Management")
 @RestController
 @RequestMapping("/groups")
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class GroupController {
     private final GatheringQueryUseCase gatheringQueryUseCase;
     private final MemberQueryUseCase memberQueryUseCase;
 
+    @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
         List<Group> groups = groupQueryUseCase.getGroupsByMemberId(MemberId.from(UUID.fromString(memberId)));
@@ -39,6 +43,7 @@ public class GroupController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
     @GetMapping("/{groupId}/gatherings")
     public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
         List<Gathering> gatherings = gatheringQueryUseCase.getGatheringsByGroupId(GroupId.from(groupId));
@@ -46,6 +51,7 @@ public class GroupController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get Members in Group", description = "Retrieves a list of members in a specific group.")
     @GetMapping("/{groupId}/members")
     public ResponseEntity<List<MeResponse>> getMembersInGroup(@PathVariable UUID groupId) {
         List<Member> members = memberQueryUseCase.getMembersByGroupId(groupId);
