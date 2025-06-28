@@ -2,39 +2,62 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "`group`")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@SuperBuilder(toBuilder = true)
+@SQLRestriction("deleted_at is null")
 public class GroupJpaEntity extends BaseEntity {
 
+    /**
+     * 그룹 이름
+     */
+    @Column(nullable = false, length = 50)
     private String name;
 
+    /**
+     * 설명
+     */
+    @Column(length = 100)
     private String description;
 
-    @Column(name = "church_id", columnDefinition = "CHAR(36)")
-    private UUID churchId;
+    /**
+     * 로고 URL
+     */
+    @Column(name = "logo_url", length = 200)
+    private String logoUrl;
 
-    @Column(name = "start_date")
+    /**
+     * 교회
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "church_id", nullable = false)
+    private ChurchJpaEntity church;
+
+    /**
+     * 시작 날짜
+     */
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "end_date")
+    /**
+     * 종료 날짜
+     */
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Builder
-    public GroupJpaEntity(String name, String description, UUID churchId, LocalDate startDate, LocalDate endDate) {
-        this.name = name;
-        this.description = description;
-        this.churchId = churchId;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
+    @OneToMany(mappedBy = "group")
+    private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 } 

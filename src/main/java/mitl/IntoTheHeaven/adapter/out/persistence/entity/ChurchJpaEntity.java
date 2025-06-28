@@ -1,65 +1,58 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "church")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class ChurchJpaEntity {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@SuperBuilder(toBuilder = true)
+@SQLRestriction("deleted_at is null")
+public class ChurchJpaEntity extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
-
+    /**
+     * 이름
+     */
     @Column(nullable = false, length = 50)
     private String name;
 
+    /**
+     * 로고 URL
+     */
     @Column(length = 200)
+    private String logo_url;
+
+    /**
+     * 위치
+     */
+    @Column(nullable = false, length = 200)
     private String location;
 
+    /**
+     * 전화번호
+     */
     @Column(length = 20)
     private String number;
 
-    private String homepageUrl;
+    /**
+     * 홈페이지 URL
+     */
+    @Column(length = 200)
+    private String homepage_url;
 
+    /**
+     * 설명
+     */
     @Column(length = 100)
     private String description;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    private LocalDateTime deletedAt;
-
-    @Builder
-    public ChurchJpaEntity(UUID id, String name, String location, String number, String homepageUrl, String description, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        this.id = id;
-        this.name = name;
-        this.location = location;
-        this.number = number;
-        this.homepageUrl = homepageUrl;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-    }
 } 

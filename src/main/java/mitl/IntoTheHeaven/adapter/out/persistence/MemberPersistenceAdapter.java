@@ -8,8 +8,10 @@ import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.model.Member;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -17,6 +19,13 @@ public class MemberPersistenceAdapter implements MemberPort {
 
   private final MemberJpaRepository memberJpaRepository;
   private final MemberPersistenceMapper memberPersistenceMapper;
+
+  @Override
+  public List<Member> findMembersByGroupId(UUID groupId) {
+    return memberJpaRepository.findAllByGroupMembers_Group_Id(groupId).stream()
+            .map(memberPersistenceMapper::toDomain)
+            .collect(Collectors.toList());
+  }
 
   @Override
   public Optional<Member> findById(UUID memberId) {

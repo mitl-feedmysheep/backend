@@ -6,7 +6,9 @@ import mitl.IntoTheHeaven.domain.enums.Gender;
 import mitl.IntoTheHeaven.domain.model.Member;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -30,5 +32,11 @@ public class MeResponse {
                 .phone(member.getPhone())
                 .profileUrl(member.getProfileUrl())
                 .build();
+    }
+
+    public static List<MeResponse> from(List<Member> members) {
+        return members.stream()
+                .map(MeResponse::from)
+                .collect(Collectors.toList());
     }
 } 

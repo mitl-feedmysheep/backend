@@ -2,62 +2,74 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "gathering")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class GatheringJpaEntity {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@SuperBuilder(toBuilder = true)
+@SQLRestriction("deleted_at is null")
+public class GatheringJpaEntity extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
-
-    @Column(nullable = false, columnDefinition = "CHAR(36)")
-    private UUID groupId;
-
+    /**
+     * 모임 이름
+     */
     @Column(nullable = false, length = 50)
     private String name;
 
+    /**
+     * 설명
+     */
+    @Column(length = 100)
+    private String description;
+
+    /**
+     * 날짜
+     */
     @Column(nullable = false)
     private LocalDate date;
 
+    /**
+     * 장소
+     */
     @Column(length = 200)
     private String place;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    /**
+     * 사진 URL
+     */
+    @Column(name = "photo_url", length = 200)
+    private String photoUrl;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    /**
+     * 리더 코멘트
+     */
+    @Column(name = "leader_comment", length = 100)
+    private String leaderComment;
 
-    private LocalDateTime deletedAt;
+    /**
+     * 관리자 코멘트
+     */
+    @Column(name = "admin_comment", length = 100)
+    private String adminComment;
 
-    @Builder
-    public GatheringJpaEntity(UUID id, UUID groupId, String name, LocalDate date, String place, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        this.id = id;
-        this.groupId = groupId;
-        this.name = name;
-        this.date = date;
-        this.place = place;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-    }
+    /**
+     * 그룹
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    private GroupJpaEntity group;
+
+    @OneToMany(mappedBy = "gathering")
+    private List<GatheringMemberJpaEntity> gatheringMembers = new ArrayList<>();
 } 

@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.domain.model.Member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -17,8 +18,13 @@ public class MemberQueryService implements MemberQueryUseCase {
   private final MemberPort memberPort;
 
   @Override
-  public Member findMemberById(UUID memberId) {
+  public Member getMemberById(UUID memberId) {
     return memberPort.findById(memberId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+            .orElseThrow(() -> new RuntimeException("Member not found"));
+  }
+
+  @Override
+  public List<Member> getMembersByGroupId(UUID groupId) {
+    return memberPort.findMembersByGroupId(groupId);
   }
 } 

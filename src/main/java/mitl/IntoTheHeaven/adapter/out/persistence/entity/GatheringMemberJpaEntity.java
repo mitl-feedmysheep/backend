@@ -2,67 +2,50 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "gathering_member")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class GatheringMemberJpaEntity {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@SuperBuilder(toBuilder = true)
+@SQLRestriction("deleted_at is null")
+public class GatheringMemberJpaEntity extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
-
+    /**
+     * 모임
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gathering_id", nullable = false, columnDefinition = "CHAR(36)")
+    @JoinColumn(name = "gathering_id", nullable = false)
     private GatheringJpaEntity gathering;
 
+    /**
+     * 그룹 멤버
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_member_id", nullable = false, columnDefinition = "CHAR(36)")
+    @JoinColumn(name = "group_member_id", nullable = false)
     private GroupMemberJpaEntity groupMember;
 
-    @Column(nullable = false)
-    private Boolean worshipAttendance;
+    /**
+     * 예배 참석 여부
+     */
+    @Column(name = "worship_attendance", nullable = false)
+    private boolean worshipAttendance;
 
-    @Column(nullable = false)
-    private Boolean gatheringAttendance;
+    /**
+     * 모임 참석 여부
+     */
+    @Column(name = "gathering_attendance", nullable = false)
+    private boolean gatheringAttendance;
 
-    @Column(columnDefinition = "TEXT")
+    /**
+     * 삶 나눔
+     */
+    @Column(length = 500)
     private String story;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    private LocalDateTime deletedAt;
-
-    @Builder
-    public GatheringMemberJpaEntity(UUID id, GatheringJpaEntity gathering, GroupMemberJpaEntity groupMember, Boolean worshipAttendance, Boolean gatheringAttendance, String story, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        this.id = id;
-        this.gathering = gathering;
-        this.groupMember = groupMember;
-        this.worshipAttendance = worshipAttendance;
-        this.gatheringAttendance = gatheringAttendance;
-        this.story = story;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-    }
 } 

@@ -19,16 +19,7 @@ public class GroupQueryService implements GroupQueryUseCase {
     private final GroupPort groupPort;
 
     @Override
-    public List<GroupResponse> getGroupsByMemberId(UUID memberId) {
-        List<Group> groups = groupPort.findGroupsByMemberId(memberId);
-        return groups.stream()
-                .map(group -> new GroupResponse(
-                        group.getId().getValue(),
-                        group.getName(),
-                        group.getDescription(),
-                        group.getChurchId().getValue(),
-                        group.getStartDate(),
-                        group.getEndDate()))
-                .toList();
+    public List<Group> getGroupsByMemberId(UUID memberId) {
+        return groupPort.findGroupsByMemberId(memberId);
     }
 } 

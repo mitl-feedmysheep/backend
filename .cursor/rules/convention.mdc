@@ -1,9 +1,8 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
-
 # IntoTheHeaven Project Development Convention
 
 This document defines the development conventions for the IntoTheHeaven project to maintain a consistent code style and architecture.
@@ -46,6 +45,26 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
 - **Domain Logic Placement**:
   - **Domain Model**: Logic that operates on a single domain aggregate and its internal state (e.g., calculating a member's age from their birthdate) should be placed within the domain model class itself. This follows the Information Expert principle and increases cohesion.
   - **Application Service**: Logic that coordinates between different domain models or aggregates (e.g., calculating the average age of a group) belongs in the `application` service. The service is responsible for orchestrating the flow, fetching necessary data from ports, and calling domain methods.
+
+- **DTO Conversion Principle**: In the query flow, application services (`UseCase`) should return pure domain models. The responsibility for converting these domain models into Data Transfer Objects (DTOs) for the presentation layer lies with the `adapter.in.web.controller`. This ensures that the application core remains independent of specific presentation formats.
+  - **Example**: A `UseCase` returns `List<Group>`, and the `Controller` maps it to `List<GroupResponse>`.
+  - **Implementation**: The conversion logic should be encapsulated within the DTO class itself using a static `from` method. Method overloading should be used to handle both single objects and lists.
+    ```java
+    // In SomeResponse.java
+    public static SomeResponse from(SomeDomainObject domain) { /* ... */ }
+    public static List<SomeResponse> from(List<SomeDomainObject> domains) { /* ... */ }
+
+    // In SomeController.java
+    // Single object conversion
+    SomeDomainObject domainObject = useCase.findSomething();
+    SomeResponse response = SomeResponse.from(domainObject);
+    return ResponseEntity.ok(response);
+
+    // List conversion
+    List<SomeDomainObject> domainObjects = useCase.findManyThings();
+    List<SomeResponse> response = SomeResponse.from(domainObjects);
+    return ResponseEntity.ok(response);
+    ```
 
 ## 2. Package Structure
 
@@ -103,7 +122,7 @@ src/main/java/mitl/IntoTheHeaven
 
 ## 4. API Design Principles (RESTful)
 
-- **URI**: Resources should be represented by nouns (plural). (`/api/v1/members`, `/api/v1/groups/{groupId}/gatherings`)
+- **URI**: Resources should be represented by nouns (plural). (`/members`, `/groups/{groupId}/gatherings`)
 - **HTTP Method**: Actions on resources are expressed by HTTP Methods.
   - `POST`: Create a resource.
   - `GET`: Retrieve a resource.
@@ -134,3 +153,46 @@ Follow the [Conventional Commits](mdc:https:/www.conventionalcommits.org/en/v1.0
 - **Immutability**: Design DTOs and Value Objects to be immutable where possible.
 - **Validation**: Perform primary validation at the Controller DTO level using `@Valid`.
 - **Exception Handling**: Define business exceptions in the `domain` or `application` layer and handle them globally using `@RestControllerAdvice`.
+
+## 7. Key Implementation Patterns and Conventions
+
+This section covers specific patterns and conventions adopted in the project to address common challenges.
+
+### a. Data Fetching and N+1 Problem
+
+To prevent the N+1 query problem, we use JPA's EntityGraph feature for eager fetching of related entities in a single query (Fetch Join).
+
+-   **Primary Method**: Use `@EntityGraph` directly on repository methods. While powerful, be aware of its limitations.
+    -   **Example**: In `MemberJpaRepository`, `findWithGroupsById` uses `@EntityGraph` to fetch `groupMembers` and their associated `group` in one go.
+      ```java
+      // In MemberJpaRepository.java
+      @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
+      Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
+      ```
+-   **Convention**:
+    -   For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
+    -   For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
+    -   Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+
+### b. Adapter Responsibilities and Repository Usage
+
+An adapter's purpose is to implement a port and bridge the application layer to an external technology (like a database).
+
+-   **Principle**: An adapter is not restricted to using only the repository that matches its name. It should use whatever repositories are necessary to fulfill its port's contract in the most efficient way.
+-   **Example**: `GroupPersistenceAdapter` implements `GroupPort`. To fulfill the `findGroupsByMemberId` method, it uses `MemberJpaRepository`. This is the correct approach because the query starts with a `memberId`, making `Member` the logical starting point for the database query, based on the ERD.
+-   **Guideline**: The choice of which repository to use within an adapter should be driven by the data model (ERD) and query efficiency, not by the adapter's name.
+
+### c. JPA Entity Design Conventions
+
+To ensure consistency, maintainability, and alignment with our architecture, all JPA Entity classes must adhere to the following design conventions:
+
+-   **Base Entity Inheritance**: All entities must extend a common `BaseEntity` class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
+
+-   **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), a mechanism that supports parent class fields (like Lombok's `@SuperBuilder`) must be used. This provides a readable and fluent API for object creation.
+    -   **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` for JPA's internal use, and the all-arguments constructor should be `private`, making it accessible only to the builder.
+
+-   **Global Soft-Delete Filter**: To ensure that queries only return active records, a global filter (like Hibernate's `@SQLRestriction`) should be applied at the entity level to automatically exclude records where `deleted_at` is not null. This simplifies application logic, as individual queries do not need to concern themselves with filtering for soft-deleted records.
+
+-   **Standard-Compliant Field Documentation**: Field descriptions should be documented using standard JavaDoc comments (`/** ... */`) rather than implementation-specific annotation properties (like `comment` in Hibernate's `@Column`). This improves code portability and ensures that documentation is independent of the underlying persistence provider.
+
+-   **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD (`into-the-heaven.erd.json`). The ERD is the single source of truth for the data model.

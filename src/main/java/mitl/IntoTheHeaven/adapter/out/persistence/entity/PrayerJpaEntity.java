@@ -2,60 +2,50 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "prayer")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class PrayerJpaEntity {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@SuperBuilder(toBuilder = true)
+@SQLRestriction("deleted_at is null")
+public class PrayerJpaEntity extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "CHAR(36)")
-    private UUID id;
+    /**
+     * 기도제목
+     */
+    @Column(name = "prayer_request", nullable = false, length = 200)
+    private String prayerRequest;
 
-    @Column(nullable = false, columnDefinition = "CHAR(36)")
-    private UUID gatheringMemberId;
+    /**
+     * 설명
+     */
+    @Column(length = 100)
+    private String description;
 
-    @Column(nullable = false, length = 200)
-    private String title;
+    /**
+     * 응답 여부
+     */
+    @Column(name = "is_answered", nullable = false)
+    private boolean isAnswered;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    /**
+     * 멤버 (개인 기도)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private MemberJpaEntity member;
 
-    private LocalDateTime answeredAt;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    private LocalDateTime deletedAt;
-
-    @Builder
-    public PrayerJpaEntity(UUID id, UUID gatheringMemberId, String title, String content, LocalDateTime answeredAt, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-        this.id = id;
-        this.gatheringMemberId = gatheringMemberId;
-        this.title = title;
-        this.content = content;
-        this.answeredAt = answeredAt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-    }
+    /**
+     * 모임 멤버 (모임 기도)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gathering_member_id")
+    private GatheringMemberJpaEntity gatheringMember;
 } 
