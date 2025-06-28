@@ -34,7 +34,6 @@ public class MemberPersistenceMapper {
             return null;
         }
         return MemberJpaEntity.builder()
-                .id(domain.getId().getValue())
                 .name(domain.getName())
                 .email(domain.getEmail())
                 .password(domain.getPassword())
@@ -44,9 +43,6 @@ public class MemberPersistenceMapper {
                 .profileUrl(domain.getProfileUrl())
                 .address(domain.getAddress())
                 .description(domain.getDescription())
-                .createdAt(domain.getCreatedAt())
-                .updatedAt(domain.getUpdatedAt())
-                .deletedAt(domain.getDeletedAt())
                 .build();
     }
 } 

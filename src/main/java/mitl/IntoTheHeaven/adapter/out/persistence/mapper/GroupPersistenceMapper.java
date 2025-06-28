@@ -22,7 +22,6 @@ public class GroupPersistenceMapper {
 
     public GroupJpaEntity toJpaEntity(Group domain) {
         return GroupJpaEntity.builder()
-                .id(domain.getId().getValue())
                 .name(domain.getName())
                 .description(domain.getDescription())
                 .churchId(domain.getChurchId().getValue())
