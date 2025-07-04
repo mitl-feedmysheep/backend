@@ -1,6 +1,10 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
+import mitl.IntoTheHeaven.domain.model.GroupId;
+import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.GroupMemberId;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Component;
@@ -43,6 +47,18 @@ public class MemberPersistenceMapper {
                 .profileUrl(domain.getProfileUrl())
                 .address(domain.getAddress())
                 .description(domain.getDescription())
+                .build();
+    }
+
+    public GroupMember toGroupMemberDomain(GroupMemberJpaEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        return GroupMember.builder()
+                .id(GroupMemberId.from(entity.getId()))
+                .groupId(GroupId.from(entity.getGroup().getId()))
+                .memberId(MemberId.from(entity.getMember().getId()))
+                .role(entity.getRole())
                 .build();
     }
 } 

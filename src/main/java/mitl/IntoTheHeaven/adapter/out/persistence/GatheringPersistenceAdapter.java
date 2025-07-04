@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.GatheringPersistenceMapper;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GatheringJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
@@ -30,5 +31,12 @@ public class GatheringPersistenceAdapter implements GatheringPort {
     public Optional<Gathering> findDetailById(UUID gatheringId) {
         return gatheringJpaRepository.findWithDetailsById(gatheringId)
                 .map(gatheringPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Gathering save(Gathering gathering, UUID groupId) {
+        GatheringJpaEntity entity = gatheringPersistenceMapper.toEntity(gathering, groupId);
+        GatheringJpaEntity savedEntity = gatheringJpaRepository.save(entity);
+        return gatheringPersistenceMapper.toDomain(savedEntity);
     }
 } 

@@ -11,4 +11,6 @@ public interface GatheringPort {
     List<Gathering> findAllByGroupId(UUID groupId);
 
     Optional<Gathering> findDetailById(UUID gatheringId);
+
+    Gathering save(Gathering gathering, UUID groupId);
 } 

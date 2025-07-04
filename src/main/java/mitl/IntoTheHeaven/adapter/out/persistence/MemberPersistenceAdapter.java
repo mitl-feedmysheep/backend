@@ -1,10 +1,12 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.MemberJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
+import mitl.IntoTheHeaven.domain.model.GroupMember;
 import mitl.IntoTheHeaven.domain.model.Member;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +40,15 @@ public class MemberPersistenceAdapter implements MemberPort {
     MemberJpaEntity entity = memberPersistenceMapper.toEntity(member);
     MemberJpaEntity savedEntity = memberJpaRepository.save(entity);
     return memberPersistenceMapper.toDomain(savedEntity);
+  }
+
+  @Override
+  public List<GroupMember> findGroupMembersByGroupId(UUID groupId) {
+    return memberJpaRepository.findAllWithGroupMembersByGroupMembers_Group_Id(groupId).stream()
+            .flatMap(memberEntity -> memberEntity.getGroupMembers().stream())
+            .filter(groupMemberEntity -> groupMemberEntity.getGroup().getId().equals(groupId))
+            .map(memberPersistenceMapper::toGroupMemberDomain)
+            .collect(Collectors.toList());
   }
 
   @Override

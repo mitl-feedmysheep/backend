@@ -2,10 +2,14 @@ package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringMemberJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,6 +39,7 @@ public class GatheringPersistenceMapper {
     private GatheringMember toDomain(GatheringMemberJpaEntity entity) {
         return GatheringMember.builder()
                 .id(GatheringMemberId.from(entity.getId()))
+                .groupMember(memberPersistenceMapper.toGroupMemberDomain(entity.getGroupMember()))
                 .member(memberPersistenceMapper.toDomain(entity.getGroupMember().getMember()))
                 .name(entity.getGroupMember().getMember().getName())
                 .worshipAttendance(entity.isWorshipAttendance())
@@ -52,6 +57,37 @@ public class GatheringPersistenceMapper {
                 .prayerRequest(entity.getPrayerRequest())
                 .description(entity.getDescription())
                 .isAnswered(entity.isAnswered())
+                .build();
+    }
+
+    public GatheringJpaEntity toEntity(Gathering domain, UUID groupId) {
+        // GatheringMember들을 GatheringMemberJpaEntity로 변환
+        List<GatheringMemberJpaEntity> gatheringMemberEntities = domain.getGatheringMembers().stream()
+                .map(this::toGatheringMemberEntity)
+                .collect(Collectors.toList());
+        
+        return GatheringJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .name(domain.getName())
+                .description(domain.getDescription())
+                .date(domain.getDate())
+                .startedAt(domain.getStartedAt())
+                .endedAt(domain.getEndedAt())
+                .place(domain.getPlace())
+                .group(GroupJpaEntity.builder().id(groupId).build())
+                .gatheringMembers(gatheringMemberEntities)
+                .build();
+    }
+    
+    private GatheringMemberJpaEntity toGatheringMemberEntity(GatheringMember domain) {
+        return GatheringMemberJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .groupMember(GroupMemberJpaEntity.builder()
+                        .id(domain.getGroupMember().getId().getValue())
+                        .build())
+                .worshipAttendance(domain.isWorshipAttendance())
+                .gatheringAttendance(domain.isGatheringAttendance())
+                .story(domain.getStory())
                 .build();
     }
 } 

@@ -15,4 +15,7 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
     Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
 
     List<MemberJpaEntity> findAllByGroupMembers_Group_Id(UUID groupId);
+
+    @EntityGraph(attributePaths = {"groupMembers"})
+    List<MemberJpaEntity> findAllWithGroupMembersByGroupMembers_Group_Id(UUID groupId);
 } 
