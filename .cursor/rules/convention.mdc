@@ -44,26 +44,46 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
 
 - **Domain Logic Placement**:
   - **Domain Model**: Logic that operates on a single domain aggregate and its internal state (e.g., calculating a member's age from their birthdate) should be placed within the domain model class itself. This follows the Information Expert principle and increases cohesion.
-  - **Application Service**: Logic that coordinates between different domain models or aggregates (e.g., calculating the average age of a group) belongs in the `application` service. The service is responsible for orchestrating the flow, fetching necessary data from ports, and calling domain methods.
+  - **Application Service**: Logic that coordinates between different domain models or aggregates belongs in the `application` service. The service is responsible for orchestrating complex business flows, fetching necessary data from multiple ports, and coordinating domain operations.
+    - **Examples**:
+      - Cross-aggregate operations (e.g., creating a gathering and automatically adding all group members as gathering participants)
+      - Multi-step business processes that involve multiple domain entities
+      - Transactional coordination between different domain operations
+      - Complex queries that span multiple aggregates
+    - **Pattern**: Application services should focus on orchestration and coordination, delegating actual business logic to domain models whenever possible.
 
-- **DTO Conversion Principle**: In the query flow, application services (`UseCase`) should return pure domain models. The responsibility for converting these domain models into Data Transfer Objects (DTOs) for the presentation layer lies with the `adapter.in.web.controller`. This ensures that the application core remains independent of specific presentation formats.
-  - **Example**: A `UseCase` returns `List<Group>`, and the `Controller` maps it to `List<GroupResponse>`.
-  - **Implementation**: The conversion logic should be encapsulated within the DTO class itself using a static `from` method. Method overloading should be used to handle both single objects and lists.
+- **DTO Conversion Principle**: The conversion between different DTO layers follows specific patterns to maintain architectural clarity and consistency.
+
+  - **Response DTO Conversion (Query Flow)**: Application services (`UseCase`) should return pure domain models. The responsibility for converting these domain models into Response DTOs lies with the `adapter.in.web.controller`.
+    - **Implementation**: The conversion logic should be encapsulated within the Response DTO class using a static `from` method.
     ```java
     // In SomeResponse.java
     public static SomeResponse from(SomeDomainObject domain) { /* ... */ }
     public static List<SomeResponse> from(List<SomeDomainObject> domains) { /* ... */ }
 
     // In SomeController.java
-    // Single object conversion
     SomeDomainObject domainObject = useCase.findSomething();
     SomeResponse response = SomeResponse.from(domainObject);
     return ResponseEntity.ok(response);
+    ```
 
-    // List conversion
-    List<SomeDomainObject> domainObjects = useCase.findManyThings();
-    List<SomeResponse> response = SomeResponse.from(domainObjects);
-    return ResponseEntity.ok(response);
+  - **Command DTO Conversion (Command Flow)**: Request DTOs from the presentation layer should be converted to Command DTOs at the controller level before passing to the application layer.
+    - **Implementation**: Command DTOs should provide a static `from` method to convert from Request DTOs. This pattern replaces the builder pattern for Command DTOs to ensure consistent conversion logic.
+    ```java
+    // In SomeCommand.java
+    public static SomeCommand from(SomeRequest request) {
+        return new SomeCommand(
+            request.getField1(),
+            request.getField2()
+        );
+    }
+
+    // In SomeController.java
+    public ResponseEntity<SomeResponse> createSomething(@RequestBody @Valid SomeRequest request) {
+        SomeCommand command = SomeCommand.from(request);
+        SomeDomainObject result = useCase.executeSomething(command);
+        return ResponseEntity.ok(SomeResponse.from(result));
+    }
     ```
 
 ### Value Object ID (Domain ID) Handling
@@ -140,7 +160,8 @@ src/main/java/mitl/IntoTheHeaven
 - **Request/Response DTO**: `[Action][Domain]Request`, `[Action][Domain]Response`
   - _Example_: `SignUpRequest`, `FindMemberResponse`
 - **Command/Query DTO**: `[Action]Command`, `[Data]Query`
-  - _Example_: `SignUpCommand`
+  - _Example_: `SignUpCommand`, `CreateGatheringCommand`
+  - _Note_: Command DTOs should provide a static `from()` method for conversion from Request DTOs instead of using the builder pattern
 - **JPA Entity**: `[Domain]JpaEntity`
   - _Example_: `MemberJpaEntity`
 - **Mapper**: `[Domain]PersistenceMapper`
@@ -209,7 +230,34 @@ An adapter's purpose is to implement a port and bridge the application layer to 
 -   **Example**: `GroupPersistenceAdapter` implements `GroupPort`. To fulfill the `findGroupsByMemberId` method, it uses `MemberJpaRepository`. This is the correct approach because the query starts with a `memberId`, making `Member` the logical starting point for the database query, based on the ERD.
 -   **Guideline**: The choice of which repository to use within an adapter should be driven by the data model (ERD) and query efficiency, not by the adapter's name.
 
-### c. JPA Entity Design Conventions
+### c. Persistence Mapper Responsibilities
+
+Persistence Mappers serve as the crucial translation layer between domain models and JPA entities, ensuring proper data conversion and relationship management.
+
+-   **Complete Object Graph Conversion**: When converting domain aggregates to JPA entities, mappers must handle the entire object graph, including all related entities.
+    -   **Domain to Entity**: The `toEntity()` method should convert not only the root aggregate but also all contained domain objects (e.g., converting `GatheringMember` domain objects to `GatheringMemberJpaEntity` when converting a `Gathering`).
+    -   **Entity to Domain**: The `toDomain()` method should reconstruct the complete domain aggregate with all its relationships.
+
+-   **Relationship Mapping**: Mappers are responsible for correctly mapping domain relationships to JPA entity relationships, ensuring that cascade operations and entity references are properly established.
+    ```java
+    // Example: GatheringPersistenceMapper
+    public GatheringJpaEntity toEntity(Gathering gathering) {
+        return GatheringJpaEntity.builder()
+            .id(gathering.getId().getValue())
+            .name(gathering.getName())
+            // Convert all GatheringMember domain objects to entities in a separated method each
+            .gatheringMembers(gathering.getGatheringMembers().stream()
+                .map(this::toGatheringMemberEntity)
+                .collect(Collectors.toList()))
+            .build();
+    }
+    ```
+
+-   **Cross-Domain Data Requirements**: When domain objects require data from multiple aggregates, mappers should coordinate the necessary information without violating domain boundaries.
+    -   Mappers may need to work with multiple repository types to gather all required data for complete domain reconstruction.
+    -   The mapper should ensure that domain objects receive all necessary related information while maintaining proper encapsulation.
+
+### d. JPA Entity Design Conventions
 
 To ensure consistency, maintainability, and alignment with our architecture, all JPA Entity classes must adhere to the following design conventions:
 
@@ -230,7 +278,7 @@ To ensure consistency, maintainability, and alignment with our architecture, all
     -   **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
     -   **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
 
-### d. Domain Model Design Conventions
+### e. Domain Model Design Conventions
 
 To build a robust and expressive core domain, all domain models (`domain.model` package) must follow these conventions:
 
@@ -248,7 +296,7 @@ To build a robust and expressive core domain, all domain models (`domain.model` 
     -   **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
     -   **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).
 
-### e. API Documentation with Swagger (OpenAPI)
+### f. API Documentation with Swagger (OpenAPI)
 
 To ensure all APIs are clearly documented and easily testable, every `Controller` must be annotated with Swagger (OpenAPI) annotations. This practice is mandatory for maintaining a consistent and understandable API specification.
 
