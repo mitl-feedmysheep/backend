@@ -9,6 +9,7 @@ import mitl.IntoTheHeaven.global.domain.DomainEntity;
 public class Prayer extends DomainEntity<Prayer, PrayerId> {
 
     private final Member member;
+    private final GatheringMember gatheringMember;
     private final String prayerRequest;
     private final String description;
     private final boolean isAnswered;

@@ -54,6 +54,8 @@ public class GatheringPersistenceMapper {
     private Prayer toDomain(PrayerJpaEntity entity) {
         return Prayer.builder()
                 .id(PrayerId.from(entity.getId()))
+                .member(memberPersistenceMapper.toDomain(entity.getMember()))
+                .gatheringMember(toDomain(entity.getGatheringMember()))
                 .prayerRequest(entity.getPrayerRequest())
                 .description(entity.getDescription())
                 .isAnswered(entity.isAnswered())
@@ -61,9 +63,14 @@ public class GatheringPersistenceMapper {
     }
 
     public GatheringJpaEntity toEntity(Gathering domain, UUID groupId) {
-        // GatheringMember들을 GatheringMemberJpaEntity로 변환
+        GroupJpaEntity groupEntity = GroupJpaEntity.builder().id(groupId).build();
+        return toEntity(domain, groupEntity);
+    }
+
+    public GatheringJpaEntity toEntity(Gathering domain, GroupJpaEntity groupEntity) {
+        // GatheringMember들을 GatheringMemberJpaEntity로 변환 (Prayer 포함)
         List<GatheringMemberJpaEntity> gatheringMemberEntities = domain.getGatheringMembers().stream()
-                .map(this::toGatheringMemberEntity)
+                .map(gatheringMember -> toGatheringMemberEntityWithPrayers(gatheringMember))
                 .collect(Collectors.toList());
         
         return GatheringJpaEntity.builder()
@@ -74,7 +81,7 @@ public class GatheringPersistenceMapper {
                 .startedAt(domain.getStartedAt())
                 .endedAt(domain.getEndedAt())
                 .place(domain.getPlace())
-                .group(GroupJpaEntity.builder().id(groupId).build())
+                .group(groupEntity)
                 .gatheringMembers(gatheringMemberEntities)
                 .build();
     }
@@ -88,6 +95,39 @@ public class GatheringPersistenceMapper {
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
                 .story(domain.getStory())
+                .build();
+    }
+
+    private GatheringMemberJpaEntity toGatheringMemberEntityWithPrayers(GatheringMember domain) {
+        GatheringMemberJpaEntity gatheringMemberEntity = GatheringMemberJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .groupMember(GroupMemberJpaEntity.builder()
+                        .id(domain.getGroupMember().getId().getValue())
+                        .build())
+                .worshipAttendance(domain.isWorshipAttendance())
+                .gatheringAttendance(domain.isGatheringAttendance())
+                .story(domain.getStory())
+                .build();
+
+        List<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
+                .map(prayer -> PrayerJpaEntity.builder()
+                        .id(prayer.getId().getValue())
+                        .prayerRequest(prayer.getPrayerRequest())
+                        .description(prayer.getDescription())
+                        .isAnswered(prayer.isAnswered())
+                        .gatheringMember(gatheringMemberEntity)
+                        .build())
+                .collect(Collectors.toList());
+
+        return GatheringMemberJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .groupMember(GroupMemberJpaEntity.builder()
+                        .id(domain.getGroupMember().getId().getValue())
+                        .build())
+                .worshipAttendance(domain.isWorshipAttendance())
+                .gatheringAttendance(domain.isGatheringAttendance())
+                .story(domain.getStory())
+                .prayers(prayerEntities)
                 .build();
     }
 } 

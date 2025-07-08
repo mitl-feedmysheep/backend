@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.application.service.command;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.model.*;
@@ -53,5 +54,64 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .build();
 
         return gatheringPort.save(gathering, command.getGroupId().getValue());
+    }
+
+    @Override
+    public GatheringMember updateGatheringMember(UpdateGatheringMemberCommand command) {
+        // 1. 기존 모임 조회
+        Gathering existingGathering = gatheringPort.findDetailById(command.getGatheringId().getValue())
+                .orElseThrow(() -> new RuntimeException("Gathering not found"));
+
+        // 2. 업데이트할 GatheringMember 찾기
+        GatheringMember targetGatheringMember = existingGathering.getGatheringMembers().stream()
+                .filter(gm -> gm.getGroupMember().getId().equals(command.getGroupMemberId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Gathering member not found"));
+
+        // 3. 새로운 기도제목들 생성
+        List<Prayer> updatedPrayers = command.getPrayers().stream()
+                .map(prayerCommand -> Prayer.builder()
+                        .id(PrayerId.from(UUID.randomUUID()))
+                        .member(targetGatheringMember.getMember())
+                        .gatheringMember(targetGatheringMember)
+                        .prayerRequest(prayerCommand.getPrayerRequest())
+                        .description(prayerCommand.getDescription())
+                        .isAnswered(false)
+                        .build())
+                .collect(Collectors.toList());
+
+        // 4. 업데이트된 GatheringMember 생성
+        GatheringMember updatedGatheringMember = GatheringMember.builder()
+                .id(targetGatheringMember.getId())
+                .groupMember(targetGatheringMember.getGroupMember())
+                .name(targetGatheringMember.getName())
+                .worshipAttendance(command.isWorshipAttendance())
+                .gatheringAttendance(command.isGatheringAttendance())
+                .story(command.getStory())
+                .prayers(updatedPrayers)
+                .build();
+
+        // 5. 전체 GatheringMember 리스트에서 해당 멤버만 교체
+        List<GatheringMember> updatedGatheringMembers = existingGathering.getGatheringMembers().stream()
+                .map(gm -> gm.getGroupMember().getId().equals(command.getGroupMemberId()) 
+                    ? updatedGatheringMember 
+                    : gm)
+                .collect(Collectors.toList());
+
+        // 6. 업데이트된 모임 생성 및 저장
+        Gathering updatedGathering = Gathering.builder()
+                .id(existingGathering.getId())
+                .name(existingGathering.getName())
+                .description(existingGathering.getDescription())
+                .date(existingGathering.getDate())
+                .startedAt(existingGathering.getStartedAt())
+                .endedAt(existingGathering.getEndedAt())
+                .place(existingGathering.getPlace())
+                .gatheringMembers(updatedGatheringMembers)
+                .build();
+
+        gatheringPort.save(updatedGathering);
+
+        return updatedGatheringMember;
     }
 } 

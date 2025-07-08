@@ -39,4 +39,15 @@ public class GatheringPersistenceAdapter implements GatheringPort {
         GatheringJpaEntity savedEntity = gatheringJpaRepository.save(entity);
         return gatheringPersistenceMapper.toDomain(savedEntity);
     }
+
+    @Override
+    public Gathering save(Gathering gathering) {
+        // 기존 entity에서 group 정보를 조회
+        GatheringJpaEntity existingEntity = gatheringJpaRepository.findById(gathering.getId().getValue())
+                .orElseThrow(() -> new RuntimeException("Gathering not found for update"));
+        
+        GatheringJpaEntity entity = gatheringPersistenceMapper.toEntity(gathering, existingEntity.getGroup());
+        GatheringJpaEntity savedEntity = gatheringJpaRepository.save(entity);
+        return gatheringPersistenceMapper.toDomain(savedEntity);
+    }
 } 

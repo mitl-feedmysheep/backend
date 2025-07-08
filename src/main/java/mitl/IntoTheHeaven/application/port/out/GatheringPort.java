@@ -13,4 +13,6 @@ public interface GatheringPort {
     Optional<Gathering> findDetailById(UUID gatheringId);
 
     Gathering save(Gathering gathering, UUID groupId);
+    
+    Gathering save(Gathering gathering);
 } 

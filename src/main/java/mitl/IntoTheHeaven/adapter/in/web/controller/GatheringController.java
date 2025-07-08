@@ -7,11 +7,16 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.CreateGatheringRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.CreateGatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringDetailResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringMemberRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
+import mitl.IntoTheHeaven.domain.model.GatheringMember;
+import mitl.IntoTheHeaven.domain.model.GroupMemberId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +50,23 @@ public class GatheringController {
     ) {
         Gathering gathering = gatheringQueryUseCase.getGatheringDetail(GatheringId.from(gatheringId));
         GatheringDetailResponse response = GatheringDetailResponse.from(gathering);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Update Gathering Member and create prayer requests", description = "Updates attendance, story sharing, and prayer requests for a specific gathering member.")
+    @PatchMapping("/{gatheringId}/groupMember/{groupMemberId}")
+    public ResponseEntity<UpdateGatheringMemberResponse> updateGatheringMember(
+            @PathVariable UUID gatheringId,
+            @PathVariable UUID groupMemberId,
+            @Valid @RequestBody UpdateGatheringMemberRequest request
+    ) {
+        UpdateGatheringMemberCommand command = UpdateGatheringMemberCommand.from(
+            GatheringId.from(gatheringId), 
+            GroupMemberId.from(groupMemberId), 
+            request
+        );
+        GatheringMember gatheringMember = gatheringCommandUseCase.updateGatheringMember(command);
+        UpdateGatheringMemberResponse response = UpdateGatheringMemberResponse.from(gatheringMember);
         return ResponseEntity.ok(response);
     }
 } 
