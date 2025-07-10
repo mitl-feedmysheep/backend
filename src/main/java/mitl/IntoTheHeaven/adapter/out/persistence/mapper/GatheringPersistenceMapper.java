@@ -54,8 +54,8 @@ public class GatheringPersistenceMapper {
     private Prayer toDomain(PrayerJpaEntity entity) {
         return Prayer.builder()
                 .id(PrayerId.from(entity.getId()))
-                .member(memberPersistenceMapper.toDomain(entity.getMember()))
-                .gatheringMember(toDomain(entity.getGatheringMember()))
+                .member(entity.getMember() != null ? memberPersistenceMapper.toDomain(entity.getMember()) : null)
+                .gatheringMember(null) // 순환 참조 방지를 위해 null 설정
                 .prayerRequest(entity.getPrayerRequest())
                 .description(entity.getDescription())
                 .isAnswered(entity.isAnswered())
@@ -99,6 +99,7 @@ public class GatheringPersistenceMapper {
     }
 
     private GatheringMemberJpaEntity toGatheringMemberEntityWithPrayers(GatheringMember domain) {
+        // 먼저 GatheringMemberJpaEntity 기본 구조 생성
         GatheringMemberJpaEntity gatheringMemberEntity = GatheringMemberJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .groupMember(GroupMemberJpaEntity.builder()
@@ -109,16 +110,20 @@ public class GatheringPersistenceMapper {
                 .story(domain.getStory())
                 .build();
 
+        // Prayer들을 변환하여 설정
         List<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
                 .map(prayer -> PrayerJpaEntity.builder()
                         .id(prayer.getId().getValue())
                         .prayerRequest(prayer.getPrayerRequest())
                         .description(prayer.getDescription())
                         .isAnswered(prayer.isAnswered())
+                        .member(prayer.getMember() != null ? 
+                                memberPersistenceMapper.toEntity(prayer.getMember()) : null)
                         .gatheringMember(gatheringMemberEntity)
                         .build())
                 .collect(Collectors.toList());
 
+        // 완성된 엔터티에 Prayer 리스트 설정
         return GatheringMemberJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .groupMember(GroupMemberJpaEntity.builder()

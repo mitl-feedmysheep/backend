@@ -20,6 +20,9 @@ public class SignUpRequest {
     private String email;
     private LocalDate birthdate;
     private Gender gender;
+    private String phone;
+    private String address;
+    private String description;
 
     public SignUpCommand toCommand() {
         return SignUpCommand.builder()
@@ -29,6 +32,9 @@ public class SignUpRequest {
                 .email(email)
                 .birthdate(birthdate)
                 .gender(gender)
+                .phone(phone)
+                .address(address)
+                .description(description)
                 .build();
     }
 } 

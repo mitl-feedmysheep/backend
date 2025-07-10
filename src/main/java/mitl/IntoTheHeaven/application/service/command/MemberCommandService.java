@@ -22,8 +22,6 @@ public class MemberCommandService implements MemberCommandUseCase {
 
     @Override
     public Member signUp(SignUpCommand command) {
-        // In a real application, you should check for duplicate username/email here.
-
         Member member = Member.builder()
                 .id(MemberId.from(UUID.randomUUID())) // Generate a new UUID for the member
                 .name(command.getName())
@@ -32,6 +30,9 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .password(passwordEncoder.encode(command.getPassword()))
                 .sex(command.getGender())
                 .birthday(command.getBirthdate())
+                .phone(command.getPhone())
+                .address(command.getAddress())
+                .description(command.getDescription())
                 .build();
 
         return memberPort.save(member);

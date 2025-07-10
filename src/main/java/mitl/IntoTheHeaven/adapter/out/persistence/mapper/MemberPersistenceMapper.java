@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -38,6 +39,7 @@ public class MemberPersistenceMapper {
             return null;
         }
         return MemberJpaEntity.builder()
+                .id(domain.getId().getValue())
                 .name(domain.getName())
                 .email(domain.getEmail())
                 .password(domain.getPassword())
@@ -59,6 +61,18 @@ public class MemberPersistenceMapper {
                 .groupId(GroupId.from(entity.getGroup().getId()))
                 .memberId(MemberId.from(entity.getMember().getId()))
                 .role(entity.getRole())
+                .build();
+    }
+
+    public GroupMemberJpaEntity toGroupMemberEntity(GroupMember domain) {
+        if (domain == null) {
+            return null;
+        }
+        return GroupMemberJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .group(GroupJpaEntity.builder().id(domain.getGroupId().getValue()).build())
+                .member(MemberJpaEntity.builder().id(domain.getMemberId().getValue()).build())
+                .role(domain.getRole())
                 .build();
     }
 } 

@@ -92,6 +92,24 @@ To enhance type safety and clarify domain intent, the application core must use 
 
 -   **Principle**: Conversion happens at the boundaries. The application core remains pure, exclusively handling domain-specific ID objects.
 
+-   **ID Generation Strategy**: All entity IDs are generated at the **application layer** using `UUID.randomUUID()` and wrapped in domain-specific ID objects. JPA entities do **NOT** use `@GeneratedValue` annotations.
+    ```java
+    // In MemberCommandService.java
+    Member member = Member.builder()
+        .id(MemberId.from(UUID.randomUUID())) // Domain layer ID generation
+        .name(command.getName())
+        // ... other fields
+        .build();
+    ```
+
+-   **BaseEntity Configuration**: The `BaseEntity` class must **NOT** use `@GeneratedValue` to maintain control over ID generation in the application layer.
+    ```java
+    // In BaseEntity.java
+    @Id
+    @Column(columnDefinition = "CHAR(36)")
+    private UUID id; // No @GeneratedValue annotation
+    ```
+
 -   **Inbound Flow (`Adapter In`)**: The `Controller` is responsible for **wrapping** primitive types received from external requests (e.g., `UUID` from `@PathVariable`) into Value Object IDs before passing them to the `UseCase`.
     ```java
     // In SomeController.java
@@ -234,16 +252,41 @@ An adapter's purpose is to implement a port and bridge the application layer to 
 
 Persistence Mappers serve as the crucial translation layer between domain models and JPA entities, ensuring proper data conversion and relationship management.
 
+-   **Mandatory ID Handling**: All `toEntity()` methods must explicitly set the domain ID to the entity. This is critical for proper entity persistence.
+    ```java
+    // REQUIRED: Always set the domain ID in toEntity methods
+    public MemberJpaEntity toEntity(Member domain) {
+        return MemberJpaEntity.builder()
+            .id(domain.getId().getValue()) // MANDATORY: Set domain ID
+            .name(domain.getName())
+            // ... other fields
+            .build();
+    }
+    ```
+
 -   **Complete Object Graph Conversion**: When converting domain aggregates to JPA entities, mappers must handle the entire object graph, including all related entities.
     -   **Domain to Entity**: The `toEntity()` method should convert not only the root aggregate but also all contained domain objects (e.g., converting `GatheringMember` domain objects to `GatheringMemberJpaEntity` when converting a `Gathering`).
     -   **Entity to Domain**: The `toDomain()` method should reconstruct the complete domain aggregate with all its relationships.
+
+-   **Circular Reference Prevention**: When handling complex object graphs, prevent infinite loops by carefully managing bidirectional relationships.
+    ```java
+    // Example: Preventing circular reference in Prayer mapping
+    private Prayer toDomain(PrayerJpaEntity entity) {
+        return Prayer.builder()
+            .id(PrayerId.from(entity.getId()))
+            .member(entity.getMember() != null ? memberPersistenceMapper.toDomain(entity.getMember()) : null)
+            .gatheringMember(null) // Prevent circular reference
+            .prayerRequest(entity.getPrayerRequest())
+            .build();
+    }
+    ```
 
 -   **Relationship Mapping**: Mappers are responsible for correctly mapping domain relationships to JPA entity relationships, ensuring that cascade operations and entity references are properly established.
     ```java
     // Example: GatheringPersistenceMapper
     public GatheringJpaEntity toEntity(Gathering gathering) {
         return GatheringJpaEntity.builder()
-            .id(gathering.getId().getValue())
+            .id(gathering.getId().getValue()) // MANDATORY: Set domain ID
             .name(gathering.getName())
             // Convert all GatheringMember domain objects to entities in a separated method each
             .gatheringMembers(gathering.getGatheringMembers().stream()
@@ -257,11 +300,34 @@ Persistence Mappers serve as the crucial translation layer between domain models
     -   Mappers may need to work with multiple repository types to gather all required data for complete domain reconstruction.
     -   The mapper should ensure that domain objects receive all necessary related information while maintaining proper encapsulation.
 
+-   **Null Safety**: All mapper methods should handle null inputs gracefully to prevent NullPointerExceptions.
+    ```java
+    public MemberJpaEntity toEntity(Member domain) {
+        if (domain == null) {
+            return null;
+        }
+        // ... mapping logic
+    }
+    ```
+
 ### d. JPA Entity Design Conventions
 
 To ensure consistency, maintainability, and alignment with our architecture, all JPA Entity classes must adhere to the following design conventions:
 
 -   **Base Entity Inheritance**: All entities must extend a common `BaseEntity` class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
+
+-   **Application-Level ID Management**: JPA entities must **NOT** use `@GeneratedValue` annotations. ID generation is handled at the application layer to maintain control over the domain model lifecycle.
+    ```java
+    // CORRECT: BaseEntity without @GeneratedValue
+    @Id
+    @Column(columnDefinition = "CHAR(36)")
+    private UUID id; // No @GeneratedValue
+    
+    // INCORRECT: Do not use @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID) // ❌ FORBIDDEN
+    private UUID id;
+    ```
 
 -   **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), **`@SuperBuilder`** must be used.
     -   **Usage**: The `@SuperBuilder` annotation should be used *without* the `toBuilder = true` option. JPA entities are mutable and managed by the persistence context, so the `toBuilder()` pattern, which implies immutability, is not appropriate.

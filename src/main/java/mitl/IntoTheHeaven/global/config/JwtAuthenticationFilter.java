@@ -25,14 +25,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    private static final List<String> SWAGGER_URL = Arrays.asList(
+    private static final List<String> EXCLUDED_PATHS = Arrays.asList(
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/auth/**"
     );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return SWAGGER_URL.stream()
+        return EXCLUDED_PATHS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, request.getRequestURI()));
     }
 

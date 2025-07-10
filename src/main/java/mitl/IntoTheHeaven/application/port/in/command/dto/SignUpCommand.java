@@ -20,4 +20,7 @@ public class SignUpCommand {
     private String email;
     private LocalDate birthdate;
     private Gender gender;
+    private String phone;
+    private String address;
+    private String description;
 } 
