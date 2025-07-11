@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 @Tag(name = "Auth", description = "APIs for Authentication")
 @RestController
 @RequestMapping("/auth")
@@ -35,7 +37,7 @@ public class AuthController {
 
     @Operation(summary = "User Signup", description = "Registers a new user.")
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest signUpRequest) {
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
         Member newMember = memberCommandUseCase.signUp(signUpRequest.toCommand());
         SignUpResponse response = SignUpResponse.builder()
                 .memberId(newMember.getId().getValue().toString())

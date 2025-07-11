@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
+import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,9 +27,8 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .id(MemberId.from(UUID.randomUUID())) // Generate a new UUID for the member
                 .name(command.getName())
                 .email(command.getEmail())
-                // Passwords should be encoded using a password encoder like BCryptPasswordEncoder
                 .password(passwordEncoder.encode(command.getPassword()))
-                .sex(command.getGender())
+                .sex(Sex.valueOf(command.getSex()))
                 .birthday(command.getBirthdate())
                 .phone(command.getPhone())
                 .address(command.getAddress())

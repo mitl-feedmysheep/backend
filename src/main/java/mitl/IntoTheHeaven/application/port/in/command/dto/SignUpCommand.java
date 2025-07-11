@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import mitl.IntoTheHeaven.domain.enums.Gender;
 
 import java.time.LocalDate;
 
@@ -19,7 +18,7 @@ public class SignUpCommand {
     private String name;
     private String email;
     private LocalDate birthdate;
-    private Gender gender;
+    private String sex;
     private String phone;
     private String address;
     private String description;

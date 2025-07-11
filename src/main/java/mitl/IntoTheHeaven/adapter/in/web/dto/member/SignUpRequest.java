@@ -3,9 +3,13 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.member;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import mitl.IntoTheHeaven.domain.enums.Gender;
+import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 
@@ -14,24 +18,41 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class SignUpRequest {
 
+    @NotBlank(message = "Username is required")
     private String username;
+    
+    @NotBlank(message = "Password is required")
     private String password;
+    
+    @NotBlank(message = "Name is required")
     private String name;
+    
+    @Email(message = "Valid email is required")
+    @NotBlank(message = "Email is required")
     private String email;
+    
+    @NotNull(message = "Birthdate is required")
     private LocalDate birthdate;
-    private Gender gender;
+    
+    @NotBlank(message = "Sex is required")
+    @Pattern(regexp = "M|F", message = "Sex must be either M or F")
+    private String sex;
+    
+    @NotBlank(message = "Phone is required")
     private String phone;
+    
     private String address;
+    
     private String description;
 
     public SignUpCommand toCommand() {
         return SignUpCommand.builder()
                 .username(username)
-                .password(password) // In a real application, password should be encoded here or in the service layer.
+                .password(password)
                 .name(name)
                 .email(email)
                 .birthdate(birthdate)
-                .gender(gender)
+                .sex(sex)
                 .phone(phone)
                 .address(address)
                 .description(description)

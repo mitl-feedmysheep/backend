@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import mitl.IntoTheHeaven.domain.enums.Gender;
+import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -47,7 +47,7 @@ public class MemberJpaEntity extends BaseEntity {
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 1)
-    private Gender sex;
+    private Sex sex;
 
     /**
      * 생년월일

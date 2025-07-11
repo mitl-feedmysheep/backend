@@ -2,7 +2,7 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.member;
 
 import lombok.Builder;
 import lombok.Getter;
-import mitl.IntoTheHeaven.domain.enums.Gender;
+import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
 
 import java.time.LocalDate;
@@ -17,7 +17,7 @@ public class MeResponse {
     private final UUID id;
     private final String name;
     private final String email;
-    private final Gender sex;
+    private final Sex sex;
     private final LocalDate birthday;
     private final String phone;
     private final String profileUrl;

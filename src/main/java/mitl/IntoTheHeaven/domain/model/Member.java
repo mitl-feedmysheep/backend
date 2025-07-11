@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import mitl.IntoTheHeaven.domain.enums.Gender;
+import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
 @Getter
@@ -14,7 +14,7 @@ public class Member extends AggregateRoot<Member, MemberId> {
     private final String name;
     private final String email;
     private final String password;
-    private final Gender sex;
+    private final Sex sex;
     private final LocalDate birthday;
     private final String phone;
     private final String profileUrl;

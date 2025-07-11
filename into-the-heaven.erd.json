@@ -10,7 +10,7 @@
     "show": 431,
     "database": 4,
     "databaseName": "into_the_heaven",
-    "canvasType": "ERD",
+    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
     "language": 32,
     "tableNameCase": 4,
     "columnNameCase": 2,

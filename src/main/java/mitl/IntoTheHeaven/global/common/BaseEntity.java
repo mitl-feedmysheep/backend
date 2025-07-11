@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -22,28 +24,29 @@ import java.util.UUID;
 public abstract class BaseEntity {
 
     /**
-     * 엔티티 아이디 (PK)
+     * Entity ID (Primary Key) - Stored as BINARY(16) for performance optimization
      */
     @Id
-    @Column(columnDefinition = "CHAR(36)")
+    @Column(columnDefinition = "BINARY(16)")
+    @JdbcTypeCode(SqlTypes.BINARY)
     private UUID id;
 
     /**
-     * 생성일시
+     * Creation timestamp
      */
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     /**
-     * 수정일시
+     * Last modification timestamp
      */
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     /**
-     * 삭제일시
+     * Deletion timestamp for soft delete
      */
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
