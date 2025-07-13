@@ -13,6 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -32,12 +37,25 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        configuration.setAllowedHeaders(List.of("*")); // Allow all headers
+        configuration.setAllowCredentials(true); // Allow credentials
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Apply to all paths
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // CSRF 비활성화
-            .httpBasic(httpBasic -> httpBasic.disable()) // HTTP Basic 인증 비활성화
-            .formLogin(formLogin -> formLogin.disable()) // Form Login 비활성화
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 세션 사용 안함
+            .csrf(csrf -> csrf.disable()) // Disable CSRF
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Configure CORS
+            .httpBasic(httpBasic -> httpBasic.disable()) // Disable HTTP Basic authentication
+            .formLogin(formLogin -> formLogin.disable()) // Disable Form Login
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // Stateless session
 
         http
             .authorizeHttpRequests(auth -> auth
@@ -46,7 +64,7 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/v3/api-docs/**"
                 ).permitAll()
-                .anyRequest().authenticated()); // 그 외 모든 요청은 인증 필요
+                .anyRequest().authenticated()); // All other requests require authentication
 
         http
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

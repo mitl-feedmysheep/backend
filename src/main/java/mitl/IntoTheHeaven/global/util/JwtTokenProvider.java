@@ -9,13 +9,14 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import java.util.Date;
+import java.util.List;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -24,15 +25,12 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
-    private final UserDetailsService userDetailsService;
 
     public JwtTokenProvider(
         @Value("${jwt.secret}") String secret,
-        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
-        UserDetailsService userDetailsService) {
+        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
-        this.userDetailsService = userDetailsService;
     }
 
     public String createAccessToken(Authentication authentication) {
@@ -49,8 +47,9 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String token) {
         String memberId = getUsernameFromToken(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(memberId);
-        return new UsernamePasswordAuthenticationToken(memberId, "", userDetails.getAuthorities());
+        // Create Authentication object directly without DB lookup (JWT token is already validated)
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("USER"));
+        return new UsernamePasswordAuthenticationToken(memberId, "", authorities);
     }
 
     public String getUsernameFromToken(String token) {
