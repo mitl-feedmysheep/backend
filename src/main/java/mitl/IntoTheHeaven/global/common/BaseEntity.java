@@ -24,11 +24,11 @@ import java.util.UUID;
 public abstract class BaseEntity {
 
     /**
-     * Entity ID (Primary Key) - Stored as BINARY(16) for performance optimization
+     * Entity ID (Primary Key) - Stored as CHAR(36) for UUID string representation
      */
     @Id
-    @Column(columnDefinition = "BINARY(16)")
-    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(columnDefinition = "CHAR(36)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private UUID id;
 
     /**

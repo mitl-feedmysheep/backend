@@ -4,6 +4,9 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.model.Member;
+
+import java.util.UUID;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -19,16 +22,26 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final MemberPort memberPort;
 
+    /**
+     * Loads user details by user ID for Spring Security authentication.
+     * Note: Despite the method name 'loadUserByUsername', this implementation
+     * expects a user ID string that will be parsed as UUID.
+     *
+     * @param userId The user ID as a string (UUID format)
+     * @return UserDetails object containing user information and authorities
+     * @throws UsernameNotFoundException if user is not found
+     */
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return memberPort.findByEmail(username)
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        UUID userUuid = UUID.fromString(userId);
+        return memberPort.findById(userUuid)
                 .map(this::createUserDetails)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " -> User not found."));
+                .orElseThrow(() -> new UsernameNotFoundException(userId + " -> User not found."));
     }
 
     private UserDetails createUserDetails(Member member) {
-        // 우선 모든 유저에게 "USER" 권한을 부여합니다.
+        // Grant "USER" authority to all users for now
         GrantedAuthority grantedAuthority = new SimpleGrantedAuthority("USER");
         return new User(
                 String.valueOf(member.getId().getValue()),

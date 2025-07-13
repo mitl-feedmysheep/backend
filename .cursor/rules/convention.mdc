@@ -38,6 +38,7 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
 - **CQS (Command and Query Separation)**: We apply CQS starting from the `application` layer. The `port.in` (UseCases) and `service` packages are separated into `command` and `query` sub-packages. This separation recognizes that commands (state changes) and queries (data retrieval) have different requirements and optimization strategies.
 
 - **Domain Logic Placement**:
+
   - **Domain Model**: Logic that operates on a single domain aggregate and its internal state (e.g., calculating a member's age from their birthdate) should be placed within the domain model class itself. This follows the Information Expert principle and increases cohesion.
   - **Application Service**: Logic that coordinates between different domain models or aggregates belongs in the `application` service. The service is responsible for orchestrating complex business flows, fetching necessary data from multiple ports, and coordinating domain operations.
     - **Examples**:
@@ -50,7 +51,9 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
 - **DTO Conversion Principle**: The conversion between different DTO layers follows specific patterns to maintain architectural clarity and consistency.
 
   - **Response DTO Conversion (Query Flow)**: Application services (`UseCase`) should return pure domain models. The responsibility for converting these domain models into Response DTOs lies with the `adapter.in.web.controller`.
+
     - **Implementation**: The conversion logic should be encapsulated within the Response DTO class using a static `from` method.
+
     ```java
     // In SomeResponse.java
     public static SomeResponse from(SomeDomainObject domain) { /* ... */ }
@@ -63,7 +66,9 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
     ```
 
   - **Command DTO Conversion (Command Flow)**: Request DTOs from the presentation layer should be converted to Command DTOs at the controller level before passing to the application layer.
+
     - **Implementation**: Command DTOs should provide a static `from` method to convert from Request DTOs. This pattern replaces the builder pattern for Command DTOs to ensure consistent conversion logic.
+
     ```java
     // In SomeCommand.java
     public static SomeCommand from(SomeRequest request) {
@@ -85,46 +90,49 @@ This project is based on Hexagonal Architecture. The roles and responsibilities 
 
 To enhance type safety and clarify domain intent, the application core must use Value Object IDs (e.g., `GatheringId`) instead of primitive types (`UUID`). The conversion between these types is strictly managed at the architecture's boundaries.
 
--   **Principle**: Conversion happens at the boundaries. The application core remains pure, exclusively handling domain-specific ID objects.
+- **Principle**: Conversion happens at the boundaries. The application core remains pure, exclusively handling domain-specific ID objects.
 
--   **ID Generation Strategy**: All entity IDs are generated at the **application layer** using `UUID.randomUUID()` and wrapped in domain-specific ID objects. JPA entities do **NOT** use `@GeneratedValue` annotations.
-    ```java
-    // In MemberCommandService.java
-    Member member = Member.builder()
-        .id(MemberId.from(UUID.randomUUID())) // Domain layer ID generation
-        .name(command.getName())
-        // ... other fields
-        .build();
-    ```
+- **ID Generation Strategy**: All entity IDs are generated at the **application layer** using `UUID.randomUUID()` and wrapped in domain-specific ID objects. JPA entities do **NOT** use `@GeneratedValue` annotations.
 
--   **BaseEntity Configuration**: The [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class must **NOT** use `@GeneratedValue` to maintain control over ID generation in the application layer. UUIDs are stored as `BINARY(16)` for optimal performance and storage efficiency.
-    ```java
-    // In BaseEntity.java
-    @Id
-    @Column(columnDefinition = "BINARY(16)")
-    @JdbcTypeCode(SqlTypes.BINARY)
-    private UUID id; // No @GeneratedValue annotation
-    ```
+  ```java
+  // In MemberCommandService.java
+  Member member = Member.builder()
+      .id(MemberId.from(UUID.randomUUID())) // Domain layer ID generation
+      .name(command.getName())
+      // ... other fields
+      .build();
+  ```
 
--   **Inbound Flow (`Adapter In`)**: The `Controller` is responsible for **wrapping** primitive types received from external requests (e.g., `UUID` from `@PathVariable`) into Value Object IDs before passing them to the `UseCase`.
-    ```java
-    // In SomeController.java
-    public ResponseEntity<SomeResponse> getSomething(@PathVariable UUID id) {
-        // Wrap primitive UUID into a domain-specific ID
-        SomeDomainObject domainObject = useCase.findSomething(new SomeId(id));
-        // ...
-    }
-    ```
+- **BaseEntity Configuration**: The [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class must **NOT** use `@GeneratedValue` to maintain control over ID generation in the application layer. UUIDs are stored as `CHAR(36)` for readable string representation.
 
--   **Outbound Flow (`Adapter Out`)**: The `Persistence Adapter` is responsible for **unwrapping** the primitive value from the Value Object ID before interacting with external infrastructure like a database.
-    ```java
-    // In SomePersistenceAdapter.java
-    public Optional<SomeDomainObject> findById(SomeId domainId) {
-        // Unwrap the primitive value for the repository
-        UUID rawId = domainId.getValue();
-        return someJpaRepository.findById(rawId).map(mapper::toDomain);
-    }
-    ```
+  ```java
+  // In BaseEntity.java
+  @Id
+  @Column(columnDefinition = "CHAR(36)")
+  @JdbcTypeCode(SqlTypes.CHAR)
+  private UUID id; // No @GeneratedValue annotation
+  ```
+
+- **Inbound Flow (`Adapter In`)**: The `Controller` is responsible for **wrapping** primitive types received from external requests (e.g., `UUID` from `@PathVariable`) into Value Object IDs before passing them to the `UseCase`.
+
+  ```java
+  // In SomeController.java
+  public ResponseEntity<SomeResponse> getSomething(@PathVariable UUID id) {
+      // Wrap primitive UUID into a domain-specific ID
+      SomeDomainObject domainObject = useCase.findSomething(new SomeId(id));
+      // ...
+  }
+  ```
+
+- **Outbound Flow (`Adapter Out`)**: The `Persistence Adapter` is responsible for **unwrapping** the primitive value from the Value Object ID before interacting with external infrastructure like a database.
+  ```java
+  // In SomePersistenceAdapter.java
+  public Optional<SomeDomainObject> findById(SomeId domainId) {
+      // Unwrap the primitive value for the repository
+      UUID rawId = domainId.getValue();
+      return someJpaRepository.findById(rawId).map(mapper::toDomain);
+  }
+  ```
 
 ## 2. Package Structure
 
@@ -195,18 +203,35 @@ src/main/java/mitl/IntoTheHeaven
 
 ## 5. Commit Message Convention
 
-Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification with detailed format.
 
-- **Format**: `type(scope): subject`
+- **Format**:
+
+  ```
+  type: {summary}
+  - {element}
+  - {element}
+  - ...
+  ```
+
 - **`type`**:
+
   - `feat`: A new feature
   - `fix`: A bug fix
   - `docs`: Documentation only changes
   - `refactor`: A code change that neither fixes a bug nor adds a feature
   - `test`: Adding missing tests or correcting existing tests
+
 - **Example**:
-  - `feat(member): add user signup API`
-  - `refactor(group): refactor Group domain model`
+
+  ```
+  fix: resolve JWT authentication issues
+  - Update JwtTokenProvider to use memberId as principal
+  - Add Bearer token prefix handling in JwtAuthenticationFilter
+  - Fix null memberId issue in @AuthenticationPrincipal
+  ```
+
+- **Assistant Guidelines**: When asked to write commit messages, always use the detailed format above with summary and bullet points listing specific changes.
 
 ## 6. Code Style
 
@@ -219,24 +244,22 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/
 
 ## 7. Database and Performance Optimizations
 
-### UUID Storage Optimization
+### UUID Storage Configuration
 
-- **Storage Format**: All UUIDs must be stored as `BINARY(16)` instead of `CHAR(36)` or `VARCHAR(36)` for optimal performance and storage efficiency.
-  - **Benefits**: 55% storage reduction (36 bytes → 16 bytes), better query performance, resolved encoding issues
-  - **Implementation**: Use `@Column(columnDefinition = "BINARY(16)")` and `@JdbcTypeCode(SqlTypes.BINARY)` annotations
+- **Storage Format**: All UUIDs are stored as `CHAR(36)` for readable string representation and easier database debugging.
+  - **Benefits**: Human-readable format, easier debugging, direct UUID string usage in queries
+  - **Implementation**: Use `@Column(columnDefinition = "CHAR(36)")` and `@JdbcTypeCode(SqlTypes.CHAR)` annotations
 
 ```java
 // In BaseEntity.java
 @Id
-@Column(columnDefinition = "BINARY(16)")
-@JdbcTypeCode(SqlTypes.BINARY)
+@Column(columnDefinition = "CHAR(36)")
+@JdbcTypeCode(SqlTypes.CHAR)
 private UUID id;
 ```
 
-- **Database Queries**: When manually querying the database, use MySQL's UUID conversion functions:
-  - `UUID_TO_BIN()`: Convert UUID string to binary for WHERE clauses
-  - `BIN_TO_UUID()`: Convert binary back to readable UUID format for SELECT statements
-  - Example: `SELECT * FROM member WHERE id = UUID_TO_BIN('309e73a3-6d2c-456a-a3e6-59e692b7d8f7')`
+- **Database Queries**: When manually querying the database, use UUID strings directly:
+  - Example: `SELECT * FROM member WHERE id = '309e73a3-6d2c-456a-a3e6-59e692b7d8f7'`
 
 ### Database Configuration
 
@@ -252,205 +275,226 @@ This section covers specific patterns and conventions adopted in the project to 
 
 To prevent the N+1 query problem, we use JPA's EntityGraph feature for eager fetching of related entities in a single query (Fetch Join).
 
--   **Primary Method**: Use `@EntityGraph` directly on repository methods. While powerful, be aware of its limitations.
-    -   **Example**: In `MemberJpaRepository`, `findWithGroupsById` uses `@EntityGraph` to fetch `groupMembers` and their associated `group` in one go.
-      ```java
-      // In MemberJpaRepository.java
-      @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
-      Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
-      ```
--   **Convention**:
-    -   For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
-    -   For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
-    -   Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+- **Primary Method**: Use `@EntityGraph` directly on repository methods. While powerful, be aware of its limitations.
+  - **Example**: In `MemberJpaRepository`, `findWithGroupsById` uses `@EntityGraph` to fetch `groupMembers` and their associated `group` in one go.
+  ```java
+  // In MemberJpaRepository.java
+  @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
+  Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
+  ```
+- **Convention**:
+  - For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
+  - For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
+  - Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
 
 ### b. Adapter Responsibilities and Repository Usage
 
 An adapter's purpose is to implement a port and bridge the application layer to an external technology (like a database).
 
--   **Principle**: An adapter is not restricted to using only the repository that matches its name. It should use whatever repositories are necessary to fulfill its port's contract in the most efficient way.
--   **Example**: `GroupPersistenceAdapter` implements `GroupPort`. To fulfill the `findGroupsByMemberId` method, it uses `MemberJpaRepository`. This is the correct approach because the query starts with a `memberId`, making `Member` the logical starting point for the database query, based on the ERD.
--   **Guideline**: The choice of which repository to use within an adapter should be driven by the data model (ERD) and query efficiency, not by the adapter's name.
+- **Principle**: An adapter is not restricted to using only the repository that matches its name. It should use whatever repositories are necessary to fulfill its port's contract in the most efficient way.
+- **Example**: `GroupPersistenceAdapter` implements `GroupPort`. To fulfill the `findGroupsByMemberId` method, it uses `MemberJpaRepository`. This is the correct approach because the query starts with a `memberId`, making `Member` the logical starting point for the database query, based on the ERD.
+- **Guideline**: The choice of which repository to use within an adapter should be driven by the data model (ERD) and query efficiency, not by the adapter's name.
 
 ### c. Persistence Mapper Responsibilities
 
 Persistence Mappers serve as the crucial translation layer between domain models and JPA entities, ensuring proper data conversion and relationship management.
 
--   **Mandatory ID Handling**: All `toEntity()` methods must explicitly set the domain ID to the entity. This is critical for proper entity persistence.
-    ```java
-    // REQUIRED: Always set the domain ID in toEntity methods
-    public MemberJpaEntity toEntity(Member domain) {
-        return MemberJpaEntity.builder()
-            .id(domain.getId().getValue()) // MANDATORY: Set domain ID
-            .name(domain.getName())
-            // ... other fields
-            .build();
-    }
-    ```
+- **Mandatory ID Handling**: All `toEntity()` methods must explicitly set the domain ID to the entity. This is critical for proper entity persistence.
 
--   **Complete Object Graph Conversion**: When converting domain aggregates to JPA entities, mappers must handle the entire object graph, including all related entities.
-    -   **Domain to Entity**: The `toEntity()` method should convert not only the root aggregate but also all contained domain objects (e.g., converting `GatheringMember` domain objects to `GatheringMemberJpaEntity` when converting a `Gathering`).
-    -   **Entity to Domain**: The `toDomain()` method should reconstruct the complete domain aggregate with all its relationships.
+  ```java
+  // REQUIRED: Always set the domain ID in toEntity methods
+  public MemberJpaEntity toEntity(Member domain) {
+      return MemberJpaEntity.builder()
+          .id(domain.getId().getValue()) // MANDATORY: Set domain ID
+          .name(domain.getName())
+          // ... other fields
+          .build();
+  }
+  ```
 
--   **Circular Reference Prevention**: When handling complex object graphs, prevent infinite loops by carefully managing bidirectional relationships.
-    ```java
-    // Example: Preventing circular reference in Prayer mapping
-    private Prayer toDomain(PrayerJpaEntity entity) {
-        return Prayer.builder()
-            .id(PrayerId.from(entity.getId()))
-            .member(entity.getMember() != null ? memberPersistenceMapper.toDomain(entity.getMember()) : null)
-            .gatheringMember(null) // Prevent circular reference
-            .prayerRequest(entity.getPrayerRequest())
-            .build();
-    }
-    ```
+- **Complete Object Graph Conversion**: When converting domain aggregates to JPA entities, mappers must handle the entire object graph, including all related entities.
 
--   **Relationship Mapping**: Mappers are responsible for correctly mapping domain relationships to JPA entity relationships, ensuring that cascade operations and entity references are properly established.
-    ```java
-    // Example: GatheringPersistenceMapper
-    public GatheringJpaEntity toEntity(Gathering gathering) {
-        return GatheringJpaEntity.builder()
-            .id(gathering.getId().getValue()) // MANDATORY: Set domain ID
-            .name(gathering.getName())
-            // Convert all GatheringMember domain objects to entities in a separated method each
-            .gatheringMembers(gathering.getGatheringMembers().stream()
-                .map(this::toGatheringMemberEntity)
-                .collect(Collectors.toList()))
-            .build();
-    }
-    ```
+  - **Domain to Entity**: The `toEntity()` method should convert not only the root aggregate but also all contained domain objects (e.g., converting `GatheringMember` domain objects to `GatheringMemberJpaEntity` when converting a `Gathering`).
+  - **Entity to Domain**: The `toDomain()` method should reconstruct the complete domain aggregate with all its relationships.
 
--   **Cross-Domain Data Requirements**: When domain objects require data from multiple aggregates, mappers should coordinate the necessary information without violating domain boundaries.
-    -   Mappers may need to work with multiple repository types to gather all required data for complete domain reconstruction.
-    -   The mapper should ensure that domain objects receive all necessary related information while maintaining proper encapsulation.
+- **Circular Reference Prevention**: When handling complex object graphs, prevent infinite loops by carefully managing bidirectional relationships.
 
--   **Null Safety**: All mapper methods should handle null inputs gracefully to prevent NullPointerExceptions.
-    ```java
-    public MemberJpaEntity toEntity(Member domain) {
-        if (domain == null) {
-            return null;
-        }
-        // ... mapping logic
-    }
-    ```
+  ```java
+  // Example: Preventing circular reference in Prayer mapping
+  private Prayer toDomain(PrayerJpaEntity entity) {
+      return Prayer.builder()
+          .id(PrayerId.from(entity.getId()))
+          .member(entity.getMember() != null ? memberPersistenceMapper.toDomain(entity.getMember()) : null)
+          .gatheringMember(null) // Prevent circular reference
+          .prayerRequest(entity.getPrayerRequest())
+          .build();
+  }
+  ```
+
+- **Relationship Mapping**: Mappers are responsible for correctly mapping domain relationships to JPA entity relationships, ensuring that cascade operations and entity references are properly established.
+
+  ```java
+  // Example: GatheringPersistenceMapper
+  public GatheringJpaEntity toEntity(Gathering gathering) {
+      return GatheringJpaEntity.builder()
+          .id(gathering.getId().getValue()) // MANDATORY: Set domain ID
+          .name(gathering.getName())
+          // Convert all GatheringMember domain objects to entities in a separated method each
+          .gatheringMembers(gathering.getGatheringMembers().stream()
+              .map(this::toGatheringMemberEntity)
+              .collect(Collectors.toList()))
+          .build();
+  }
+  ```
+
+- **Cross-Domain Data Requirements**: When domain objects require data from multiple aggregates, mappers should coordinate the necessary information without violating domain boundaries.
+
+  - Mappers may need to work with multiple repository types to gather all required data for complete domain reconstruction.
+  - The mapper should ensure that domain objects receive all necessary related information while maintaining proper encapsulation.
+
+- **Null Safety**: All mapper methods should handle null inputs gracefully to prevent NullPointerExceptions.
+  ```java
+  public MemberJpaEntity toEntity(Member domain) {
+      if (domain == null) {
+          return null;
+      }
+      // ... mapping logic
+  }
+  ```
 
 ### d. JPA Entity Design Conventions
 
 To ensure consistency, maintainability, and alignment with our architecture, all JPA Entity classes must adhere to the following design conventions:
 
--   **Base Entity Inheritance**: All entities must extend the common [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
+- **Base Entity Inheritance**: All entities must extend the common [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
 
--   **Application-Level ID Management**: JPA entities must **NOT** use `@GeneratedValue` annotations. ID generation is handled at the application layer to maintain control over the domain model lifecycle.
-    ```java
-    // CORRECT: BaseEntity without @GeneratedValue
-    @Id
-    @Column(columnDefinition = "BINARY(16)")
-    @JdbcTypeCode(SqlTypes.BINARY)
-    private UUID id; // No @GeneratedValue
-    
-    // INCORRECT: Do not use @GeneratedValue
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // ❌ FORBIDDEN
-    private UUID id;
-    ```
+- **Application-Level ID Management**: JPA entities must **NOT** use `@GeneratedValue` annotations. ID generation is handled at the application layer to maintain control over the domain model lifecycle.
 
--   **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), **`@SuperBuilder`** must be used.
-    -   **Usage**: The `@SuperBuilder` annotation should be used *without* the `toBuilder = true` option. JPA entities are mutable and managed by the persistence context, so the `toBuilder()` pattern, which implies immutability, is not appropriate.
-    -   **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` (`@NoArgsConstructor(access = AccessLevel.PROTECTED)`) for JPA's internal use, and an all-arguments constructor should be made `private` (`@AllArgsConstructor(access = AccessLevel.PRIVATE)`) to be used by the builder.
+      ```java
 
--   **Global Soft-Delete Filter**: To ensure that queries only return active records, a global filter (like Hibernate's `@SQLRestriction`) should be applied at the entity level to automatically exclude records where `deleted_at` is not null. This simplifies application logic, as individual queries do not need to concern themselves with filtering for soft-deleted records.
+  // CORRECT: BaseEntity without @GeneratedValue
+  @Id
+  @Column(columnDefinition = "CHAR(36)")
+  @JdbcTypeCode(SqlTypes.CHAR)
+  private UUID id; // No @GeneratedValue
 
--   **Standard-Compliant Field Documentation**: Field descriptions should be documented using standard JavaDoc comments (`/** ... */`) rather than implementation-specific annotation properties (like `comment` in Hibernate's `@Column`). This improves code portability and ensures that documentation is independent of the underlying persistence provider.
+  // INCORRECT: Do not use @GeneratedValue
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID) // ❌ FORBIDDEN
+  private UUID id;
 
--   **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD ([into-the-heaven.erd.json](mdc:into-the-heaven.erd.json)). The ERD is the single source of truth for the data model.
+  ```
 
--   **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
-    -   **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
-    -   **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
-    -   **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
+  ```
+
+- **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), **`@SuperBuilder`** must be used.
+
+  - **Usage**: The `@SuperBuilder` annotation should be used _without_ the `toBuilder = true` option. JPA entities are mutable and managed by the persistence context, so the `toBuilder()` pattern, which implies immutability, is not appropriate.
+  - **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` (`@NoArgsConstructor(access = AccessLevel.PROTECTED)`) for JPA's internal use, and an all-arguments constructor should be made `private` (`@AllArgsConstructor(access = AccessLevel.PRIVATE)`) to be used by the builder.
+
+- **Global Soft-Delete Filter**: To ensure that queries only return active records, a global filter (like Hibernate's `@SQLRestriction`) should be applied at the entity level to automatically exclude records where `deleted_at` is not null. This simplifies application logic, as individual queries do not need to concern themselves with filtering for soft-deleted records.
+
+- **Standard-Compliant Field Documentation**: Field descriptions should be documented using standard JavaDoc comments (`/** ... */`) rather than implementation-specific annotation properties (like `comment` in Hibernate's `@Column`). This improves code portability and ensures that documentation is independent of the underlying persistence provider.
+
+- **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD ([into-the-heaven.erd.json](mdc:into-the-heaven.erd.json)). The ERD is the single source of truth for the data model.
+
+- **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
+  - **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
+  - **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
+  - **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
 
 ### e. Domain Model Design Conventions
 
 To build a robust and expressive core domain, all domain models (`domain.model` package) must follow these conventions:
 
--   **Immutability by Default**: All fields must be declared as `private final`. This ensures that domain objects are immutable, making their state predictable and safe for concurrent use.
+- **Immutability by Default**: All fields must be declared as `private final`. This ensures that domain objects are immutable, making their state predictable and safe for concurrent use.
 
--   **Consistent and Safe Instantiation**
+- **Consistent and Safe Instantiation**
 
-    -   Explicit constructors should not be defined; rely on the builder provided by `@SuperBuilder`.
+  - Explicit constructors should not be defined; rely on the builder provided by `@SuperBuilder`.
 
--   **Minimal and Purposeful Annotations**:
-    -   **`@Getter`**: Use on all domain models to provide read-access to state.
-    -   **Prohibited Annotations**: To protect model integrity and enforce the builder pattern, the use of `@Setter`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, and `@RequiredArgsConstructor` is strictly forbidden on domain models.
+- **Minimal and Purposeful Annotations**:
 
--   **Clear Hierarchy (`DomainEntity` vs. `AggregateRoot`)**:
-    -   **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
-    -   **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).
+  - **`@Getter`**: Use on all domain models to provide read-access to state.
+  - **Prohibited Annotations**: To protect model integrity and enforce the builder pattern, the use of `@Setter`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, and `@RequiredArgsConstructor` is strictly forbidden on domain models.
+
+- **Clear Hierarchy (`DomainEntity` vs. `AggregateRoot`)**:
+  - **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
+  - **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).
 
 ### f. Request/Response DTO Validation
 
 To ensure data integrity and provide clear feedback to API consumers, comprehensive validation must be implemented on all Request DTOs.
 
--   **Validation Annotations**: Use appropriate validation annotations based on field requirements:
-    - `@NotBlank`: For string fields that cannot be null, empty, or whitespace-only
-    - `@NotNull`: For non-string fields that cannot be null
-    - `@Email`: For email format validation
-    - `@Pattern`: For custom regex validation (e.g., `@Pattern(regexp = "M|F")` for sex field)
-    - `@Valid`: At controller level to enable validation processing
+- **Validation Annotations**: Use appropriate validation annotations based on field requirements:
 
--   **Controller Validation**: All controller endpoints that accept Request DTOs must use `@Valid` annotation:
-    ```java
-    @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
-        // ...
-    }
-    ```
+  - `@NotBlank`: For string fields that cannot be null, empty, or whitespace-only
+  - `@NotNull`: For non-string fields that cannot be null
+  - `@Email`: For email format validation
+  - `@Pattern`: For custom regex validation (e.g., `@Pattern(regexp = "M|F")` for sex field)
+  - `@Valid`: At controller level to enable validation processing
 
--   **Error Messages**: Validation messages should be in English and provide clear guidance:
-    ```java
-    @NotBlank(message = "Username is required")
-    @Pattern(regexp = "M|F", message = "Sex must be either M or F")
-    ```
+- **Controller Validation**: All controller endpoints that accept Request DTOs must use `@Valid` annotation:
+
+  ```java
+  @PostMapping("/signup")
+  public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
+      // ...
+  }
+  ```
+
+- **Error Messages**: Validation messages should be in English and provide clear guidance:
+  ```java
+  @NotBlank(message = "Username is required")
+  @Pattern(regexp = "M|F", message = "Sex must be either M or F")
+  ```
 
 ### g. API Documentation with Swagger (OpenAPI)
 
 To ensure all APIs are clearly documented and easily testable, every `Controller` must be annotated with Swagger (OpenAPI) annotations. This practice is mandatory for maintaining a consistent and understandable API specification.
 
--   **Controller-Level (`@Tag`)**: Every controller class must have a `@Tag` annotation. This groups all APIs within that controller under a common name in the Swagger UI.
-    -   `name`: A short, descriptive name for the API group (e.g., "Group", "Member").
-    -   `description`: A brief explanation of what the APIs in this group are for.
+- **Controller-Level (`@Tag`)**: Every controller class must have a `@Tag` annotation. This groups all APIs within that controller under a common name in the Swagger UI.
 
--   **Method-Level (`@Operation`)**: Every public endpoint method within a controller must have an `@Operation` annotation. This describes the specific purpose of that API.
-    -   `summary`: A short, verb-first summary of the API's function (e.g., "Get My Groups", "Create New Gathering").
-    -   `description`: A more detailed explanation of what the API does, what it returns, and any important notes.
+  - `name`: A short, descriptive name for the API group (e.g., "Group", "Member").
+  - `description`: A brief explanation of what the APIs in this group are for.
 
--   **Language**: All descriptions must be written in **English**.
+- **Method-Level (`@Operation`)**: Every public endpoint method within a controller must have an `@Operation` annotation. This describes the specific purpose of that API.
 
--   **Example (`GroupController.java`)**:
-    ```java
-    @Tag(name = "Group", description = "APIs for Group Management")
-    @RestController
-    @RequestMapping("/groups")
-    @RequiredArgsConstructor
-    public class GroupController {
+  - `summary`: A short, verb-first summary of the API's function (e.g., "Get My Groups", "Create New Gathering").
+  - `description`: A more detailed explanation of what the API does, what it returns, and any important notes.
 
-        // ... dependencies
+- **Language**: All descriptions must be written in **English**.
 
-        @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
-        @GetMapping
-        public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
-            // ...
-        }
+- **Example (`GroupController.java`)**:
 
-        @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
-        @GetMapping("/{groupId}/gatherings")
-        public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
-            // ...
-        }
-    }
-    ```
+  ```java
+  @Tag(name = "Group", description = "APIs for Group Management")
+  @RestController
+  @RequestMapping("/groups")
+  @RequiredArgsConstructor
+  public class GroupController {
 
-            // ...
-        }
-    }
-    ```
+      // ... dependencies
+
+      @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
+      @GetMapping
+      public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
+          // ...
+      }
+
+      @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
+      @GetMapping("/{groupId}/gatherings")
+      public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
+          // ...
+      }
+  }
+  ```
+
+          // ...
+      }
+
+  }
+
+  ```
+
+  ```
