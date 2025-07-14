@@ -63,7 +63,7 @@ public class GatheringJpaEntity extends BaseEntity {
     /**
      * 사진 URL
      */
-    @Column(name = "photo_url", length = 200)
+    @Column(name = "photo_url", length = 2048)
     private String photoUrl;
 
     /**

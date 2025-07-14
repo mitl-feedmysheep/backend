@@ -4,13 +4,13 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -5524.1335,
-    "scrollLeft": -3205.0483,
+    "scrollTop": -5335.1335,
+    "scrollLeft": -3032.0483,
     "zoomLevel": 0.8,
     "show": 431,
     "database": 4,
     "databaseName": "into_the_heaven",
-    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
+    "canvasType": "ERD",
     "language": 32,
     "tableNameCase": 4,
     "columnNameCase": 2,
@@ -285,6 +285,7 @@
           "n1rHwQfAb0uEv3GVZ1zD-",
           "_u_kZn4Hym54xDYHo0XJc",
           "i5r8KBpOb_o00E4px_UEC",
+          "GlUy6IovhbS5lTe3JBOuH",
           "L_kk6DKHX1uUmwB_R8bzl",
           "C5be8GRTtZ8uUCs2gg0tA",
           "ghQeIO6DKu9SV1fezp3zF",
@@ -301,6 +302,7 @@
           "_u_kZn4Hym54xDYHo0XJc",
           "i5r8KBpOb_o00E4px_UEC",
           "rsnn3zZ8gvRpqgwAuuZB3",
+          "GlUy6IovhbS5lTe3JBOuH",
           "L_kk6DKHX1uUmwB_R8bzl",
           "C5be8GRTtZ8uUCs2gg0tA",
           "ghQeIO6DKu9SV1fezp3zF",
@@ -320,7 +322,7 @@
           "color": "#E91E63"
         },
         "meta": {
-          "updateAt": 1750815146631,
+          "updateAt": 1752466635850,
           "createAt": 1731376244947
         }
       },
@@ -2528,6 +2530,26 @@
           "updateAt": 1750927552969,
           "createAt": 1750927522559
         }
+      },
+      "GlUy6IovhbS5lTe3JBOuH": {
+        "id": "GlUy6IovhbS5lTe3JBOuH",
+        "tableId": "ESkgqEGCwEvFi1SKNfDe2",
+        "name": "photo_url",
+        "comment": "모임 사진",
+        "dataType": "VARCHAR(2048)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 98,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1752466646631,
+          "createAt": 1752466633783
+        }
       }
     },
     "relationshipEntities": {
@@ -2662,7 +2684,7 @@
           "columnIds": [
             "oVA1CZqmpx_2ASYn69w9k"
           ],
-          "x": 1836.2868,
+          "x": 1840.2868,
           "y": 4273.8686,
           "direction": 4
         },
@@ -2681,8 +2703,8 @@
           "columnIds": [
             "f7Be8lZuVb6Q23cpm6I4k"
           ],
-          "x": 1836.2868,
-          "y": 4641.8686,
+          "x": 1840.2868,
+          "y": 4665.8686,
           "direction": 8
         },
         "end": {

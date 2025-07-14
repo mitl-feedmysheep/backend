@@ -32,12 +32,6 @@ public class GroupJpaEntity extends BaseEntity {
     private String description;
 
     /**
-     * 로고 URL
-     */
-    @Column(name = "logo_url", length = 200)
-    private String logoUrl;
-
-    /**
      * 교회
      */
     @ManyToOne(fetch = FetchType.LAZY)
