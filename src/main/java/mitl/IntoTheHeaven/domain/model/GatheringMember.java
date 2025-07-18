@@ -10,9 +10,8 @@ import java.util.List;
 @SuperBuilder
 public class GatheringMember extends DomainEntity<GatheringMember, GatheringMemberId> {
 
+    private final GatheringId gatheringId; // 단방향 참조: ID만 가짐
     private final GroupMember groupMember;
-    private final Member member;
-    private final String name;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
     private final String story;

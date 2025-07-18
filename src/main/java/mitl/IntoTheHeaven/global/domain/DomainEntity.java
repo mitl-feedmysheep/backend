@@ -6,7 +6,7 @@ import lombok.experimental.SuperBuilder;
 import java.util.Objects;
 
 @Getter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public abstract class DomainEntity<T extends DomainEntity<T, ID>, ID extends BaseId> {
 
   private final ID id;

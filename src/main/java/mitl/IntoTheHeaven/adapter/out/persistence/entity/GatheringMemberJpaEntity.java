@@ -8,10 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "gathering_member")
@@ -55,6 +56,7 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     private String story;
 
     @OneToMany(mappedBy = "gatheringMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10)
     @Builder.Default
-    private List<PrayerJpaEntity> prayers = new ArrayList<>();
+    private Set<PrayerJpaEntity> prayers = new HashSet<>();
 } 

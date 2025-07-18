@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
 @Getter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public abstract class AggregateRoot<T extends AggregateRoot<T, ID>, ID extends BaseId> extends DomainEntity<T, ID> {
 
     protected AggregateRoot(ID id) {

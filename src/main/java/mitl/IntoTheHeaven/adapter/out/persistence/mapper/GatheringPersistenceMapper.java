@@ -8,7 +8,9 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,9 +41,8 @@ public class GatheringPersistenceMapper {
     private GatheringMember toDomain(GatheringMemberJpaEntity entity) {
         return GatheringMember.builder()
                 .id(GatheringMemberId.from(entity.getId()))
+                .gatheringId(GatheringId.from(entity.getGathering().getId())) // 단방향 참조: ID만 사용
                 .groupMember(memberPersistenceMapper.toGroupMemberDomain(entity.getGroupMember()))
-                .member(memberPersistenceMapper.toDomain(entity.getGroupMember().getMember()))
-                .name(entity.getGroupMember().getMember().getName())
                 .worshipAttendance(entity.isWorshipAttendance())
                 .gatheringAttendance(entity.isGatheringAttendance())
                 .story(entity.getStory())
@@ -68,11 +69,24 @@ public class GatheringPersistenceMapper {
     }
 
     public GatheringJpaEntity toEntity(Gathering domain, GroupJpaEntity groupEntity) {
-        // GatheringMember들을 GatheringMemberJpaEntity로 변환 (Prayer 포함)
-        List<GatheringMemberJpaEntity> gatheringMemberEntities = domain.getGatheringMembers().stream()
-                .map(gatheringMember -> toGatheringMemberEntityWithPrayers(gatheringMember))
-                .collect(Collectors.toList());
+        // 먼저 Gathering 엔터티를 생성 (GatheringMember 없이)
+        GatheringJpaEntity gatheringEntity = GatheringJpaEntity.builder()
+                .id(domain.getId().getValue())
+                .name(domain.getName())
+                .description(domain.getDescription())
+                .date(domain.getDate())
+                .startedAt(domain.getStartedAt())
+                .endedAt(domain.getEndedAt())
+                .place(domain.getPlace())
+                .group(groupEntity)
+                .build();
         
+        // GatheringMember들을 GatheringMemberJpaEntity로 변환 (Prayer 포함)
+        Set<GatheringMemberJpaEntity> gatheringMemberEntities = domain.getGatheringMembers().stream()
+                .map(gatheringMember -> toGatheringMemberEntityWithPrayers(gatheringMember, gatheringEntity))
+                .collect(Collectors.toSet());
+        
+        // 완성된 엔터티를 다시 빌드하여 GatheringMember 리스트 설정
         return GatheringJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .name(domain.getName())
@@ -98,20 +112,21 @@ public class GatheringPersistenceMapper {
                 .build();
     }
 
-    private GatheringMemberJpaEntity toGatheringMemberEntityWithPrayers(GatheringMember domain) {
+    private GatheringMemberJpaEntity toGatheringMemberEntityWithPrayers(GatheringMember domain, GatheringJpaEntity gatheringEntity) {
         // 먼저 GatheringMemberJpaEntity 기본 구조 생성
         GatheringMemberJpaEntity gatheringMemberEntity = GatheringMemberJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .groupMember(GroupMemberJpaEntity.builder()
                         .id(domain.getGroupMember().getId().getValue())
                         .build())
+                .gathering(gatheringEntity)
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
                 .story(domain.getStory())
                 .build();
 
         // Prayer들을 변환하여 설정
-        List<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
+        Set<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
                 .map(prayer -> PrayerJpaEntity.builder()
                         .id(prayer.getId().getValue())
                         .prayerRequest(prayer.getPrayerRequest())
@@ -121,7 +136,7 @@ public class GatheringPersistenceMapper {
                                 memberPersistenceMapper.toEntity(prayer.getMember()) : null)
                         .gatheringMember(gatheringMemberEntity)
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         // 완성된 엔터티에 Prayer 리스트 설정
         return GatheringMemberJpaEntity.builder()
@@ -129,6 +144,7 @@ public class GatheringPersistenceMapper {
                 .groupMember(GroupMemberJpaEntity.builder()
                         .id(domain.getGroupMember().getId().getValue())
                         .build())
+                .gathering(gatheringEntity)
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
                 .story(domain.getStory())

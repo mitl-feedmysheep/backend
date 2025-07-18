@@ -12,8 +12,8 @@ import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "gathering")
@@ -87,5 +87,5 @@ public class GatheringJpaEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "gathering", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<GatheringMemberJpaEntity> gatheringMembers = new ArrayList<>();
+    private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
 } 

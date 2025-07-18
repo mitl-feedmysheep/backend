@@ -20,8 +20,8 @@ public class GatheringMemberResponse {
 
     public static GatheringMemberResponse from(GatheringMember gatheringMember) {
         return GatheringMemberResponse.builder()
-                .memberId(gatheringMember.getMember().getId().getValue())
-                .name(gatheringMember.getName())
+                .memberId(gatheringMember.getGroupMember().getMember().getId().getValue())
+                .name(gatheringMember.getGroupMember().getMember().getName())
                 .worshipAttendance(gatheringMember.isWorshipAttendance())
                 .gatheringAttendance(gatheringMember.isGatheringAttendance())
                 .story(gatheringMember.getStory())

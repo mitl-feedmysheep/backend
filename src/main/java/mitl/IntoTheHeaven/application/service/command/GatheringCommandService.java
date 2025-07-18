@@ -26,27 +26,30 @@ public class GatheringCommandService implements GatheringCommandUseCase {
     public Gathering createGathering(CreateGatheringCommand command) {
         // 1. 해당 그룹의 모든 GroupMember들을 조회
         List<GroupMember> groupMembers = memberPort.findGroupMembersByGroupId(command.getGroupId().getValue());
+
+        // 2. 모임 ID 생성
+        GatheringId gatheringId = GatheringId.from(UUID.randomUUID());
         
-        // 2. 각 GroupMember를 모임 멤버로 변환 (초기 상태로 생성)
+        // 3. 각 GroupMember를 모임 멤버로 변환
         List<GatheringMember> gatheringMembers = groupMembers.stream()
-                .map(groupMember -> {
-                    return GatheringMember.builder()
-                            .id(GatheringMemberId.from(UUID.randomUUID()))
-                            .groupMember(groupMember)
-                            .worshipAttendance(false) // 초기값: 미참석
-                            .gatheringAttendance(false) // 초기값: 미참석
-                            .story("") // 초기값: 빈 문자열
-                            .prayers(List.of()) // 초기값: 빈 리스트
-                            .build();
-                })
+                .map(groupMember -> GatheringMember.builder()
+                        .id(GatheringMemberId.from(UUID.randomUUID()))
+                        .gatheringId(gatheringId) // 단방향 참조: ID만 사용
+                        .groupMember(groupMember)
+                        .worshipAttendance(false)
+                        .gatheringAttendance(false)
+                        .story(null)
+                        .prayers(List.of())
+                        .build())
                 .collect(Collectors.toList());
 
-        // 3. 모임 생성 (모임 멤버들과 함께)
+        // 4. 모임 생성 (멤버들과 함께)
         Gathering gathering = Gathering.builder()
-                .id(GatheringId.from(UUID.randomUUID()))
+                .id(gatheringId)
+                .group(Group.builder().id(command.getGroupId()).build())
                 .name(command.getName())
-                .description(command.getDescription())
                 .date(command.getDate())
+                .description(command.getDescription())
                 .startedAt(command.getStartedAt())
                 .endedAt(command.getEndedAt())
                 .place(command.getPlace())
@@ -72,7 +75,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
         List<Prayer> updatedPrayers = command.getPrayers().stream()
                 .map(prayerCommand -> Prayer.builder()
                         .id(PrayerId.from(UUID.randomUUID()))
-                        .member(targetGatheringMember.getMember())
+                        .member(null) // persistence layer에서 처리
                         .gatheringMember(targetGatheringMember)
                         .prayerRequest(prayerCommand.getPrayerRequest())
                         .description(prayerCommand.getDescription())
@@ -83,8 +86,8 @@ public class GatheringCommandService implements GatheringCommandUseCase {
         // 4. 업데이트된 GatheringMember 생성
         GatheringMember updatedGatheringMember = GatheringMember.builder()
                 .id(targetGatheringMember.getId())
+                .gatheringId(targetGatheringMember.getGatheringId()) // ID만 사용
                 .groupMember(targetGatheringMember.getGroupMember())
-                .name(targetGatheringMember.getName())
                 .worshipAttendance(command.isWorshipAttendance())
                 .gatheringAttendance(command.isGatheringAttendance())
                 .story(command.getStory())
@@ -99,14 +102,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .collect(Collectors.toList());
 
         // 6. 업데이트된 모임 생성 및 저장
-        Gathering updatedGathering = Gathering.builder()
-                .id(existingGathering.getId())
-                .name(existingGathering.getName())
-                .description(existingGathering.getDescription())
-                .date(existingGathering.getDate())
-                .startedAt(existingGathering.getStartedAt())
-                .endedAt(existingGathering.getEndedAt())
-                .place(existingGathering.getPlace())
+        Gathering updatedGathering = existingGathering.toBuilder()
                 .gatheringMembers(updatedGatheringMembers)
                 .build();
 

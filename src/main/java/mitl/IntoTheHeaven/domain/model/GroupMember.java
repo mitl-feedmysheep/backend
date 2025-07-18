@@ -10,6 +10,6 @@ import mitl.IntoTheHeaven.global.domain.DomainEntity;
 public class GroupMember extends DomainEntity<GroupMember, GroupMemberId> {
 
     private final GroupId groupId;
-    private final MemberId memberId;
+    private final Member member;  // MemberId 대신 Member 전체 정보
     private final GroupMemberRole role;
 } 

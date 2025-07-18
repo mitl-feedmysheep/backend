@@ -8,6 +8,7 @@ import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class GatheringPersistenceAdapter implements GatheringPort {
     public List<Gathering> findAllByGroupId(UUID groupId) {
         return gatheringJpaRepository.findAllByGroupId(groupId).stream()
                 .map(gatheringPersistenceMapper::toDomain)
+                .sorted(Comparator.comparing(Gathering::getDate).reversed())
                 .collect(Collectors.toList());
     }
 

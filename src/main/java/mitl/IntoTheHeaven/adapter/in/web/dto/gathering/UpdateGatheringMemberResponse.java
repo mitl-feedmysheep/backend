@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 public class UpdateGatheringMemberResponse {
 
     private final UUID id;
-    private final UUID memberId;
-    private final String memberName;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
     private final String story;
@@ -23,8 +21,6 @@ public class UpdateGatheringMemberResponse {
     public static UpdateGatheringMemberResponse from(GatheringMember gatheringMember) {
         return new UpdateGatheringMemberResponse(
             gatheringMember.getId().getValue(),
-            gatheringMember.getMember().getId().getValue(),
-            gatheringMember.getName(),
             gatheringMember.isWorshipAttendance(),
             gatheringMember.isGatheringAttendance(),
             gatheringMember.getStory(),

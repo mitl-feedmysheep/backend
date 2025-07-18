@@ -59,7 +59,7 @@ public class MemberPersistenceMapper {
         return GroupMember.builder()
                 .id(GroupMemberId.from(entity.getId()))
                 .groupId(GroupId.from(entity.getGroup().getId()))
-                .memberId(MemberId.from(entity.getMember().getId()))
+                .member(toDomain(entity.getMember()))  // Member 전체 정보 포함
                 .role(entity.getRole())
                 .build();
     }
@@ -71,7 +71,7 @@ public class MemberPersistenceMapper {
         return GroupMemberJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .group(GroupJpaEntity.builder().id(domain.getGroupId().getValue()).build())
-                .member(MemberJpaEntity.builder().id(domain.getMemberId().getValue()).build())
+                .member(MemberJpaEntity.builder().id(domain.getMember().getId().getValue()).build())
                 .role(domain.getRole())
                 .build();
     }
