@@ -24,17 +24,17 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
     @Override
     public Gathering createGathering(CreateGatheringCommand command) {
-        // 1. 해당 그룹의 모든 GroupMember들을 조회
+        // 1. Retrieve all GroupMembers for the group
         List<GroupMember> groupMembers = memberPort.findGroupMembersByGroupId(command.getGroupId().getValue());
 
-        // 2. 모임 ID 생성
+        // 2. Generate gathering ID
         GatheringId gatheringId = GatheringId.from(UUID.randomUUID());
         
-        // 3. 각 GroupMember를 모임 멤버로 변환
+        // 3. Convert each GroupMember to GatheringMember
         List<GatheringMember> gatheringMembers = groupMembers.stream()
                 .map(groupMember -> GatheringMember.builder()
                         .id(GatheringMemberId.from(UUID.randomUUID()))
-                        .gatheringId(gatheringId) // 단방향 참조: ID만 사용
+                        .gatheringId(gatheringId) // Unidirectional reference: use ID only
                         .groupMember(groupMember)
                         .worshipAttendance(false)
                         .gatheringAttendance(false)
@@ -43,7 +43,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                         .build())
                 .collect(Collectors.toList());
 
-        // 4. 모임 생성 (멤버들과 함께)
+        // 4. Create gathering with members
         Gathering gathering = Gathering.builder()
                 .id(gatheringId)
                 .group(Group.builder().id(command.getGroupId()).build())
@@ -61,21 +61,21 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
     @Override
     public GatheringMember updateGatheringMember(UpdateGatheringMemberCommand command) {
-        // 1. 기존 모임 조회
+        // 1. Retrieve existing gathering
         Gathering existingGathering = gatheringPort.findDetailById(command.getGatheringId().getValue())
                 .orElseThrow(() -> new RuntimeException("Gathering not found"));
 
-        // 2. 업데이트할 GatheringMember 찾기
+        // 2. Find GatheringMember to update
         GatheringMember targetGatheringMember = existingGathering.getGatheringMembers().stream()
                 .filter(gm -> gm.getGroupMember().getId().equals(command.getGroupMemberId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Gathering member not found"));
 
-        // 3. 새로운 기도제목들 생성
+        // 3. Create new prayer requests
         List<Prayer> updatedPrayers = command.getPrayers().stream()
                 .map(prayerCommand -> Prayer.builder()
                         .id(PrayerId.from(UUID.randomUUID()))
-                        .member(null) // persistence layer에서 처리
+                        .member(targetGatheringMember.getGroupMember().getMember())
                         .gatheringMember(targetGatheringMember)
                         .prayerRequest(prayerCommand.getPrayerRequest())
                         .description(prayerCommand.getDescription())
@@ -83,10 +83,10 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                         .build())
                 .collect(Collectors.toList());
 
-        // 4. 업데이트된 GatheringMember 생성
+        // 4. Create updated GatheringMember
         GatheringMember updatedGatheringMember = GatheringMember.builder()
                 .id(targetGatheringMember.getId())
-                .gatheringId(targetGatheringMember.getGatheringId()) // ID만 사용
+                .gatheringId(targetGatheringMember.getGatheringId()) // Unidirectional reference: use ID only
                 .groupMember(targetGatheringMember.getGroupMember())
                 .worshipAttendance(command.isWorshipAttendance())
                 .gatheringAttendance(command.isGatheringAttendance())
@@ -94,14 +94,14 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .prayers(updatedPrayers)
                 .build();
 
-        // 5. 전체 GatheringMember 리스트에서 해당 멤버만 교체
+        // 5. Replace only the target member in the GatheringMember list
         List<GatheringMember> updatedGatheringMembers = existingGathering.getGatheringMembers().stream()
                 .map(gm -> gm.getGroupMember().getId().equals(command.getGroupMemberId()) 
                     ? updatedGatheringMember 
                     : gm)
                 .collect(Collectors.toList());
 
-        // 6. 업데이트된 모임 생성 및 저장
+        // 6. Create and save updated gathering
         Gathering updatedGathering = existingGathering.toBuilder()
                 .gatheringMembers(updatedGatheringMembers)
                 .build();
