@@ -129,3 +129,21 @@ Unlike sermon-based journaling tools, this platform focuses on **group-centered 
 - Unit and integration tests will focus on the core domain logic.
 
 ---
+
+## 📚 Documentation
+
+### 🎨 Design & Architecture
+- [Technical Strategy](https://shimmering-jacket-601.notion.site/Technical-Strategy-21b022064a508095a6a0f85e8280bfef?source=copy_link)
+- [Architecture](https://github.com/mitl-feedmysheep/backend/blob/main/.cursor/rules/convention.mdc)
+
+### 📋 Policies
+- [Policy](https://shimmering-jacket-601.notion.site/Policy-21d022064a50804191a4e0c7586dddc6?source=copy_link)
+
+### 🔌 API References
+- [API Lists](https://shimmering-jacket-601.notion.site/API-Lists-21d022064a5080e493e2cc9c3adb6250?source=copy_link)
+
+### 🌱 Development Resources
+- [Seed Data](https://shimmering-jacket-601.notion.site/Seed-Data-234022064a5080bfbc2acd82a5e92df0?source=copy_link)
+
+### 🏗️ Infrastructure
+- [Infrastructure](https://shimmering-jacket-601.notion.site/Infrastructure-234022064a5080dfb67cce33547b7f12?source=copy_link)
