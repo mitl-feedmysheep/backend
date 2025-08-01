@@ -494,15 +494,3 @@ To ensure all APIs are clearly documented and easily testable, every `Controller
       }
 
   }
-
-  ```
-
-feat: add gathering order and statistics to group gatherings API
-- Add nth field to display gathering sequence number in chronological order
-- Add totalWorshipAttendanceCount, totalGatheringAttendanceCount, totalPrayerRequestCount to GatheringResponse
-- Refactor GatheringWithStatistics to include calculated statistics instead of raw data
-- Move business logic (nth calculation, null checks) from DTO to GatheringQueryService
-- Implement Clean Architecture separation: Controller handles DTO mapping, Service handles business logic
-- Update GatheringQueryUseCase to return GatheringWithStatistics instead of GatheringResponse
-
-  ```
