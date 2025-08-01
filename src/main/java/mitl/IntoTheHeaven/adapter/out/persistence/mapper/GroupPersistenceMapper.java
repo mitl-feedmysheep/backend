@@ -1,14 +1,25 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
+import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
+import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.GroupMemberId;
+
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class GroupPersistenceMapper {
+
+    private final MemberPersistenceMapper memberPersistenceMapper;
 
     public Group toDomain(GroupJpaEntity entity) {
         return Group.builder()
@@ -29,6 +40,24 @@ public class GroupPersistenceMapper {
                 .church(ChurchJpaEntity.builder().id(domain.getChurchId().getValue()).build())
                 .startDate(domain.getStartDate())
                 .endDate(domain.getEndDate())
+                .build();
+    }
+
+    public GroupMember toGroupMemberDomain(GroupMemberJpaEntity entity) {
+        return GroupMember.builder()
+                .id(GroupMemberId.from(entity.getId()))
+                .groupId(GroupId.from(entity.getGroup().getId()))
+                .member(memberPersistenceMapper.toDomain(entity.getMember()))
+                .role(entity.getRole())
+                .build();
+    }
+
+    public GroupMember toGroupMemberDomain(GroupMemberJpaEntity entity, UUID groupId) {
+        return GroupMember.builder()
+                .id(GroupMemberId.from(entity.getId()))
+                .groupId(GroupId.from(groupId))
+                .member(memberPersistenceMapper.toDomain(entity.getMember()))
+                .role(entity.getRole())
                 .build();
     }
 } 

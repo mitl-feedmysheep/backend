@@ -86,4 +86,8 @@ public class MemberJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 }

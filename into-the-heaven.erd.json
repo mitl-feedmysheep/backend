@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -5335.1335,
-    "scrollLeft": -3032.0483,
+    "scrollTop": -4884.1335,
+    "scrollLeft": -4035.0483,
     "zoomLevel": 0.8,
     "show": 431,
     "database": 4,
@@ -978,7 +978,7 @@
         "comment": "삭제일시",
         "dataType": "DATETIME",
         "default": "",
-        "options": 8,
+        "options": 0,
         "ui": {
           "keys": 0,
           "widthName": 62,
@@ -987,7 +987,7 @@
           "widthDefault": 60
         },
         "meta": {
-          "updateAt": 1750814960475,
+          "updateAt": 1754015386715,
           "createAt": 1731314035744
         }
       },

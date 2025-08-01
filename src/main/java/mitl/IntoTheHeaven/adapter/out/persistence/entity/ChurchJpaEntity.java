@@ -32,12 +32,6 @@ public class ChurchJpaEntity extends BaseEntity {
     private String name;
 
     /**
-     * 로고 URL
-     */
-    @Column(name = "logo_url", length = 200)
-    private String logoUrl;
-
-    /**
      * 위치
      */
     @Column(nullable = false, length = 200)
@@ -64,4 +58,8 @@ public class ChurchJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "church", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<GroupJpaEntity> groups = new ArrayList<>();
+
+    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 } 

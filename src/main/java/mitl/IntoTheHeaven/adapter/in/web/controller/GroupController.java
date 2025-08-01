@@ -5,14 +5,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
-import mitl.IntoTheHeaven.adapter.in.web.dto.member.MeResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.member.GroupMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
-import mitl.IntoTheHeaven.application.port.in.query.MemberQueryUseCase;
-import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
-import mitl.IntoTheHeaven.domain.model.Member;
+import mitl.IntoTheHeaven.domain.model.GroupMember;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.http.ResponseEntity;
@@ -33,9 +31,8 @@ public class GroupController {
 
     private final GroupQueryUseCase groupQueryUseCase;
     private final GatheringQueryUseCase gatheringQueryUseCase;
-    private final MemberQueryUseCase memberQueryUseCase;
 
-    @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
+    @Operation(summary = "Get All My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
         List<Group> groups = groupQueryUseCase.getGroupsByMemberId(MemberId.from(UUID.fromString(memberId)));
@@ -46,16 +43,24 @@ public class GroupController {
     @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
     @GetMapping("/{groupId}/gatherings")
     public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
-        List<Gathering> gatherings = gatheringQueryUseCase.getGatheringsByGroupId(GroupId.from(groupId));
-        List<GatheringResponse> response = GatheringResponse.from(gatherings);
+        List<GatheringResponse> response = gatheringQueryUseCase.getGatheringsWithStatisticsByGroupId(GroupId.from(groupId))
+                .stream()
+                .map(gws -> GatheringResponse.from(
+                    gws.getGathering(),
+                    gws.getNth(),
+                    gws.getTotalWorshipAttendanceCount(),
+                    gws.getTotalGatheringAttendanceCount(),
+                    gws.getTotalPrayerRequestCount()
+                ))
+                .toList();
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Get Members in Group", description = "Retrieves a list of members in a specific group.")
+    @Operation(summary = "Get Members in Group", description = "Retrieves a list of members with roles in a specific group.")
     @GetMapping("/{groupId}/members")
-    public ResponseEntity<List<MeResponse>> getMembersInGroup(@PathVariable UUID groupId) {
-        List<Member> members = memberQueryUseCase.getMembersByGroupId(groupId);
-        List<MeResponse> response = MeResponse.from(members);
+    public ResponseEntity<List<GroupMemberResponse>> getMembersInGroup(@PathVariable UUID groupId) {
+        List<GroupMember> groupMembers = groupQueryUseCase.getGroupMembersByGroupId(groupId);
+        List<GroupMemberResponse> response = GroupMemberResponse.from(groupMembers);
         return ResponseEntity.ok(response);
     }
 } 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.global.util.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -40,6 +41,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")); // Allow HTTP methods
         configuration.setAllowedHeaders(List.of("*")); // Allow all headers
         configuration.setAllowCredentials(true); // Allow credentials
         
@@ -67,7 +69,20 @@ public class SecurityConfig {
                 .anyRequest().authenticated()); // All other requests require authentication
 
         http
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            // ✅ 예외 처리 설정 추가
+        .exceptionHandling(exceptions -> exceptions
+        .authenticationEntryPoint((request, response, authException) -> {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication failed\"}");
+        })
+        .accessDeniedHandler((request, response, accessDeniedException) -> {
+            response.setStatus(HttpStatus.FORBIDDEN.value());
+            response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Access denied\"}");
+                })
+            );
 
         return http.build();
     }

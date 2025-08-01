@@ -14,8 +14,14 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
     @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
     Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
 
+    @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group", "groupMembers.group.church"})
+    Optional<MemberJpaEntity> findWithGroupsAndChurchesById(UUID memberId);
+
     List<MemberJpaEntity> findAllByGroupMembers_Group_Id(UUID groupId);
 
     @EntityGraph(attributePaths = {"groupMembers"})
     List<MemberJpaEntity> findAllWithGroupMembersByGroupMembers_Group_Id(UUID groupId);
+
+    @EntityGraph(attributePaths = {"churchMembers", "churchMembers.church"})
+    Optional<MemberJpaEntity> findWithChurchesById(UUID memberId);
 } 
