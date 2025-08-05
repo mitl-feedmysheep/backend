@@ -46,4 +46,11 @@ public class GroupPersistenceAdapter implements GroupPort {
                 .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
                 .toList();
     }
+
+    @Override
+    public GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId) {
+        return groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, memberId)
+                .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
+                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", memberId: " + memberId));
+    }
 } 

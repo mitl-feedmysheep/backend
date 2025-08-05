@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.GroupMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.GetMyGroupMemberInfoUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -31,6 +32,7 @@ public class GroupController {
 
     private final GroupQueryUseCase groupQueryUseCase;
     private final GatheringQueryUseCase gatheringQueryUseCase;
+    private final GetMyGroupMemberInfoUseCase getMyGroupMemberInfoUseCase;
 
     @Operation(summary = "Get All My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
@@ -61,6 +63,19 @@ public class GroupController {
     public ResponseEntity<List<GroupMemberResponse>> getMembersInGroup(@PathVariable UUID groupId) {
         List<GroupMember> groupMembers = groupQueryUseCase.getGroupMembersByGroupId(groupId);
         List<GroupMemberResponse> response = GroupMemberResponse.from(groupMembers);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get My Info in Group", description = "Retrieves my information and role in a specific group.")
+    @GetMapping("/{groupId}/me")
+    public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
+            @PathVariable UUID groupId,
+            @AuthenticationPrincipal String memberId) {
+        GroupMember groupMember = getMyGroupMemberInfoUseCase.getMyGroupMemberInfo(
+                GroupId.from(groupId), 
+                MemberId.from(UUID.fromString(memberId))
+        );
+        GroupMemberResponse response = GroupMemberResponse.from(groupMember);
         return ResponseEntity.ok(response);
     }
 } 

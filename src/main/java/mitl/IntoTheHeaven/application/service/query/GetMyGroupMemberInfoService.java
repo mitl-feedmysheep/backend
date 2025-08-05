@@ -1,0 +1,24 @@
+package mitl.IntoTheHeaven.application.service.query;
+
+import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.application.port.in.query.GetMyGroupMemberInfoUseCase;
+import mitl.IntoTheHeaven.application.port.out.GroupPort;
+import mitl.IntoTheHeaven.domain.model.GroupId;
+import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class GetMyGroupMemberInfoService implements GetMyGroupMemberInfoUseCase {
+
+    private final GroupPort groupPort;
+
+    @Override
+    public GroupMember getMyGroupMemberInfo(GroupId groupId, MemberId memberId) {
+        return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue());
+    }
+}

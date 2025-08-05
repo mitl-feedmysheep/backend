@@ -201,6 +201,92 @@ src/main/java/mitl/IntoTheHeaven
 - **Success Responses**: `200 OK`, `201 Created`, `204 No Content`
 - **Error Responses**: `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error`
 
+### UseCase Design Principles
+
+To maintain clean architecture boundaries and avoid tight coupling between different business operations, the following principles must be strictly followed:
+
+- **One API, One UseCase**: Each API endpoint must use exactly **one dedicated UseCase**. This ensures clear separation of concerns and makes the codebase more maintainable.
+
+  - **Prohibited**: Reusing existing UseCases for new APIs, even if they seem similar or could be extended.
+  - **Required**: Creating a new UseCase interface and service implementation for each new API endpoint.
+
+  ```java
+  // ❌ INCORRECT: Reusing existing UseCase for new API
+  @GetMapping("/{groupId}/me")
+  public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
+          @PathVariable UUID groupId,
+          @AuthenticationPrincipal String memberId) {
+      // Using existing GroupQueryUseCase.getGroupMembersByGroupId() - WRONG!
+      List<GroupMember> groupMembers = groupQueryUseCase.getGroupMembersByGroupId(groupId);
+      // ... filter logic in controller - WRONG!
+  }
+
+  // ✅ CORRECT: Dedicated UseCase for new API
+  @GetMapping("/{groupId}/me")
+  public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
+          @PathVariable UUID groupId,
+          @AuthenticationPrincipal String memberId) {
+      // Using dedicated UseCase - CORRECT!
+      GroupMember groupMember = getMyGroupMemberInfoUseCase.getMyGroupMemberInfo(
+              GroupId.from(groupId), 
+              MemberId.from(UUID.fromString(memberId))
+      );
+      return ResponseEntity.ok(GroupMemberResponse.from(groupMember));
+  }
+  ```
+
+- **UseCase Non-Reusability**: UseCases are designed for specific business operations and should **NOT** be reused across different API endpoints. Each UseCase should have a single, well-defined responsibility.
+
+  - **Benefits**: 
+    - Clear business operation boundaries
+    - Easier testing and mocking
+    - Reduced coupling between different APIs
+    - Better maintainability when business logic changes
+    - Clearer code intention and readability
+
+- **Port Method Reusability**: In contrast to UseCases, **Port methods CAN and SHOULD be reused** across different UseCases. Port methods represent low-level data access operations and infrastructure interactions that are meant to be shared.
+
+  ```java
+  // ✅ CORRECT: Multiple UseCases using the same Port method
+  
+  // GroupQueryService.java
+  @Override
+  public List<GroupMember> getGroupMembersByGroupId(UUID groupId) {
+      return groupPort.findGroupMembersByGroupId(groupId); // Using Port method
+  }
+  
+  // GetMyGroupMemberInfoService.java  
+  @Override
+  public GroupMember getMyGroupMemberInfo(GroupId groupId, MemberId memberId) {
+      return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue()); // Using Port method
+  }
+  
+  // SomeOtherService.java - ALSO OKAY to use the same Port methods
+  @Override
+  public SomeResult doSomeOtherOperation(UUID groupId) {
+      List<GroupMember> members = groupPort.findGroupMembersByGroupId(groupId); // Reusing Port method - CORRECT!
+      // ... different business logic
+  }
+  ```
+
+- **Port Method Granularity**: When a new UseCase requires data that existing Port methods cannot provide efficiently, new Port methods should be added rather than implementing workarounds in the service layer.
+
+  ```java
+  // ✅ CORRECT: Add specific Port method for new UseCase
+  public interface GroupPort {
+      // Existing method - can be reused by multiple UseCases
+      List<GroupMember> findGroupMembersByGroupId(UUID groupId);
+      
+      // New method for specific use case - can also be reused by other UseCases
+      GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId);
+  }
+  ```
+
+- **Architecture Layer Responsibility Summary**:
+  - **UseCase Layer**: Business logic composition - NO reuse between different APIs
+  - **Port Layer**: Data access operations - YES, encouraged to reuse across UseCases
+  - **Adapter Layer**: Infrastructure implementation - Implements Port interfaces, naturally reused
+
 ## 5. Commit Message Convention
 
 Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification with detailed format.
@@ -494,3 +580,16 @@ To ensure all APIs are clearly documented and easily testable, every `Controller
       }
 
   }
+
+@convention.mdc
+
+feat: add API endpoint to get user's role information in specific group
+- Create GetMyGroupMemberInfoUseCase interface for dedicated business operation
+- Implement GetMyGroupMemberInfoService with GroupPort dependency
+- Add findGroupMemberByGroupIdAndMemberId method to GroupPort interface
+- Implement new port method in GroupPersistenceAdapter with proper error handling
+- Add findByGroup_IdAndMember_Id method to GroupMemberJpaRepository with EntityGraph
+- Create /groups/{groupId}/me GET endpoint in GroupController with JWT authentication
+- Add UseCase Design Principles section to convention.mdc with one-API-one-UseCase rule
+- Document Port method reusability guidelines and architecture layer responsibilities
+- Establish clear separation between UseCase non-reusability and Port method reusability

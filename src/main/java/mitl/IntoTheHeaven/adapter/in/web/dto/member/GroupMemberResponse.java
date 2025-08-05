@@ -26,7 +26,7 @@ public class GroupMemberResponse {
 
     public static GroupMemberResponse from(GroupMember groupMember) {
         return GroupMemberResponse.builder()
-                .id(groupMember.getMember().getId().getValue())
+                .id(groupMember.getId().getValue())
                 .name(groupMember.getMember().getName())
                 .email(groupMember.getMember().getEmail())
                 .sex(groupMember.getMember().getSex())
