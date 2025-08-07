@@ -13,6 +13,7 @@ public class GatheringResponse {
 
     private final UUID id;
     private final String name;
+    private final String description;
     private final LocalDate date;
     private final String place;
     private final Integer nth;
@@ -27,6 +28,7 @@ public class GatheringResponse {
         return GatheringResponse.builder()
                 .id(gathering.getId().getValue())
                 .name(gathering.getName())
+                .description(gathering.getDescription())
                 .date(gathering.getDate())
                 .place(gathering.getPlace())
                 .nth(nth)

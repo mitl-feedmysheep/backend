@@ -22,7 +22,7 @@ public class GatheringDetailResponse {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private String place;
-    private List<GatheringMemberResponse> members;
+    private List<GatheringMemberResponse> gatheringMembers;
 
     public static GatheringDetailResponse from(Gathering gathering) {
         return GatheringDetailResponse.builder()
@@ -33,7 +33,7 @@ public class GatheringDetailResponse {
                 .startedAt(gathering.getStartedAt())
                 .endedAt(gathering.getEndedAt())
                 .place(gathering.getPlace())
-                .members(gathering.getGatheringMembers().stream()
+                .gatheringMembers(gathering.getGatheringMembers().stream()
                         .map(GatheringMemberResponse::from)
                         .collect(Collectors.toList()))
                 .build();

@@ -575,21 +575,3 @@ To ensure all APIs are clearly documented and easily testable, every `Controller
       }
   }
   ```
-
-          // ...
-      }
-
-  }
-
-@convention.mdc
-
-feat: add API endpoint to get user's role information in specific group
-- Create GetMyGroupMemberInfoUseCase interface for dedicated business operation
-- Implement GetMyGroupMemberInfoService with GroupPort dependency
-- Add findGroupMemberByGroupIdAndMemberId method to GroupPort interface
-- Implement new port method in GroupPersistenceAdapter with proper error handling
-- Add findByGroup_IdAndMember_Id method to GroupMemberJpaRepository with EntityGraph
-- Create /groups/{groupId}/me GET endpoint in GroupController with JWT authentication
-- Add UseCase Design Principles section to convention.mdc with one-API-one-UseCase rule
-- Document Port method reusability guidelines and architecture layer responsibilities
-- Establish clear separation between UseCase non-reusability and Port method reusability

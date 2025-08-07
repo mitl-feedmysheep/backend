@@ -9,6 +9,8 @@ import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GroupId;
+import mitl.IntoTheHeaven.domain.model.GatheringMember;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +30,20 @@ public class GatheringQueryService implements GatheringQueryUseCase {
 
     @Override
     public Gathering getGatheringDetail(GatheringId gatheringId) {
-        return gatheringPort.findDetailById(gatheringId.getValue())
+        Gathering gathering = gatheringPort.findDetailById(gatheringId.getValue())
                 .orElseThrow(() -> new RuntimeException("Gathering not found"));
+        
+        // gatheringMembers를 LEADER 먼저, 그 다음 나이 많은 순서로 정렬
+        Comparator<GatheringMember> roleComparator = Comparator.comparing(gm -> gm.getGroupMember().getRole() == GroupMemberRole.LEADER ? 0 : 1);
+        Comparator<GatheringMember> birthdayComparator = Comparator.comparing(gm -> gm.getGroupMember().getMember().getBirthday());
+        
+        List<GatheringMember> sortedGatheringMembers = gathering.getGatheringMembers().stream()
+                .sorted(roleComparator.thenComparing(birthdayComparator))
+                .toList();
+        
+        return gathering.toBuilder()
+                .gatheringMembers(sortedGatheringMembers)
+                .build();
     }
 
     @Override
