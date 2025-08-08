@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.domain.model.GroupId;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Data
 @AllArgsConstructor
@@ -20,16 +21,14 @@ public class CreateGatheringCommand {
     private LocalDateTime endedAt;
     private String place;
 
-
-
     public static CreateGatheringCommand from(CreateGatheringRequest request) {
         return new CreateGatheringCommand(
                 GroupId.from(request.getGroupId()),
                 request.getName(),
                 request.getDescription(),
                 request.getDate(),
-                request.getStartedAt(),
-                request.getEndedAt(),
+                request.getStartedAt().toLocalDateTime(),
+                request.getEndedAt().toLocalDateTime(),
                 request.getPlace()
         );
     }

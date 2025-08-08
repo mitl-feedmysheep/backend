@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GroupMemberId;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
@@ -40,11 +41,13 @@ public class UpdateGatheringMemberCommand {
     @Getter
     @RequiredArgsConstructor
     public static class PrayerUpdateCommand {
+        private final UUID id; // optional existing id
         private final String prayerRequest;
         private final String description;
 
         public static PrayerUpdateCommand from(UpdateGatheringMemberRequest.PrayerRequest request) {
             return new PrayerUpdateCommand(
+                request.getId(),
                 request.getPrayerRequest(),
                 request.getDescription()
             );

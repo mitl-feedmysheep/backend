@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -23,6 +24,7 @@ public class UpdateGatheringMemberRequest {
     @Getter
     @Setter
     public static class PrayerRequest {
+        private UUID id; // optional: existing prayer ID for update
         private String prayerRequest;
         private String description;
     }

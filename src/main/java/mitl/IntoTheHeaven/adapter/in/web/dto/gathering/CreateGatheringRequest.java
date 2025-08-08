@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -28,10 +28,10 @@ public class CreateGatheringRequest {
     private LocalDate date;
 
     @NotNull(message = "Start time is required")
-    private LocalDateTime startedAt;
+    private OffsetDateTime startedAt; // Keep offset (e.g., Z)
 
     @NotNull(message = "End time is required")
-    private LocalDateTime endedAt;
+    private OffsetDateTime endedAt; // Keep offset (e.g., Z)
 
     @NotBlank(message = "Place is required")
     @Size(max = 100, message = "Place must be less than 100 characters")

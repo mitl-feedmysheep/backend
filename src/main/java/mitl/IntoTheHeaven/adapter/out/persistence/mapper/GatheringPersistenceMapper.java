@@ -60,6 +60,7 @@ public class GatheringPersistenceMapper {
                 .prayerRequest(entity.getPrayerRequest())
                 .description(entity.getDescription())
                 .isAnswered(entity.isAnswered())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 
@@ -126,17 +127,18 @@ public class GatheringPersistenceMapper {
                 .build();
 
         // Prayer들을 변환하여 설정
-        Set<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
+        List<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
                 .map(prayer -> PrayerJpaEntity.builder()
                         .id(prayer.getId().getValue())
                         .prayerRequest(prayer.getPrayerRequest())
                         .description(prayer.getDescription())
                         .isAnswered(prayer.isAnswered())
+                        .createdAt(prayer.getCreatedAt())
                         .member(prayer.getMember() != null ? 
                                 memberPersistenceMapper.toEntity(prayer.getMember()) : null)
                         .gatheringMember(gatheringMemberEntity)
                         .build())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
         // 완성된 엔터티에 Prayer 리스트 설정
         return GatheringMemberJpaEntity.builder()

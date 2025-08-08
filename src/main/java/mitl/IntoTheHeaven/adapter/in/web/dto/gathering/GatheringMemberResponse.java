@@ -2,9 +2,11 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.gathering;
 
 import lombok.Builder;
 import lombok.Data;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import mitl.IntoTheHeaven.domain.model.GatheringMember;
+import mitl.IntoTheHeaven.domain.model.Prayer;
 import java.util.UUID;
 import java.time.LocalDate;
 
@@ -33,6 +35,7 @@ public class GatheringMemberResponse {
                 .gatheringAttendance(gatheringMember.isGatheringAttendance())
                 .story(gatheringMember.getStory())
                 .prayers(gatheringMember.getPrayers().stream()
+                        .sorted(Comparator.comparing(Prayer::getCreatedAt))
                         .map(PrayerResponse::from)
                         .collect(Collectors.toList()))
                 .build();

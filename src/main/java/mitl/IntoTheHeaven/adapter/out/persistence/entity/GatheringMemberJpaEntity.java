@@ -11,8 +11,8 @@ import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "gathering_member")
@@ -56,7 +56,8 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     private String story;
 
     @OneToMany(mappedBy = "gatheringMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
     @BatchSize(size = 10)
     @Builder.Default
-    private Set<PrayerJpaEntity> prayers = new HashSet<>();
+    private List<PrayerJpaEntity> prayers = new ArrayList<>();
 } 

@@ -10,8 +10,12 @@ import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,19 +75,39 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Gathering member not found"));
 
-        // 3. Create new prayer requests
-        List<Prayer> updatedPrayers = command.getPrayers().stream()
-                .map(prayerCommand -> Prayer.builder()
+        // 3. Build upserted prayer list (full sync)
+        Map<UUID, Prayer> existingPrayerById = targetGatheringMember.getPrayers().stream()
+                .collect(Collectors.toMap(p -> p.getId().getValue(), Function.identity()));
+
+        List<Prayer> mergedPrayers = new ArrayList<>();
+        for (UpdateGatheringMemberCommand.PrayerUpdateCommand pCmd : command.getPrayers()) {
+            if (pCmd.getId() != null && existingPrayerById.containsKey(pCmd.getId())) {
+                // Update existing: preserve id and createdAt, keep isAnswered as is
+                Prayer prev = existingPrayerById.get(pCmd.getId());
+                Prayer updated = Prayer.builder()
+                        .id(prev.getId())
+                        .member(targetGatheringMember.getGroupMember().getMember())
+                        .gatheringMember(targetGatheringMember)
+                        .prayerRequest(pCmd.getPrayerRequest())
+                        .description(pCmd.getDescription())
+                        .isAnswered(prev.isAnswered())
+                        .build();
+                mergedPrayers.add(updated);
+            } else {
+                // Create new
+                Prayer created = Prayer.builder()
                         .id(PrayerId.from(UUID.randomUUID()))
                         .member(targetGatheringMember.getGroupMember().getMember())
                         .gatheringMember(targetGatheringMember)
-                        .prayerRequest(prayerCommand.getPrayerRequest())
-                        .description(prayerCommand.getDescription())
+                        .prayerRequest(pCmd.getPrayerRequest())
+                        .description(pCmd.getDescription())
                         .isAnswered(false)
-                        .build())
-                .collect(Collectors.toList());
+                        .build();
+                mergedPrayers.add(created);
+            }
+        }
 
-        // 4. Create updated GatheringMember
+        // 4. Create updated GatheringMember (missing old prayers are removed via orphanRemoval)
         GatheringMember updatedGatheringMember = GatheringMember.builder()
                 .id(targetGatheringMember.getId())
                 .gatheringId(targetGatheringMember.getGatheringId()) // Unidirectional reference: use ID only
@@ -91,7 +115,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .worshipAttendance(command.isWorshipAttendance())
                 .gatheringAttendance(command.isGatheringAttendance())
                 .story(command.getStory())
-                .prayers(updatedPrayers)
+                .prayers(mergedPrayers)
                 .build();
 
         // 5. Replace only the target member in the GatheringMember list
