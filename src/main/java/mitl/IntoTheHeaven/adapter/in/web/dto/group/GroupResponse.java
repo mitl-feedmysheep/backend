@@ -17,15 +17,17 @@ public class GroupResponse {
     private final UUID churchId;
     private final LocalDate startDate;
     private final LocalDate endDate;
+    private final Integer groupMemberCount; // renamed
 
     @Builder
-    public GroupResponse(UUID id, String name, String description, UUID churchId, LocalDate startDate, LocalDate endDate) {
+    public GroupResponse(UUID id, String name, String description, UUID churchId, LocalDate startDate, LocalDate endDate, Integer groupMemberCount) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.churchId = churchId;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.groupMemberCount = groupMemberCount;
     }
 
     public static GroupResponse from(Group group) {
@@ -36,6 +38,18 @@ public class GroupResponse {
                 .churchId(group.getChurchId().getValue())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
+                .build();
+    }
+
+    public static GroupResponse from(Group group, int groupMemberCount) {
+        return GroupResponse.builder()
+                .id(group.getId().getValue())
+                .name(group.getName())
+                .description(group.getDescription())
+                .churchId(group.getChurchId().getValue())
+                .startDate(group.getStartDate())
+                .endDate(group.getEndDate())
+                .groupMemberCount(groupMemberCount)
                 .build();
     }
 

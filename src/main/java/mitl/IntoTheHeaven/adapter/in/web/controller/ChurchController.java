@@ -47,7 +47,9 @@ public class ChurchController {
                 MemberId.from(UUID.fromString(memberId)), 
                 ChurchId.from(churchId)
         );
-        List<GroupResponse> response = GroupResponse.from(groups);
+        List<GroupResponse> response = groups.stream()
+                .map(g -> GroupResponse.from(g, groupQueryUseCase.getGroupMembersByGroupId(g.getId().getValue()).size()))
+                .toList();
         return ResponseEntity.ok(response);
     }
 }
