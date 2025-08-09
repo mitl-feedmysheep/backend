@@ -49,11 +49,12 @@ jobs:
     name: Deploy to Self-Hosted
     needs: build_and_push
     runs-on: self-hosted
-    env:
-      DOCKER_CONFIG: ${{ runner.temp }}/.docker
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set DOCKER_CONFIG env for this job
+        run: echo "DOCKER_CONFIG=$PWD/.docker" >> $GITHUB_ENV
 
       - name: Prepare Docker config (avoid macOS keychain prompt)
         run: |
