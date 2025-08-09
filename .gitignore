@@ -40,3 +40,8 @@ out/
 src/main/generated
 
 .DS_Store
+
+# Local-only env and profiles (do not commit secrets)
+.env
+.env.*
+src/main/resources/application-local.properties

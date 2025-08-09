@@ -1,0 +1,38 @@
+services:
+  app:
+    image: ${APP_IMAGE}
+    container_name: into-the-heaven-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # --- Spring basics ---
+      SPRING_APPLICATION_NAME: IntoTheHeaven
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+
+      # --- DB (non-secret defaults; secrets via env_file) ---
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+      # --- JPA & timezone ---
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      SPRING_SQL_INIT_MODE: never
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_USE_GET_GENERATED_KEYS: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_INSERTS: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_BATCH_SIZE: "100"
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: UTC
+      SPRING_JACKSON_TIME_ZONE: Asia/Seoul
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_BATCH_FETCH_SIZE: "1000"
+
+      # --- JWT (provided via env_file) ---
+
+      # Dev convenience (optional)
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_DEVTOOLS_RESTART_EXCLUDE: static/**,public/**
+
+    ports:
+      - "8080:8080"
