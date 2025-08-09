@@ -61,11 +61,18 @@ jobs:
           mkdir -p "$DOCKER_CONFIG"
           echo '{}' > "$DOCKER_CONFIG/config.json"
 
+      - name: Show Docker config path
+        run: |
+          echo "DOCKER_CONFIG=$DOCKER_CONFIG"
+          ls -la "$DOCKER_CONFIG" || true
+          cat "$DOCKER_CONFIG/config.json" || true
+
       - name: DockerHub Login (for pull)
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
       - name: Create .env from secrets
         run: |
