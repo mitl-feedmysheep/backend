@@ -21,5 +21,4 @@ public class SignUpCommand {
     private String sex;
     private String phone;
     private String address;
-    private String description;
 } 

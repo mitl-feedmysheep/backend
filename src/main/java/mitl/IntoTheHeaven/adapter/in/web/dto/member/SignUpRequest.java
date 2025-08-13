@@ -38,8 +38,6 @@ public class SignUpRequest {
     private String phone;
     
     private String address;
-    
-    private String description;
 
     public SignUpCommand toCommand() {
         return SignUpCommand.builder()
@@ -50,7 +48,6 @@ public class SignUpRequest {
                 .sex(sex)
                 .phone(phone)
                 .address(address)
-                .description(description)
                 .build();
     }
 } 

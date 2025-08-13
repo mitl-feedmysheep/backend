@@ -27,7 +27,6 @@ public class MemberPersistenceMapper {
                 .phone(entity.getPhone())
                 .profileUrl(entity.getProfileUrl())
                 .address(entity.getAddress())
-                .description(entity.getDescription())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .deletedAt(entity.getDeletedAt())
@@ -48,7 +47,6 @@ public class MemberPersistenceMapper {
                 .phone(domain.getPhone())
                 .profileUrl(domain.getProfileUrl())
                 .address(domain.getAddress())
-                .description(domain.getDescription())
                 .build();
     }
 

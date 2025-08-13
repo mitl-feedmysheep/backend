@@ -1,7 +1,6 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
 import lombok.RequiredArgsConstructor;
-import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.MemberJpaRepository;
@@ -54,6 +53,12 @@ public class MemberPersistenceAdapter implements MemberPort {
   @Override
   public Optional<Member> findByEmail(String email) {
     return memberJpaRepository.findByEmail(email)
+            .map(memberPersistenceMapper::toDomain);
+  }
+
+  @Override
+  public Optional<Member> findByPhone(String phone) {
+    return memberJpaRepository.findByPhone(phone)
             .map(memberPersistenceMapper::toDomain);
   }
 } 

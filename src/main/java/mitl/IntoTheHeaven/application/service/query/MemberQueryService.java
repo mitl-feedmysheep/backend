@@ -28,4 +28,14 @@ public class MemberQueryService implements MemberQueryUseCase {
   public List<Member> getMembersByGroupId(UUID groupId) {
     return memberPort.findMembersByGroupId(groupId);
   }
+
+  @Override
+  public boolean isPhoneAvailable(String phone) {
+    return memberPort.findByPhone(phone).isEmpty();
+  }
+
+  @Override
+  public boolean isEmailAvailable(String email) {
+    return memberPort.findByEmail(email).isEmpty();
+  }
 } 
