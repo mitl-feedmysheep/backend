@@ -31,4 +31,5 @@ public class MemberController {
         MeResponse response = MeResponse.from(member);
         return ResponseEntity.ok(response);
     }
+
 } 

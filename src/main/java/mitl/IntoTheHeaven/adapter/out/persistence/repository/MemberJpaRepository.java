@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID> {
     Optional<MemberJpaEntity> findByEmail(String email);
 
+    Optional<MemberJpaEntity> findByPhone(String phone);
+
     @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
     Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
 

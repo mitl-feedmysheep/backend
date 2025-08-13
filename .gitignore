@@ -33,9 +33,6 @@ out/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
-.vscode/
-
 ### QueryDSL ###
 src/main/generated
 

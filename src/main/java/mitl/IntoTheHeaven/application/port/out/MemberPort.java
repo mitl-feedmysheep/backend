@@ -18,4 +18,6 @@ public interface MemberPort {
   Member save(Member member);
 
   Optional<Member> findByEmail(String email);
+
+  Optional<Member> findByPhone(String phone);
 } 
