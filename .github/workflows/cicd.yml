@@ -98,6 +98,17 @@ jobs:
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SES_REGION=${{ secrets.AWS_SES_REGION }}
 
+          # --- Mail provider selection ---
+          MAIL_PROVIDER=${{ secrets.MAIL_PROVIDER }}
+
+          # --- Gmail SMTP (used when mail.provider=gmail) ---
+          SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}
+          SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}
+          SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
+          SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }}
+          SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }}
+
           # --- Mail From/Reply-To ---
           MAIL_FROM=${{ secrets.MAIL_FROM }}
           MAIL_REPLY_TO=${{ secrets.MAIL_REPLY_TO }}
