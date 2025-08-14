@@ -65,6 +65,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid verification code");
     }
 
+
     @Operation(summary = "User Signup", description = "Registers a new user.")
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
