@@ -33,6 +33,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    // JavaMail (for Gmail SMTP)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     // AWS SES v2 client
     implementation 'software.amazon.awssdk:sesv2'
     compileOnly 'org.projectlombok:lombok'

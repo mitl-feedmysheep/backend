@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.out.email;
 
 import mitl.IntoTheHeaven.application.port.out.EmailPort;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.Body;
@@ -15,6 +16,7 @@ import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
  * SES-based implementation of EmailPort.
  */
 @Component
+@ConditionalOnProperty(name = "mail.provider", havingValue = "ses", matchIfMissing = true)
 public class SesEmailAdapter implements EmailPort {
 
     private final SesV2Client sesClient;

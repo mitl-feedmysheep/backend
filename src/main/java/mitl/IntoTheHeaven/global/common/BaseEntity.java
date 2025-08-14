@@ -11,12 +11,14 @@ import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.querydsl.core.annotations.QuerySupertype;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @MappedSuperclass
+@QuerySupertype
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
