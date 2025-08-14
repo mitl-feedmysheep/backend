@@ -55,11 +55,11 @@ public class ChurchJpaEntity extends BaseEntity {
     @Column(length = 100)
     private String description;
 
-    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupJpaEntity> groups = new ArrayList<>();
 
-    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "church", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 } 

@@ -79,15 +79,15 @@ public class MemberJpaEntity extends BaseEntity {
     @Column(length = 100)
     private String description;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 }
