@@ -9,10 +9,14 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.CreateGatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringDetailResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringMemberRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringMemberResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringResponse;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.UpdateGatheringUseCase;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GatheringMember;
@@ -31,6 +35,7 @@ public class GatheringController {
 
     private final GatheringQueryUseCase gatheringQueryUseCase;
     private final GatheringCommandUseCase gatheringCommandUseCase;
+    private final UpdateGatheringUseCase updateGatheringUseCase;
 
     @Operation(summary = "Create New Gathering", description = "Creates a new gathering with the specified details including date, time, place, and description.")
     @PostMapping
@@ -67,6 +72,18 @@ public class GatheringController {
         );
         GatheringMember gatheringMember = gatheringCommandUseCase.updateGatheringMember(command);
         UpdateGatheringMemberResponse response = UpdateGatheringMemberResponse.from(gatheringMember);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Update Gathering", description = "Partially updates gathering fields: name, description, date, startedAt, endedAt, place.")
+    @PatchMapping("/{gatheringId}")
+    public ResponseEntity<UpdateGatheringResponse> updateGathering(
+            @PathVariable UUID gatheringId,
+            @Valid @RequestBody UpdateGatheringRequest request
+    ) {
+        UpdateGatheringCommand command = UpdateGatheringCommand.from(GatheringId.from(gatheringId), request);
+        Gathering updated = updateGatheringUseCase.updateGathering(command);
+        UpdateGatheringResponse response = UpdateGatheringResponse.from(updated);
         return ResponseEntity.ok(response);
     }
 } 

@@ -50,8 +50,10 @@ public class GatheringQueryService implements GatheringQueryUseCase {
     public List<GatheringWithStatistics> getGatheringsWithStatisticsByGroupId(GroupId groupId) {
         // 1. 모임 조회 및 정렬
         List<Gathering> gatherings = gatheringPort.findAllByGroupId(groupId.getValue()).stream()
-                .sorted(Comparator.comparing(Gathering::getDate).reversed()
-                        .thenComparing(Gathering::getStartedAt).reversed())
+                .sorted(
+                        Comparator.comparing(Gathering::getDate, Comparator.reverseOrder())
+                                .thenComparing(Gathering::getStartedAt, Comparator.reverseOrder())
+                )
                 .toList();
         
         // 2. 통계 데이터 조회

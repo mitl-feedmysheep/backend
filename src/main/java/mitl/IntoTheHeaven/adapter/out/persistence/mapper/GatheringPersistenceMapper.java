@@ -8,7 +8,6 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +31,8 @@ public class GatheringPersistenceMapper {
                 .startedAt(entity.getStartedAt())
                 .endedAt(entity.getEndedAt())
                 .place(entity.getPlace())
+                .leaderComment(entity.getLeaderComment())
+                .adminComment(entity.getAdminComment())
                 .gatheringMembers(entity.getGatheringMembers().stream()
                         .map(this::toDomain)
                         .collect(Collectors.toList()))
@@ -79,6 +80,8 @@ public class GatheringPersistenceMapper {
                 .startedAt(domain.getStartedAt())
                 .endedAt(domain.getEndedAt())
                 .place(domain.getPlace())
+                .leaderComment(domain.getLeaderComment())
+                .adminComment(domain.getAdminComment())
                 .group(groupEntity)
                 .build();
         
@@ -96,6 +99,8 @@ public class GatheringPersistenceMapper {
                 .startedAt(domain.getStartedAt())
                 .endedAt(domain.getEndedAt())
                 .place(domain.getPlace())
+                .leaderComment(domain.getLeaderComment())
+                .adminComment(domain.getAdminComment())
                 .group(groupEntity)
                 .gatheringMembers(gatheringMemberEntities)
                 .build();

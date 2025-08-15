@@ -20,6 +20,8 @@ public class Gathering extends AggregateRoot<Gathering, GatheringId> {
     private final LocalDateTime startedAt;
     private final LocalDateTime endedAt;
     private final String place;
+    private final String leaderComment;
+    private final String adminComment;
     private final List<GatheringMember> gatheringMembers;
 
     public Gathering addGatheringMembers(List<GatheringMember> members) {

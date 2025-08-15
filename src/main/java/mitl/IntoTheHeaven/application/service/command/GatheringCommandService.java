@@ -2,15 +2,16 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.UpdateGatheringUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class GatheringCommandService implements GatheringCommandUseCase {
+public class GatheringCommandService implements GatheringCommandUseCase, UpdateGatheringUseCase {
 
     private final GatheringPort gatheringPort;
     private final MemberPort memberPort;
@@ -133,5 +134,25 @@ public class GatheringCommandService implements GatheringCommandUseCase {
         gatheringPort.save(updatedGathering);
 
         return updatedGatheringMember;
+    }
+
+    @Override
+    public Gathering updateGathering(UpdateGatheringCommand command) {
+        Gathering existingGathering = gatheringPort.findDetailById(command.getGatheringId().getValue())
+                .orElseThrow(() -> new RuntimeException("Gathering not found"));
+
+        Gathering updated = existingGathering.toBuilder()
+                .name(command.getName() != null ? command.getName() : existingGathering.getName())
+                .description(command.getDescription() != null ? command.getDescription() : existingGathering.getDescription())
+                .date(command.getDate() != null ? command.getDate() : existingGathering.getDate())
+                .startedAt(command.getStartedAt() != null ? command.getStartedAt() : existingGathering.getStartedAt())
+                .endedAt(command.getEndedAt() != null ? command.getEndedAt() : existingGathering.getEndedAt())
+                .place(command.getPlace() != null ? command.getPlace() : existingGathering.getPlace())
+                .leaderComment(command.getLeaderComment() != null ? command.getLeaderComment() : existingGathering.getLeaderComment())
+                .adminComment(command.getAdminComment() != null ? command.getAdminComment() : existingGathering.getAdminComment())
+                .build();
+
+        Gathering saved = gatheringPort.save(updated);
+        return saved;
     }
 } 

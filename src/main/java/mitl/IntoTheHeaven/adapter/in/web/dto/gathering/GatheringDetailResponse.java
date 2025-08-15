@@ -22,6 +22,8 @@ public class GatheringDetailResponse {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private String place;
+    private String leaderComment;
+    private String adminComment;
     private List<GatheringMemberResponse> gatheringMembers;
 
     public static GatheringDetailResponse from(Gathering gathering) {
@@ -33,6 +35,8 @@ public class GatheringDetailResponse {
                 .startedAt(gathering.getStartedAt())
                 .endedAt(gathering.getEndedAt())
                 .place(gathering.getPlace())
+                .leaderComment(gathering.getLeaderComment())
+                .adminComment(gathering.getAdminComment())
                 .gatheringMembers(gathering.getGatheringMembers().stream()
                         .map(GatheringMemberResponse::from)
                         .collect(Collectors.toList()))
