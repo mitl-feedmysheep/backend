@@ -7,7 +7,7 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.GroupMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
-import mitl.IntoTheHeaven.application.port.in.query.GetMyGroupMemberInfoUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.GroupMemberQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -32,7 +32,7 @@ public class GroupController {
 
     private final GroupQueryUseCase groupQueryUseCase;
     private final GatheringQueryUseCase gatheringQueryUseCase;
-    private final GetMyGroupMemberInfoUseCase getMyGroupMemberInfoUseCase;
+    private final GroupMemberQueryUseCase groupMemberQueryUseCase;
 
     @Operation(summary = "Get All My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
@@ -71,7 +71,7 @@ public class GroupController {
     public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
             @PathVariable UUID groupId,
             @AuthenticationPrincipal String memberId) {
-        GroupMember groupMember = getMyGroupMemberInfoUseCase.getMyGroupMemberInfo(
+        GroupMember groupMember = groupMemberQueryUseCase.getGroupMemberByGroupIdAndMemberId(
                 GroupId.from(groupId), 
                 MemberId.from(UUID.fromString(memberId))
         );
