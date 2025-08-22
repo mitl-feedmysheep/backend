@@ -5,12 +5,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.ChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.prayer.PrayerRequestCountByChurchResponse;
 import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.PrayerQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.MemberId;
+import mitl.IntoTheHeaven.domain.model.Prayer;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +33,7 @@ public class ChurchController {
 
     private final ChurchQueryUseCase churchQueryUseCase;
     private final GroupQueryUseCase groupQueryUseCase;
+    private final PrayerQueryUseCase prayerQueryUseCase;
 
     @Operation(summary = "Get My Churches", description = "Retrieves a list of churches the current user belongs to.")
     @GetMapping
@@ -50,6 +55,21 @@ public class ChurchController {
         List<GroupResponse> response = groups.stream()
                 .map(g -> GroupResponse.from(g, groupQueryUseCase.getGroupMembersByGroupId(g.getId().getValue()).size()))
                 .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get Prayer Requests in Church", description = "Retrieves a count of prayer requests within a specific church that the current user belongs to.")
+    @GetMapping("/{churchId}/prayer-request-count")
+    public ResponseEntity<PrayerRequestCountByChurchResponse> getPrayerRequestsInChurch(
+            @PathVariable UUID churchId,
+            @AuthenticationPrincipal String memberId) {
+        Long prayerRequestCount = prayerQueryUseCase.getPrayerRequestCountByMemberIdAndChurchId(
+                MemberId.from(UUID.fromString(memberId)), 
+                ChurchId.from(churchId)
+        );
+        
+        PrayerRequestCountByChurchResponse response = PrayerRequestCountByChurchResponse.from(prayerRequestCount);
+
         return ResponseEntity.ok(response);
     }
 }
