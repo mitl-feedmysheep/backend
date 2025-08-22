@@ -4,5 +4,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PrayerPort {
-    Integer findPrayerRequestCountByMemberIds(List<UUID> memberIds);
+    long findPrayerRequestCountByMemberIds(List<UUID> memberIds);
 }

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class Prayer extends DomainEntity<Prayer, PrayerId> {
 
     private final Member member;
+    private final MemberId memberId;
     private final GatheringMember gatheringMember;
     private final String prayerRequest;
     private final String description;

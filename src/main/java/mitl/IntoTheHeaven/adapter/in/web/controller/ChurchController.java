@@ -59,11 +59,11 @@ public class ChurchController {
     }
 
     @Operation(summary = "Get Prayer Requests in Church", description = "Retrieves a count of prayer requests within a specific church that the current user belongs to.")
-    @GetMapping("/{churchId}/prayer-requests")
+    @GetMapping("/{churchId}/prayer-request-count")
     public ResponseEntity<PrayerRequestCountByChurchResponse> getPrayerRequestsInChurch(
             @PathVariable UUID churchId,
             @AuthenticationPrincipal String memberId) {
-        Integer prayerRequestCount = prayerQueryUseCase.getPrayerRequestCountByMemberIdAndChurchId(
+        Long prayerRequestCount = prayerQueryUseCase.getPrayerRequestCountByMemberIdAndChurchId(
                 MemberId.from(UUID.fromString(memberId)), 
                 ChurchId.from(churchId)
         );

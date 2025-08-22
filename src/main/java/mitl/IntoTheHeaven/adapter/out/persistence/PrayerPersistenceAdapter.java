@@ -1,8 +1,11 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.repository.PrayerJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.PrayerPort;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Prayer;
+import mitl.IntoTheHeaven.domain.model.PrayerId;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,11 +18,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PrayerPersistenceAdapter implements PrayerPort {
 
-    //TODO ckdtn
     private final PrayerJpaRepository prayerJpaRepository;
 
     @Override
-    public Integer findPrayerRequestCountByMemberIds(List<UUID> memberIds) {
+    public long findPrayerRequestCountByMemberIds(List<UUID> memberIds) {
         return prayerJpaRepository.findAllByMemberIdIn(memberIds)
                 .stream()
                 .map(this::toDomain)
@@ -29,8 +31,8 @@ public class PrayerPersistenceAdapter implements PrayerPort {
 
     private Prayer toDomain(PrayerJpaEntity prayerJpaEntity) {
         return Prayer.builder()
-                .id(prayerJpaEntity.getId())
-                .memberId(prayerJpaEntity.getMemberId())
+                .id(PrayerId.from(prayerJpaEntity.getId()))
+                .memberId(MemberId.from(prayerJpaEntity.getMember().getId()))
                 .prayerRequest(prayerJpaEntity.getPrayerRequest())
                 .build();
     }

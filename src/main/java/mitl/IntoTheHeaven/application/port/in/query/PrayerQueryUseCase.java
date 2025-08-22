@@ -4,5 +4,5 @@ import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 public interface PrayerQueryUseCase {
-    Integer getPrayerRequestCountByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
+    Long getPrayerRequestCountByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
 }

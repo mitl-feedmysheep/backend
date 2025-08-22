@@ -23,17 +23,17 @@ public class PrayerQueryService implements PrayerQueryUseCase {
     private final PrayerPort prayerPort;
 
     @Override
-    public Integer getPrayerRequestCountByMemberIdAndChurchId(MemberId memberId, ChurchId churchId) {
+    public Long getPrayerRequestCountByMemberIdAndChurchId(MemberId memberId, ChurchId churchId) {
 
         // 1. Check if the user belongs to the church using churchPort
         Church church = churchPort.findById(churchId.getValue());
         if (church == null) {
-            throw new RuntimeException("No permission.");
+            throw new RuntimeException("권한이 없어요 :(");
         }
         // 2. Retrieve all members of the church using churchPort
         List<MemberId> memberIds = churchPort.findMemberIdsByChurchId(churchId.getValue());
         // 3. Get the count of prayer requests for the members using prayerPort
-        Integer prayerRequestCount = prayerPort.findPrayerRequestCountByMemberIds(memberIds.stream().map(MemberId::getValue).toList());
+        Long prayerRequestCount = prayerPort.findPrayerRequestCountByMemberIds(memberIds.stream().map(MemberId::getValue).toList());
 
         return prayerRequestCount;
     }

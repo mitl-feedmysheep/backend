@@ -7,7 +7,9 @@
         "request": "launch",
         "mainClass": "mitl.IntoTheHeaven.IntoTheHeavenApplication",
         "projectName": "backend",
-        "env": { "SPRING_PROFILES_ACTIVE": "local" }
+        "env": { "SPRING_PROFILES_ACTIVE": "local" },
+        "args": ["--server.port=8081"],
+        "preLaunchTask": "gradle: build (watch)"
       }
     ]
   }

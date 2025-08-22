@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gradle: build (watch)",
+      "type": "shell",
+      "command": "./gradlew",
+      "args": ["clean", "build", "--continuous"],
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "gradle-watch",
+          "fileLocation": ["auto"],
+          "pattern": [
+            {
+              "regexp": "^([^:]+):(\\d+):(\\d+): (warning|error): (.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".*BUILD SUCCESSFUL.*",
+            "endsPattern": ".*Waiting for changes.*"
+          }
+        }
+      ],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}
