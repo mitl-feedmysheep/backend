@@ -228,7 +228,7 @@ To maintain clean architecture boundaries and avoid tight coupling between diffe
           @AuthenticationPrincipal String memberId) {
       // Using dedicated UseCase - CORRECT!
       GroupMember groupMember = getMyGroupMemberInfoUseCase.getMyGroupMemberInfo(
-              GroupId.from(groupId), 
+              GroupId.from(groupId),
               MemberId.from(UUID.fromString(memberId))
       );
       return ResponseEntity.ok(GroupMemberResponse.from(groupMember));
@@ -237,7 +237,7 @@ To maintain clean architecture boundaries and avoid tight coupling between diffe
 
 - **UseCase Non-Reusability**: UseCases are designed for specific business operations and should **NOT** be reused across different API endpoints. Each UseCase should have a single, well-defined responsibility.
 
-  - **Benefits**: 
+  - **Benefits**:
     - Clear business operation boundaries
     - Easier testing and mocking
     - Reduced coupling between different APIs
@@ -248,19 +248,19 @@ To maintain clean architecture boundaries and avoid tight coupling between diffe
 
   ```java
   // ✅ CORRECT: Multiple UseCases using the same Port method
-  
+
   // GroupQueryService.java
   @Override
   public List<GroupMember> getGroupMembersByGroupId(UUID groupId) {
       return groupPort.findGroupMembersByGroupId(groupId); // Using Port method
   }
-  
-  // GetMyGroupMemberInfoService.java  
+
+  // GetMyGroupMemberInfoService.java
   @Override
   public GroupMember getMyGroupMemberInfo(GroupId groupId, MemberId memberId) {
       return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue()); // Using Port method
   }
-  
+
   // SomeOtherService.java - ALSO OKAY to use the same Port methods
   @Override
   public SomeResult doSomeOtherOperation(UUID groupId) {
@@ -276,7 +276,7 @@ To maintain clean architecture boundaries and avoid tight coupling between diffe
   public interface GroupPort {
       // Existing method - can be reused by multiple UseCases
       List<GroupMember> findGroupMembersByGroupId(UUID groupId);
-      
+
       // New method for specific use case - can also be reused by other UseCases
       GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId);
   }
@@ -575,3 +575,208 @@ To ensure all APIs are clearly documented and easily testable, every `Controller
       }
   }
   ```
+
+## 9. Admin API Development Guidelines
+
+This section defines the conventions and patterns for implementing administrative functionality within the existing application architecture.
+
+### Admin API Architecture Principles
+
+- **Unified Codebase**: Admin APIs are developed within the same project structure as regular app APIs, maintaining architectural consistency while providing administrative capabilities.
+
+- **No File Separation**: Rather than creating separate files for admin-specific logic, admin functionality is added to existing files with clear commenting conventions to distinguish admin-only code from regular app code.
+
+- **Shared Infrastructure**: Admin APIs leverage the same domain models, persistence layers, and infrastructure components as regular APIs, ensuring consistency and reducing code duplication.
+
+### Admin-Specific Code Identification
+
+All admin-specific code must be clearly marked with standardized comments to maintain code clarity and enable future separation if needed:
+
+```java
+public interface MemberQueryUseCase {
+    // Regular app methods
+    Member getMemberById(MemberId id);
+    boolean isEmailAvailable(String email);
+
+    // ADMIN - Administrative methods
+    List<Member> getAllMembers();
+    List<Member> searchMembers(String keyword);
+    Member getMemberWithAdminDetails(MemberId id);
+}
+
+@Service
+public class MemberQueryService implements MemberQueryUseCase {
+
+    // Regular app implementation
+    @Override
+    public Member getMemberById(MemberId id) { ... }
+
+    // ADMIN - Administrative implementation
+    @Override
+    public List<Member> getAllMembers() {
+        return memberPort.findAll(); // Admin-only: full member list access
+    }
+}
+```
+
+### Church-Based Permission System
+
+Admin permissions are managed on a per-church basis, recognizing that users may have different roles across different churches.
+
+#### Role Hierarchy
+
+```java
+public enum ChurchRole {
+    MEMBER(1),   // Regular church member
+    LEADER(2),   // Small group leader
+    ADMIN(3);    // Church administrator
+
+    private final int level;
+
+    public boolean hasPermission(ChurchRole required) {
+        return this.level >= required.level;
+    }
+}
+```
+
+#### Permission Annotation
+
+Admin APIs must use the `@RequireRole` annotation to specify required permission levels:
+
+```java
+@RestController
+@RequestMapping("/members")
+public class MemberController {
+
+    // Regular app API - no special permissions
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> getMe(@AuthenticationPrincipal String memberId) { ... }
+
+    // ADMIN - Church administrator only
+    @GetMapping
+    @RequireRole(ChurchRole.ADMIN)
+    public ResponseEntity<List<MeResponse>> getAllMembers() { ... }
+
+    // ADMIN - Church administrator only
+    @PostMapping("/{memberId}/suspend")
+    @RequireRole(ChurchRole.ADMIN)
+    public ResponseEntity<Void> suspendMember(@PathVariable UUID memberId) { ... }
+}
+```
+
+### Smart Authentication Flow
+
+The authentication system automatically handles church context based on user's church memberships:
+
+#### Single Church Users
+
+- Users belonging to only one church automatically receive a JWT token with church context
+- No additional church selection step required
+
+#### Multi-Church Users
+
+- Users belonging to multiple churches receive a temporary token after login
+- Must select a specific church through `/auth/select-church` endpoint
+- Receive a full JWT token with selected church context
+
+#### JWT Token Structure
+
+JWT tokens contain minimal information to ensure real-time permission validation:
+
+```json
+{
+  "sub": "user-uuid-123",
+  "churchId": "church-uuid-456",
+  "exp": 1234567890
+}
+```
+
+**Note**: Role information is intentionally excluded from JWT to ensure real-time permission checks and immediate reflection of role changes.
+
+### Real-Time Permission Validation
+
+Permission validation occurs at runtime through AOP (Aspect-Oriented Programming) to ensure security and immediate reflection of permission changes:
+
+```java
+@Aspect
+@Component
+@RequiredArgsConstructor
+public class RolePermissionAspect {
+
+    private final ChurchMemberService churchMemberService;
+
+    @Before("@annotation(requireRole)")
+    public void checkRole(JoinPoint joinPoint, RequireRole requireRole) {
+
+        // Extract user and church information from JWT
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userId = auth.getName();
+        String churchId = ((JwtAuthenticationToken) auth).getChurchId();
+
+        // Real-time role lookup from database
+        ChurchRole currentRole = churchMemberService.getCurrentRole(
+            MemberId.from(UUID.fromString(userId)),
+            ChurchId.from(UUID.fromString(churchId))
+        );
+
+        // Permission validation
+        if (currentRole == null || !currentRole.hasPermission(requireRole.value())) {
+            throw new AccessDeniedException(
+                String.format("Required role: %s, Current role: %s",
+                    requireRole.value(), currentRole)
+            );
+        }
+    }
+}
+```
+
+### Performance Optimization
+
+To balance security with performance, a short-term caching strategy is implemented:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class ChurchMemberService {
+
+    @Cacheable(value = "member-roles", key = "#memberId + ':' + #churchId",
+               cacheManager = "shortTermCacheManager")
+    public ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId) {
+        return churchMemberPort.findByMemberIdAndChurchId(memberId, churchId)
+            .map(ChurchMember::getRole)
+            .orElse(null);
+    }
+}
+```
+
+#### Cache Configuration
+
+```java
+@Configuration
+@EnableCaching
+public class CacheConfig {
+
+    @Bean
+    public CacheManager shortTermCacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES) // 30-minute cache for performance
+            .maximumSize(1000));
+        return cacheManager;
+    }
+}
+```
+
+### Admin Code Organization Guidelines
+
+- **Comment Prefix**: All admin-specific code must be prefixed with `// ADMIN -` comments
+- **Method Grouping**: Admin methods should be grouped together within interfaces and classes
+- **Documentation**: Admin methods should include clear documentation about their administrative purpose
+- **Validation**: Admin APIs should include appropriate validation and error handling
+
+### Security Considerations
+
+- **Real-Time Validation**: All admin operations validate permissions at request time, not token time
+- **Church Context**: Admin permissions are always validated within the context of a specific church
+- **Audit Trail**: Consider implementing audit logging for admin operations (future enhancement)
+- **Principle of Least Privilege**: Users should only have the minimum permissions necessary for their role
