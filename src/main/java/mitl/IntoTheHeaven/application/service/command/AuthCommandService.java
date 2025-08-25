@@ -3,7 +3,7 @@ package mitl.IntoTheHeaven.application.service.command;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
-import mitl.IntoTheHeaven.application.port.in.command.LoginUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
 import mitl.IntoTheHeaven.global.util.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,13 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AuthService implements LoginUseCase {
+public class AuthCommandService implements AuthCommandUseCase {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public LoginResponse login(LoginRequest request) {
+
 
         // 1. The `AuthenticationManager` attempts to authenticate using the `UsernamePasswordAuthenticationToken`.
         // 2. Internally, the `DaoAuthenticationProvider` is activated.
@@ -38,5 +39,11 @@ public class AuthService implements LoginUseCase {
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .build();
+    }
+
+    @Override
+    public LoginResponse adminLogin(LoginRequest request) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'adminLogin'");
     }
 } 

@@ -10,7 +10,7 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.SignUpRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.SignUpResponse;
-import mitl.IntoTheHeaven.application.port.in.command.LoginUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.VerificationCommandUseCase;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.SendEmailVerificationRequest;
@@ -36,7 +36,7 @@ import jakarta.validation.constraints.Pattern;
 @Validated
 public class AuthController {
 
-    private final LoginUseCase loginUseCase;
+    private final AuthCommandUseCase authCommandUseCase;
     private final MemberCommandUseCase memberCommandUseCase;
     private final MemberQueryUseCase memberQueryUseCase;
     private final VerificationCommandUseCase verificationCommandUseCase;
@@ -44,7 +44,7 @@ public class AuthController {
     @Operation(summary = "User Login", description = "Logs in a user with email and password.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
-        LoginResponse response = loginUseCase.login(loginRequest);
+        LoginResponse response = authCommandUseCase.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -100,4 +100,12 @@ public class AuthController {
         boolean available = memberQueryUseCase.isEmailAvailable(email);
         return ResponseEntity.ok(AvailabilityResponse.of(available));
     }
-} 
+
+    /* ADMIN */
+    @Operation(summary = "Admin Login", description = "Logs in an admin with email and password.")
+    @PostMapping("/admin/login")
+    public ResponseEntity<LoginResponse> adminLogin(@RequestBody @Valid LoginRequest loginRequest) {
+        LoginResponse response = authCommandUseCase.adminLogin(loginRequest);
+        return ResponseEntity.ok(response);
+    }
+}

@@ -13,7 +13,6 @@ import java.util.List;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -46,10 +45,11 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        String memberId = getUsernameFromToken(token);
-        // Create Authentication object directly without DB lookup (JWT token is already validated)
+        Claims claims = getClaimsFromToken(token);
+        String memberId = claims.getSubject();
+        String churchId = claims.get("churchId", String.class);
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("USER"));
-        return new UsernamePasswordAuthenticationToken(memberId, "", authorities);
+        return new mitl.IntoTheHeaven.global.security.JwtAuthenticationToken(memberId, "", authorities, churchId);
     }
 
     public String getUsernameFromToken(String token) {
