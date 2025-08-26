@@ -10,6 +10,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import mitl.IntoTheHeaven.application.service.query.ChurchMemberService;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,7 @@ public class AuthCommandService implements AuthCommandUseCase {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ChurchMemberService churchMemberService;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -43,7 +48,23 @@ public class AuthCommandService implements AuthCommandUseCase {
 
     @Override
     public LoginResponse adminLogin(LoginRequest request) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'adminLogin'");
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
+        List<String> adminChurchIds = churchMemberService.getAdminChurchIds(memberId);
+
+        if (adminChurchIds.isEmpty()) {
+            throw new RuntimeException("No admin church found");
+        }
+        if (adminChurchIds.size() == 1) {
+            String accessToken = jwtTokenProvider.createAccessToken(authentication, adminChurchIds.get(0));
+            return LoginResponse.builder().accessToken(accessToken).build();
+        }
+
+        // Multiple admin churches: return token without churchId for now (or extend response)
+        String tempToken = jwtTokenProvider.createAccessToken(authentication);
+        return LoginResponse.builder().accessToken(tempToken).build();
     }
 } 

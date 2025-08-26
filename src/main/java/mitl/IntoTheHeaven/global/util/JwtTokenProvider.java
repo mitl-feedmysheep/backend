@@ -32,6 +32,7 @@ public class JwtTokenProvider {
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
     }
 
+    /* Member Login */
     public String createAccessToken(Authentication authentication) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
@@ -40,6 +41,20 @@ public class JwtTokenProvider {
             .subject(authentication.getName())
             .issuedAt(now)
             .expiration(validity)
+            .signWith(key)
+            .compact();
+    }
+
+    /* Admin Login */
+    public String createAccessToken(Authentication authentication, String churchId) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+            .subject(authentication.getName())
+            .issuedAt(now)
+            .expiration(validity)
+            .claim("churchId", churchId)
             .signWith(key)
             .compact();
     }

@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,11 @@ public class ChurchMemberService {
     public ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId) {
         // TODO: Implement real lookup via ChurchMemberPort
         return ChurchRole.ADMIN; // Temporary stub for wiring
+    }
+
+    public List<String> getAdminChurchIds(MemberId memberId) {
+        // TODO: Replace with actual lookup of churches where member has ADMIN role
+        return List.of();
     }
 }
 

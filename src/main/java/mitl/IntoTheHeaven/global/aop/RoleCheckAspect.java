@@ -25,8 +25,8 @@ public class RoleCheckAspect {
 
     private final ChurchMemberService churchMemberService;
 
-    @Before("@annotation(requireRole)")
-    public void checkRole(JoinPoint joinPoint, RequireRole requireRole) {
+    @Before("@annotation(requireChurchRole)")
+    public void checkRole(JoinPoint joinPoint, RequireChurchRole requireChurchRole) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (!(auth instanceof JwtAuthenticationToken jwtAuth)) {
             throw new AccessDeniedException("Invalid authentication context");
@@ -40,8 +40,8 @@ public class RoleCheckAspect {
                 ChurchId.from(UUID.fromString(churchId))
         );
 
-        if (currentRole == null || !currentRole.hasPermission(requireRole.value())) {
-            throw new AccessDeniedException("Required role: " + requireRole.value() + ", Current role: " + currentRole);
+        if (currentRole == null || !currentRole.hasPermission(requireChurchRole.value())) {
+            throw new AccessDeniedException("Required role: " + requireChurchRole.value() + ", Current role: " + currentRole);
         }
     }
 }
