@@ -8,7 +8,7 @@ import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class MemberCommandService implements MemberCommandUseCase, ChangePasswordUseCase {
 
     private final MemberPort memberPort;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Member signUp(SignUpCommand command) {
