@@ -1,0 +1,15 @@
+.gradle
+build
+!build/resources
+!build/libs
+!build/generated
+**/.git
+**/.gitignore
+**/.idea
+**/.vscode
+**/node_modules
+**/.env
+**/.env.*
+**/tmp
+**/.DS_Store
+

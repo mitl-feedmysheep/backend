@@ -1,6 +1,7 @@
 services:
   app:
     image: ${APP_IMAGE}
+    pull_policy: always
     container_name: into-the-heaven-api
     restart: unless-stopped
     env_file:
