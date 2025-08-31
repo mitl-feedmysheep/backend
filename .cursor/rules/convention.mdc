@@ -1,3 +1,847 @@
+---
+alwaysApply: true
+---
+
+# IntoTheHeaven Project Development Convention
+
+This document defines the development conventions for the IntoTheHeaven project to maintain a consistent code style and architecture.
+
+## 1. Architecture: Hexagonal Architecture
+
+This project is based on Hexagonal Architecture. The roles and responsibilities of each layer are as follows.
+
+- **`domain`**: Contains the core business logic. It must not have dependencies on any frameworks or external technologies.
+
+  - `model`: Core domain models such as Aggregate Roots, Entities, and Value Objects (VOs).
+  - `enums`: Enum types used within the domain.
+  - `exception`: Custom business exceptions related to the domain.
+
+- **`application`**: Handles user requests and orchestrates domain services to control the business flow.
+
+  - `port.in`: Ports for requests coming from outside (Adapters) into the Application layer. Typically named as `UseCase` interfaces.
+  - `port.out`: Ports for requests going from the Application layer to the outside (Adapters).
+  - `service`: Service classes that implement the `UseCase` interfaces. Application-level technologies like `@Transactional` can be used here.
+
+- **`adapter`**: Responsible for interacting with the outside world.
+
+  - `in`: Delivers external requests to the application layer.
+    - `web`: Spring MVC controllers (`@RestController`).
+  - `out`: Delivers application requests to external systems (DB, API, etc.) and returns the results.
+    - `persistence`: DB-related logic such as JPA Entities and Repository implementations.
+    - `client`: External API clients.
+
+- **`global`**: Common modules used throughout the project.
+  - `config`: Configuration files for Spring, QueryDSL, etc.
+  - `util`: Common utility classes.
+  - `exception`: Global exception handlers.
+
+### Core Architectural Principles
+
+- **Data Consistency with ERD**: All `domain.model` classes and `adapter.out.persistence.entity` classes must be designed based on the [into-the-heaven.erd.json](mdc:into-the-heaven.erd.json) file. This ERD serves as the single source of truth for the data model, ensuring consistency between the database schema and the application code. Any changes to the data structure should be reflected in the ERD first.
+
+- **CQS (Command and Query Separation)**: We apply CQS starting from the `application` layer. The `port.in` (UseCases) and `service` packages are separated into `command` and `query` sub-packages. This separation recognizes that commands (state changes) and queries (data retrieval) have different requirements and optimization strategies.
+
+- **Domain Logic Placement**:
+
+  - **Domain Model**: Logic that operates on a single domain aggregate and its internal state (e.g., calculating a member's age from their birthdate) should be placed within the domain model class itself. This follows the Information Expert principle and increases cohesion.
+  - **Application Service**: Logic that coordinates between different domain models or aggregates belongs in the `application` service. The service is responsible for orchestrating complex business flows, fetching necessary data from multiple ports, and coordinating domain operations.
+    - **Examples**:
+      - Cross-aggregate operations (e.g., creating a gathering and automatically adding all group members as gathering participants)
+      - Multi-step business processes that involve multiple domain entities
+      - Transactional coordination between different domain operations
+      - Complex queries that span multiple aggregates
+    - **Pattern**: Application services should focus on orchestration and coordination, delegating actual business logic to domain models whenever possible.
+
+- **DTO Conversion Principle**: The conversion between different DTO layers follows specific patterns to maintain architectural clarity and consistency.
+
+  - **Response DTO Conversion (Query Flow)**: Application services (`UseCase`) should return pure domain models. The responsibility for converting these domain models into Response DTOs lies with the `adapter.in.web.controller`.
+
+    - **Implementation**: The conversion logic should be encapsulated within the Response DTO class using a static `from` method.
+
+    ```java
+    // In SomeResponse.java
+    public static SomeResponse from(SomeDomainObject domain) { /* ... */ }
+    public static List<SomeResponse> from(List<SomeDomainObject> domains) { /* ... */ }
+
+    // In SomeController.java
+    SomeDomainObject domainObject = useCase.findSomething();
+    SomeResponse response = SomeResponse.from(domainObject);
+    return ResponseEntity.ok(response);
+    ```
+
+  - **Command DTO Conversion (Command Flow)**: Request DTOs from the presentation layer should be converted to Command DTOs at the controller level before passing to the application layer.
+
+    - **Implementation**: Command DTOs should provide a static `from` method to convert from Request DTOs. This pattern replaces the builder pattern for Command DTOs to ensure consistent conversion logic.
+
+    ```java
+    // In SomeCommand.java
+    public static SomeCommand from(SomeRequest request) {
+        return new SomeCommand(
+            request.getField1(),
+            request.getField2()
+        );
+    }
+
+    // In SomeController.java
+    public ResponseEntity<SomeResponse> createSomething(@RequestBody @Valid SomeRequest request) {
+        SomeCommand command = SomeCommand.from(request);
+        SomeDomainObject result = useCase.executeSomething(command);
+        return ResponseEntity.ok(SomeResponse.from(result));
+    }
+    ```
+
+### Value Object ID (Domain ID) Handling
+
+To enhance type safety and clarify domain intent, the application core must use Value Object IDs (e.g., `GatheringId`) instead of primitive types (`UUID`). The conversion between these types is strictly managed at the architecture's boundaries.
+
+- **Principle**: Conversion happens at the boundaries. The application core remains pure, exclusively handling domain-specific ID objects.
+
+- **ID Generation Strategy**: All entity IDs are generated at the **application layer** using `UUID.randomUUID()` and wrapped in domain-specific ID objects. JPA entities do **NOT** use `@GeneratedValue` annotations.
+
+  ```java
+  // In MemberCommandService.java
+  Member member = Member.builder()
+      .id(MemberId.from(UUID.randomUUID())) // Domain layer ID generation
+      .name(command.getName())
+      // ... other fields
+      .build();
+  ```
+
+- **BaseEntity Configuration**: The [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class must **NOT** use `@GeneratedValue` to maintain control over ID generation in the application layer. UUIDs are stored as `CHAR(36)` for readable string representation.
+
+  ```java
+  // In BaseEntity.java
+  @Id
+  @Column(columnDefinition = "CHAR(36)")
+  @JdbcTypeCode(SqlTypes.CHAR)
+  private UUID id; // No @GeneratedValue annotation
+  ```
+
+- **Inbound Flow (`Adapter In`)**: The `Controller` is responsible for **wrapping** primitive types received from external requests (e.g., `UUID` from `@PathVariable`) into Value Object IDs before passing them to the `UseCase`.
+
+  ```java
+  // In SomeController.java
+  public ResponseEntity<SomeResponse> getSomething(@PathVariable UUID id) {
+      // Wrap primitive UUID into a domain-specific ID
+      SomeDomainObject domainObject = useCase.findSomething(new SomeId(id));
+      // ...
+  }
+  ```
+
+- **Outbound Flow (`Adapter Out`)**: The `Persistence Adapter` is responsible for **unwrapping** the primitive value from the Value Object ID before interacting with external infrastructure like a database.
+  ```java
+  // In SomePersistenceAdapter.java
+  public Optional<SomeDomainObject> findById(SomeId domainId) {
+      // Unwrap the primitive value for the repository
+      UUID rawId = domainId.getValue();
+      return someJpaRepository.findById(rawId).map(mapper::toDomain);
+  }
+  ```
+
+## 2. Package Structure
+
+The package structure is organized based on the hexagonal architecture layers and CQS pattern.
+
+```
+src/main/java/mitl/IntoTheHeaven
+├── domain
+│   ├── model
+│   └── enums
+├── application
+│   ├── port
+│   │   ├── in
+│   │   │   ├── command
+│   │   │   │   └── dto
+│   │   │   └── query
+│   │   └── out
+│   └── service
+│       ├── command
+│       └── query
+├── adapter
+│   ├── in
+│   │   └── web
+│   │       ├── controller
+│   │       └── dto
+│   └── out
+│       └── persistence
+│           ├── entity
+│           ├── mapper
+│           └── repository
+└── global
+    └── config
+```
+
+### 2.1 Layering rule (authoritative)
+
+- From Controller to Port (UseCase), organize by DDD domain (church, group, gathering, prayer, member).
+- In persistence (entity/repository/mapper), use table-oriented naming and structure. Join tables (e.g., church_member, group_member, gathering_member) follow the same rule.
+- Place join-table entities/repositories/mappers under the regular persistence directory using table-name-based class names.
+- For N:M relationships, do not use `@ManyToMany`. Model them explicitly with dedicated join-table entities.
+
+Example (conceptual):
+
+```
+adapter/out/persistence
+├── entity
+│   ├── ChurchJpaEntity
+│   ├── MemberJpaEntity
+│   ├── GroupJpaEntity
+│   ├── GatheringJpaEntity
+│   ├── PrayerJpaEntity
+│   ├── ChurchMemberJpaEntity      // join table
+│   ├── GroupMemberJpaEntity       // join table
+│   └── GatheringMemberJpaEntity   // join table
+├── repository
+│   ├── ChurchJpaRepository
+│   ├── MemberJpaRepository
+│   ├── GroupJpaRepository
+│   ├── GatheringJpaRepository
+│   ├── PrayerJpaRepository
+│   ├── ChurchMemberJpaRepository
+│   ├── GroupMemberJpaRepository
+│   └── GatheringMemberJpaRepository
+└── mapper
+    ├── ChurchPersistenceMapper
+    ├── MemberPersistenceMapper
+    ├── GroupPersistenceMapper
+    ├── GatheringPersistenceMapper
+    ├── PrayerPersistenceMapper
+    ├── ChurchMemberPersistenceMapper
+    ├── GroupMemberPersistenceMapper
+    └── GatheringMemberPersistenceMapper
+```
+
+## 3. Naming Convention
+
+- **UseCase (In-Port)**: `[Domain]QueryUseCase`, `[Domain]CommandUseCase`
+  - _Example_: `MemberQueryUseCase`, `MemberCommandUseCase`
+- **Service (UseCase Impl)**: `[Domain]QueryService`, `[Domain]CommandService`
+  - _Example_: `MemberQueryService`, `MemberCommandService`
+- **Port (Out-Port)**: `[Domain]Port`
+  - _Example_: `MemberPort`
+- **Adapter (Out-Adapter)**: `[Domain]PersistenceAdapter`
+  - _Example_: `MemberPersistenceAdapter`
+- **Controller**: `[Domain]Controller`
+  - _Example_: `MemberController`
+- **Request/Response DTO**: `[Action][Domain]Request`, `[Action][Domain]Response`
+  - _Example_: `SignUpRequest`, `FindMemberResponse`
+- **Command/Query DTO**: `[Action]Command`, `[Data]Query`
+  - _Example_: `SignUpCommand`, `CreateGatheringCommand`
+  - _Note_: Command DTOs should provide a static `from()` method for conversion from Request DTOs instead of using the builder pattern
+- **JPA Entity**: `[Domain]JpaEntity`
+  - _Example_: `MemberJpaEntity`
+- **Mapper**: `[Domain]PersistenceMapper`
+  - _Example_: `MemberPersistenceMapper`
+
+## 4. API Design Principles (RESTful)
+
+- **URI**: Resources should be represented by nouns (plural). (`/members`, `/groups/{groupId}/gatherings`)
+- **HTTP Method**: Actions on resources are expressed by HTTP Methods.
+  - `POST`: Create a resource.
+  - `GET`: Retrieve a resource.
+  - `PUT` / `PATCH`: Update a resource (full/partial).
+  - `DELETE`: Delete a resource.
+- **Response Format**: Use JSON as the default, with `camelCase` for keys.
+- **Success Responses**: `200 OK`, `201 Created`, `204 No Content`
+- **Error Responses**: `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error`
+
+### UseCase Design Principles
+
+To maintain clean architecture boundaries and avoid tight coupling between different business operations, the following principles must be strictly followed:
+
+- **One API, One UseCase**: Each API endpoint must use exactly **one dedicated UseCase**. This ensures clear separation of concerns and makes the codebase more maintainable.
+
+  - **Prohibited**: Reusing existing UseCases for new APIs, even if they seem similar or could be extended.
+  - **Required**: Creating a new UseCase interface and service implementation for each new API endpoint.
+
+  ```java
+  // ❌ INCORRECT: Reusing existing UseCase for new API
+  @GetMapping("/{groupId}/me")
+  public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
+          @PathVariable UUID groupId,
+          @AuthenticationPrincipal String memberId) {
+      // Using existing GroupQueryUseCase.getGroupMembersByGroupId() - WRONG!
+      List<GroupMember> groupMembers = groupQueryUseCase.getGroupMembersByGroupId(groupId);
+      // ... filter logic in controller - WRONG!
+  }
+
+  // ✅ CORRECT: Dedicated UseCase for new API
+  @GetMapping("/{groupId}/me")
+  public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
+          @PathVariable UUID groupId,
+          @AuthenticationPrincipal String memberId) {
+      // Using dedicated UseCase - CORRECT!
+      GroupMember groupMember = getMyGroupMemberInfoUseCase.getMyGroupMemberInfo(
+              GroupId.from(groupId),
+              MemberId.from(UUID.fromString(memberId))
+      );
+      return ResponseEntity.ok(GroupMemberResponse.from(groupMember));
+  }
+  ```
+
+- **UseCase Non-Reusability**: UseCases are designed for specific business operations and should **NOT** be reused across different API endpoints. Each UseCase should have a single, well-defined responsibility.
+
+  - **Benefits**:
+    - Clear business operation boundaries
+    - Easier testing and mocking
+    - Reduced coupling between different APIs
+    - Better maintainability when business logic changes
+    - Clearer code intention and readability
+
+- **Port Method Reusability**: In contrast to UseCases, **Port methods CAN and SHOULD be reused** across different UseCases. Port methods represent low-level data access operations and infrastructure interactions that are meant to be shared.
+
+  ```java
+  // ✅ CORRECT: Multiple UseCases using the same Port method
+
+  // GroupQueryService.java
+  @Override
+  public List<GroupMember> getGroupMembersByGroupId(UUID groupId) {
+      return groupPort.findGroupMembersByGroupId(groupId); // Using Port method
+  }
+
+  // GetMyGroupMemberInfoService.java
+  @Override
+  public GroupMember getMyGroupMemberInfo(GroupId groupId, MemberId memberId) {
+      return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue()); // Using Port method
+  }
+
+  // SomeOtherService.java - ALSO OKAY to use the same Port methods
+  @Override
+  public SomeResult doSomeOtherOperation(UUID groupId) {
+      List<GroupMember> members = groupPort.findGroupMembersByGroupId(groupId); // Reusing Port method - CORRECT!
+      // ... different business logic
+  }
+  ```
+
+- **Port Method Granularity**: When a new UseCase requires data that existing Port methods cannot provide efficiently, new Port methods should be added rather than implementing workarounds in the service layer.
+
+  ```java
+  // ✅ CORRECT: Add specific Port method for new UseCase
+  public interface GroupPort {
+      // Existing method - can be reused by multiple UseCases
+      List<GroupMember> findGroupMembersByGroupId(UUID groupId);
+
+      // New method for specific use case - can also be reused by other UseCases
+      GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId);
+  }
+  ```
+
+- **Architecture Layer Responsibility Summary**:
+  - **UseCase Layer**: Business logic composition - NO reuse between different APIs
+  - **Port Layer**: Data access operations - YES, encouraged to reuse across UseCases
+  - **Adapter Layer**: Infrastructure implementation - Implements Port interfaces, naturally reused
+
+## 5. Commit Message Convention
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification with detailed format.
+
+- **Format**:
+
+  ```
+  type: {summary}
+  - {element}
+  - {element}
+  - ...
+  ```
+
+- **`type`**:
+
+  - `feat`: A new feature
+  - `fix`: A bug fix
+  - `docs`: Documentation only changes
+  - `refactor`: A code change that neither fixes a bug nor adds a feature
+  - `test`: Adding missing tests or correcting existing tests
+
+- **Example**:
+
+  ```
+  fix: resolve JWT authentication issues
+  - Update JwtTokenProvider to use memberId as principal
+  - Add Bearer token prefix handling in JwtAuthenticationFilter
+  - Fix null memberId issue in @AuthenticationPrincipal
+  ```
+
+- **Assistant Guidelines**: When asked to write commit messages, always use the detailed format above with summary and bullet points listing specific changes.
+
+## 6. Code Style
+
+- **Lombok**: Actively use annotations like `@Getter`, `@Builder`, `@RequiredArgsConstructor` to minimize boilerplate code.
+- **Immutability**: Design DTOs and Value Objects to be immutable where possible.
+- **Validation**: Perform primary validation at the Controller DTO level using `@Valid`. Use specific validation annotations like `@Pattern`, `@Email`, `@NotBlank`, `@NotNull` for comprehensive input validation.
+- **Exception Handling**: Define business exceptions in the `domain` or `application` layer and handle them globally using `@RestControllerAdvice`.
+- **Error Messages**: All error messages thrown in exceptions must be written in English. This ensures consistency for developers and simplifies integration with logging and monitoring systems.
+- **Comments**: All comments in the code must be written in English for consistency and maintainability.
+
+## 7. Database and Performance Optimizations
+
+### UUID Storage Configuration
+
+- **Storage Format**: All UUIDs are stored as `CHAR(36)` for readable string representation and easier database debugging.
+  - **Benefits**: Human-readable format, easier debugging, direct UUID string usage in queries
+  - **Implementation**: Use `@Column(columnDefinition = "CHAR(36)")` and `@JdbcTypeCode(SqlTypes.CHAR)` annotations
+
+```java
+// In BaseEntity.java
+@Id
+@Column(columnDefinition = "CHAR(36)")
+@JdbcTypeCode(SqlTypes.CHAR)
+private UUID id;
+```
+
+- **Database Queries**: When manually querying the database, use UUID strings directly:
+  - Example: `SELECT * FROM member WHERE id = '309e73a3-6d2c-456a-a3e6-59e692b7d8f7'`
+
+### Database Configuration
+
+- **Auto-Creation**: Use `createDatabaseIfNotExist=true` in database URL to automatically create database if it doesn't exist
+- **Schema Management**: Rely on JPA DDL auto-generation (`spring.jpa.hibernate.ddl-auto`) instead of manual schema.sql files for better compatibility between development and testing environments
+- **Test Environment**: Configure test environments with `spring.sql.init.mode=never` to use JPA DDL only
+
+## 8. Key Implementation Patterns and Conventions
+
+This section covers specific patterns and conventions adopted in the project to address common challenges.
+
+### a. Data Fetching and N+1 Problem
+
+To prevent the N+1 query problem, we use JPA's EntityGraph feature for eager fetching of related entities in a single query (Fetch Join).
+
+- **Primary Method**: Use `@EntityGraph` directly on repository methods. While powerful, be aware of its limitations.
+  - **Example**: In `MemberJpaRepository`, `findWithGroupsById` uses `@EntityGraph` to fetch `groupMembers` and their associated `group` in one go.
+  ```java
+  // In MemberJpaRepository.java
+  @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
+  Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
+  ```
+- **Convention**:
+  - For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
+  - For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
+  - Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+
+### b. Adapter Responsibilities and Repository Usage
+
+An adapter's purpose is to implement a port and bridge the application layer to an external technology (like a database).
+
+- **Principle**: An adapter is not restricted to using only the repository that matches its name. It should use whatever repositories are necessary to fulfill its port's contract in the most efficient way.
+- **Example**: `GroupPersistenceAdapter` implements `GroupPort`. To fulfill the `findGroupsByMemberId` method, it uses `MemberJpaRepository`. This is the correct approach because the query starts with a `memberId`, making `Member` the logical starting point for the database query, based on the ERD.
+- **Guideline**: The choice of which repository to use within an adapter should be driven by the data model (ERD) and query efficiency, not by the adapter's name.
+
+### c. Persistence Mapper Responsibilities
+
+Persistence Mappers serve as the crucial translation layer between domain models and JPA entities, ensuring proper data conversion and relationship management.
+
+- **Mandatory ID Handling**: All `toEntity()` methods must explicitly set the domain ID to the entity. This is critical for proper entity persistence.
+
+  ```java
+  // REQUIRED: Always set the domain ID in toEntity methods
+  public MemberJpaEntity toEntity(Member domain) {
+      return MemberJpaEntity.builder()
+          .id(domain.getId().getValue()) // MANDATORY: Set domain ID
+          .name(domain.getName())
+          // ... other fields
+          .build();
+  }
+  ```
+
+- **Complete Object Graph Conversion**: When converting domain aggregates to JPA entities, mappers must handle the entire object graph, including all related entities.
+
+  - **Domain to Entity**: The `toEntity()` method should convert not only the root aggregate but also all contained domain objects (e.g., converting `GatheringMember` domain objects to `GatheringMemberJpaEntity` when converting a `Gathering`).
+  - **Entity to Domain**: The `toDomain()` method should reconstruct the complete domain aggregate with all its relationships.
+
+- **Circular Reference Prevention**: When handling complex object graphs, prevent infinite loops by carefully managing bidirectional relationships.
+
+  ```java
+  // Example: Preventing circular reference in Prayer mapping
+  private Prayer toDomain(PrayerJpaEntity entity) {
+      return Prayer.builder()
+          .id(PrayerId.from(entity.getId()))
+          .member(entity.getMember() != null ? memberPersistenceMapper.toDomain(entity.getMember()) : null)
+          .gatheringMember(null) // Prevent circular reference
+          .prayerRequest(entity.getPrayerRequest())
+          .build();
+  }
+  ```
+
+- **Relationship Mapping**: Mappers are responsible for correctly mapping domain relationships to JPA entity relationships, ensuring that cascade operations and entity references are properly established.
+
+  ```java
+  // Example: GatheringPersistenceMapper
+  public GatheringJpaEntity toEntity(Gathering gathering) {
+      return GatheringJpaEntity.builder()
+          .id(gathering.getId().getValue()) // MANDATORY: Set domain ID
+          .name(gathering.getName())
+          // Convert all GatheringMember domain objects to entities in a separated method each
+          .gatheringMembers(gathering.getGatheringMembers().stream()
+              .map(this::toGatheringMemberEntity)
+              .collect(Collectors.toList()))
+          .build();
+  }
+  ```
+
+- **Cross-Domain Data Requirements**: When domain objects require data from multiple aggregates, mappers should coordinate the necessary information without violating domain boundaries.
+
+  - Mappers may need to work with multiple repository types to gather all required data for complete domain reconstruction.
+  - The mapper should ensure that domain objects receive all necessary related information while maintaining proper encapsulation.
+
+- **Null Safety**: All mapper methods should handle null inputs gracefully to prevent NullPointerExceptions.
+  ```java
+  public MemberJpaEntity toEntity(Member domain) {
+      if (domain == null) {
+          return null;
+      }
+      // ... mapping logic
+  }
+  ```
+
+### d. JPA Entity Design Conventions
+
+To ensure consistency, maintainability, and alignment with our architecture, all JPA Entity classes must adhere to the following design conventions:
+
+- **Base Entity Inheritance**: All entities must extend the common [BaseEntity](mdc:src/main/java/mitl/IntoTheHeaven/global/common/BaseEntity.java) class. This centralizes common fields like `id`, `createdAt`, `updatedAt`, and `deletedAt`, reducing code duplication and ensuring a consistent structure across all tables.
+
+- **Application-Level ID Management**: JPA entities must **NOT** use `@GeneratedValue` annotations. ID generation is handled at the application layer to maintain control over the domain model lifecycle.
+
+      ```java
+
+  // CORRECT: BaseEntity without @GeneratedValue
+  @Id
+  @Column(columnDefinition = "CHAR(36)")
+  @JdbcTypeCode(SqlTypes.CHAR)
+  private UUID id; // No @GeneratedValue
+
+  // INCORRECT: Do not use @GeneratedValue
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID) // ❌ FORBIDDEN
+  private UUID id;
+
+  ```
+
+  ```
+
+- **Builder Pattern for Instantiation**: Entities should be instantiated using the Builder pattern. For entities in an inheritance hierarchy (i.e., all entities extending `BaseEntity`), **`@SuperBuilder`** must be used.
+
+  - **Usage**: The `@SuperBuilder` annotation should be used _without_ the `toBuilder = true` option. JPA entities are mutable and managed by the persistence context, so the `toBuilder()` pattern, which implies immutability, is not appropriate.
+  - **Encapsulation**: To enforce the use of the builder, direct instantiation via constructors must be prevented. The no-argument constructor should be `protected` (`@NoArgsConstructor(access = AccessLevel.PROTECTED)`) for JPA's internal use, and an all-arguments constructor should be made `private` (`@AllArgsConstructor(access = AccessLevel.PRIVATE)`) to be used by the builder.
+
+- **Global Soft-Delete Filter**: To ensure that queries only return active records, a global filter (like Hibernate's `@SQLRestriction`) should be applied at the entity level to automatically exclude records where `deleted_at` is not null. This simplifies application logic, as individual queries do not need to concern themselves with filtering for soft-deleted records.
+
+- **Standard-Compliant Field Documentation**: Field descriptions should be documented using standard JavaDoc comments (`/** ... */`) rather than implementation-specific annotation properties (like `comment` in Hibernate's `@Column`). This improves code portability and ensures that documentation is independent of the underlying persistence provider.
+
+- **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD ([into-the-heaven.erd.json](mdc:into-the-heaven.erd.json)). The ERD is the single source of truth for the data model.
+
+- **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
+  - **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
+  - **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
+  - **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
+
+### e. Domain Model Design Conventions
+
+To build a robust and expressive core domain, all domain models (`domain.model` package) must follow these conventions:
+
+- **Immutability by Default**: All fields must be declared as `private final`. This ensures that domain objects are immutable, making their state predictable and safe for concurrent use.
+
+- **Consistent and Safe Instantiation**
+
+  - Explicit constructors should not be defined; rely on the builder provided by `@SuperBuilder`.
+
+- **Minimal and Purposeful Annotations**:
+
+  - **`@Getter`**: Use on all domain models to provide read-access to state.
+  - **Prohibited Annotations**: To protect model integrity and enforce the builder pattern, the use of `@Setter`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, and `@RequiredArgsConstructor` is strictly forbidden on domain models.
+
+- **Clear Hierarchy (`DomainEntity` vs. `AggregateRoot`)**:
+  - **`DomainEntity`**: Represents a standard entity that has a unique identity but is conceptually a child object within an aggregate (e.g., `Prayer`, `GatheringMember`).
+  - **`AggregateRoot`**: Represents the root of an aggregate—a cluster of associated objects that are treated as a single unit for data changes. External objects should only hold references to the `AggregateRoot`. (e.g., `Member`, `Group`, `Gathering`).
+
+### f. Request/Response DTO Validation
+
+To ensure data integrity and provide clear feedback to API consumers, comprehensive validation must be implemented on all Request DTOs.
+
+- **Validation Annotations**: Use appropriate validation annotations based on field requirements:
+
+  - `@NotBlank`: For string fields that cannot be null, empty, or whitespace-only
+  - `@NotNull`: For non-string fields that cannot be null
+  - `@Email`: For email format validation
+  - `@Pattern`: For custom regex validation (e.g., `@Pattern(regexp = "M|F")` for sex field)
+  - `@Valid`: At controller level to enable validation processing
+
+- **Controller Validation**: All controller endpoints that accept Request DTOs must use `@Valid` annotation:
+
+  ```java
+  @PostMapping("/signup")
+  public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
+      // ...
+  }
+  ```
+
+- **Error Messages**: Validation messages should be in English and provide clear guidance:
+  ```java
+  @NotBlank(message = "Username is required")
+  @Pattern(regexp = "M|F", message = "Sex must be either M or F")
+  ```
+
+### g. API Documentation with Swagger (OpenAPI)
+
+To ensure all APIs are clearly documented and easily testable, every `Controller` must be annotated with Swagger (OpenAPI) annotations. This practice is mandatory for maintaining a consistent and understandable API specification.
+
+- **Controller-Level (`@Tag`)**: Every controller class must have a `@Tag` annotation. This groups all APIs within that controller under a common name in the Swagger UI.
+
+  - `name`: A short, descriptive name for the API group (e.g., "Group", "Member").
+  - `description`: A brief explanation of what the APIs in this group are for.
+
+- **Method-Level (`@Operation`)**: Every public endpoint method within a controller must have an `@Operation` annotation. This describes the specific purpose of that API.
+
+  - `summary`: A short, verb-first summary of the API's function (e.g., "Get My Groups", "Create New Gathering").
+  - `description`: A more detailed explanation of what the API does, what it returns, and any important notes.
+
+- **Language**: All descriptions must be written in **English**.
+
+- **Example (`GroupController.java`)**:
+
+  ```java
+  @Tag(name = "Group", description = "APIs for Group Management")
+  @RestController
+  @RequestMapping("/groups")
+  @RequiredArgsConstructor
+  public class GroupController {
+
+      // ... dependencies
+
+      @Operation(summary = "Get My Groups", description = "Retrieves a list of groups the current user belongs to.")
+      @GetMapping
+      public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
+          // ...
+      }
+
+      @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
+      @GetMapping("/{groupId}/gatherings")
+      public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
+          // ...
+      }
+  }
+  ```
+
+## 9. Admin API Development Guidelines
+
+This section defines the conventions and patterns for implementing administrative functionality within the existing application architecture.
+
+### Admin API Architecture Principles
+
+- **Unified Codebase**: Admin APIs are developed within the same project structure as regular app APIs, maintaining architectural consistency while providing administrative capabilities.
+
+- **No File Separation**: Rather than creating separate files for admin-specific logic, admin functionality is added to existing files with clear commenting conventions to distinguish admin-only code from regular app code.
+
+- **Shared Infrastructure**: Admin APIs leverage the same domain models, persistence layers, and infrastructure components as regular APIs, ensuring consistency and reducing code duplication.
+
+### Admin-Specific Code Identification
+
+All admin-specific code must be clearly marked with standardized comments to maintain code clarity and enable future separation if needed:
+
+```java
+public interface MemberQueryUseCase {
+    // Regular app methods
+    Member getMemberById(MemberId id);
+    boolean isEmailAvailable(String email);
+
+    // ADMIN - Administrative methods
+    List<Member> getAllMembers();
+    List<Member> searchMembers(String keyword);
+    Member getMemberWithAdminDetails(MemberId id);
+}
+
+@Service
+public class MemberQueryService implements MemberQueryUseCase {
+
+    // Regular app implementation
+    @Override
+    public Member getMemberById(MemberId id) { ... }
+
+    // ADMIN - Administrative implementation
+    @Override
+    public List<Member> getAllMembers() {
+        return memberPort.findAll(); // Admin-only: full member list access
+    }
+}
+```
+
+### Church-Based Permission System
+
+Admin permissions are managed on a per-church basis, recognizing that users may have different roles across different churches.
+
+#### Role Hierarchy
+
+```java
+public enum ChurchRole {
+    MEMBER(1),   // Regular church member
+    LEADER(2),   // Small group leader
+    ADMIN(3);    // Church administrator
+
+    private final int level;
+
+    public boolean hasPermission(ChurchRole required) {
+        return this.level >= required.level;
+    }
+}
+```
+
+#### Permission Annotation
+
+Admin APIs must use the `@RequireRole` annotation to specify required permission levels:
+
+```java
+@RestController
+@RequestMapping("/members")
+public class MemberController {
+
+    // Regular app API - no special permissions
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> getMe(@AuthenticationPrincipal String memberId) { ... }
+
+    // ADMIN - Church administrator only
+    @GetMapping
+    @RequireRole(ChurchRole.ADMIN)
+    public ResponseEntity<List<MeResponse>> getAllMembers() { ... }
+
+    // ADMIN - Church administrator only
+    @PostMapping("/{memberId}/suspend")
+    @RequireRole(ChurchRole.ADMIN)
+    public ResponseEntity<Void> suspendMember(@PathVariable UUID memberId) { ... }
+}
+```
+
+### Smart Authentication Flow
+
+The authentication system automatically handles church context based on user's church memberships:
+
+#### Single Church Users
+
+- Users belonging to only one church automatically receive a JWT token with church context
+- No additional church selection step required
+
+#### Multi-Church Users
+
+- Users belonging to multiple churches receive a temporary token after login
+- Must select a specific church through `/auth/select-church` endpoint
+- Receive a full JWT token with selected church context
+
+#### JWT Token Structure
+
+JWT tokens contain minimal information to ensure real-time permission validation:
+
+```json
+{
+  "sub": "user-uuid-123",
+  "churchId": "church-uuid-456",
+  "exp": 1234567890
+}
+```
+
+**Note**: Role information is intentionally excluded from JWT to ensure real-time permission checks and immediate reflection of role changes.
+
+### Real-Time Permission Validation
+
+Permission validation occurs at runtime through AOP (Aspect-Oriented Programming) to ensure security and immediate reflection of permission changes:
+
+```java
+@Aspect
+@Component
+@RequiredArgsConstructor
+public class RolePermissionAspect {
+
+    private final ChurchMemberService churchMemberService;
+
+    @Before("@annotation(requireRole)")
+    public void checkRole(JoinPoint joinPoint, RequireRole requireRole) {
+
+        // Extract user and church information from JWT
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userId = auth.getName();
+        String churchId = ((JwtAuthenticationToken) auth).getChurchId();
+
+        // Real-time role lookup from database
+        ChurchRole currentRole = churchMemberService.getCurrentRole(
+            MemberId.from(UUID.fromString(userId)),
+            ChurchId.from(UUID.fromString(churchId))
+        );
+
+        // Permission validation
+        if (currentRole == null || !currentRole.hasPermission(requireRole.value())) {
+            throw new AccessDeniedException(
+                String.format("Required role: %s, Current role: %s",
+                    requireRole.value(), currentRole)
+            );
+        }
+    }
+}
+```
+
+### Performance Optimization
+
+To balance security with performance, a short-term caching strategy is implemented:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class ChurchMemberService {
+
+    @Cacheable(value = "member-roles", key = "#memberId + ':' + #churchId",
+               cacheManager = "shortTermCacheManager")
+    public ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId) {
+        return churchMemberPort.findByMemberIdAndChurchId(memberId, churchId)
+            .map(ChurchMember::getRole)
+            .orElse(null);
+    }
+}
+```
+
+#### Cache Configuration
+
+```java
+@Configuration
+@EnableCaching
+public class CacheConfig {
+
+    @Bean
+    public CacheManager shortTermCacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES) // 30-minute cache for performance
+            .maximumSize(1000));
+        return cacheManager;
+    }
+}
+```
+
+### Admin Code Organization Guidelines
+
+- **Comment Prefix**: All admin-specific code must be prefixed with `// ADMIN -` comments
+- **Method Grouping**: Admin methods should be grouped together within interfaces and classes
+- **Documentation**: Admin methods should include clear documentation about their administrative purpose
+- **Validation**: Admin APIs should include appropriate validation and error handling
+
+### Security Considerations
+
+- **Real-Time Validation**: All admin operations validate permissions at request time, not token time
+- **Church Context**: Admin permissions are always validated within the context of a specific church
+- **Audit Trail**: Consider implementing audit logging for admin operations (future enhancement)
+- **Principle of Least Privilege**: Users should only have the minimum permissions necessary for their role
+
+## 10. Editing Order Guideline
+
+- When it comes to Admin endpoint based method, always append new code at the bottom of the target file when adding sections in this convention document or introducing new code snippets/guidelines. This ensures easier later extraction/splitting.
+
+## 11. Admin Endpoint DTO Policy
+
+- Scope: This rule applies to endpoints intended for administrative use (e.g., URIs under `/.../admin` or explicitly documented as admin-only in controller methods).
+- DTO Separation: Do not reuse regular app DTOs for admin endpoints. Create dedicated Admin Request/Response DTOs for admin APIs.
+- Naming: Use clear admin-specific naming, e.g., `AdminChurchResponse`, `AdminSelectChurchRequest`.
+- Placement: Place admin DTO classes alongside other DTOs in `adapter.in.web.dto` under the corresponding domain package. No special folders required.
+- Documentation: Annotate admin controller methods with an explicit description indicating admin-only usage, and use the `/* ADMIN */` comment prefix near admin-specific code where helpful.
+
+## 12. Service and Dependency Rules
+
+- Same-layer service calls are strictly forbidden. Do not inject or call services from the same application layer.
+- Application services must depend only on Ports for external (persistence or infrastructure) interactions. All DB access goes through Out-Ports implemented by adapters.
+
 # IntoTheHeaven Project Development Convention
 
 This document defines the development conventions for the IntoTheHeaven project to maintain a consistent code style and architecture.

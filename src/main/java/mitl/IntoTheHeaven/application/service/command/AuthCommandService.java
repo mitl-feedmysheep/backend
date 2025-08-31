@@ -8,63 +8,71 @@ import mitl.IntoTheHeaven.global.util.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import mitl.IntoTheHeaven.application.service.query.ChurchMemberService;
+import mitl.IntoTheHeaven.application.port.out.ChurchPort;
+import mitl.IntoTheHeaven.domain.enums.ChurchRole;
+import mitl.IntoTheHeaven.domain.model.ChurchId;
+import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.MemberId;
+
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AuthCommandService implements AuthCommandUseCase {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final ChurchMemberService churchMemberService;
+        private final AuthenticationManager authenticationManager;
+        private final JwtTokenProvider jwtTokenProvider;
+        private final ChurchPort churchPort;
 
-    @Override
-    public LoginResponse login(LoginRequest request) {
+        @Override
+        public LoginResponse login(LoginRequest request) {
 
+                // 1. The `AuthenticationManager` attempts to authenticate using the
+                // `UsernamePasswordAuthenticationToken`.
+                // 2. Internally, the `DaoAuthenticationProvider` is activated.
+                // 3. The `DaoAuthenticationProvider` calls `CustomUserDetailsService` to
+                // retrieve user information from the DB via `loadUserByUsername`.
+                // - If the user is not found, a `UsernameNotFoundException` is thrown here.
+                // 4. Once the `UserDetails` is returned, the `DaoAuthenticationProvider` uses
+                // the `PasswordEncoder` to compare the submitted password with the encrypted
+                // password from the DB.
+                // - If the passwords do not match, a `BadCredentialsException` is thrown here.
+                // 5. If all authentication processes are successful, an `Authentication` object
+                // containing the user's information is returned.
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        // 1. The `AuthenticationManager` attempts to authenticate using the `UsernamePasswordAuthenticationToken`.
-        // 2. Internally, the `DaoAuthenticationProvider` is activated.
-        // 3. The `DaoAuthenticationProvider` calls `CustomUserDetailsService` to retrieve user information from the DB via `loadUserByUsername`.
-        //    - If the user is not found, a `UsernameNotFoundException` is thrown here.
-        // 4. Once the `UserDetails` is returned, the `DaoAuthenticationProvider` uses the `PasswordEncoder` to compare the submitted password with the encrypted password from the DB.
-        //    - If the passwords do not match, a `BadCredentialsException` is thrown here.
-        // 5. If all authentication processes are successful, an `Authentication` object containing the user's information is returned.
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+                String accessToken = jwtTokenProvider.createAccessToken(authentication);
 
-        String accessToken = jwtTokenProvider.createAccessToken(authentication);
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .build();
-    }
-
-    @Override
-    public LoginResponse adminLogin(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-
-        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
-        List<String> adminChurchIds = churchMemberService.getAdminChurchIds(memberId);
-
-        if (adminChurchIds.isEmpty()) {
-            throw new RuntimeException("No admin church found");
-        }
-        if (adminChurchIds.size() == 1) {
-            String accessToken = jwtTokenProvider.createAccessToken(authentication, adminChurchIds.get(0));
-            return LoginResponse.builder().accessToken(accessToken).build();
+                return LoginResponse.builder()
+                                .accessToken(accessToken)
+                                .build();
         }
 
-        // Multiple admin churches: return token without churchId for now (or extend response)
-        String tempToken = jwtTokenProvider.createAccessToken(authentication);
-        return LoginResponse.builder().accessToken(tempToken).build();
-    }
-} 
+        @Override
+        public LoginResponse adminLogin(LoginRequest request) {
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                // Issue a token without churchId first (GLOBAL-like)
+                String accessToken = jwtTokenProvider.createAccessToken(authentication);
+                return LoginResponse.builder().accessToken(accessToken).build();
+        }
+
+        @Override
+        public LoginResponse selectChurch(MemberId memberId, ChurchId churchId) {
+                ChurchMember cm = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
+                if (cm == null || cm.getRole() != ChurchRole.ADMIN) {
+                        throw new RuntimeException("Not an admin of the selected church");
+                }
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                                memberId.getValue().toString(),
+                                "",
+                                List.of(new SimpleGrantedAuthority("USER")));
+                String token = jwtTokenProvider.createAccessToken(auth, churchId.getValue().toString());
+                return LoginResponse.builder().accessToken(token).build();
+        }
+}

@@ -10,6 +10,6 @@ import java.util.List;
 public interface GatheringQueryUseCase {
 
     Gathering getGatheringDetail(GatheringId gatheringId);
-    
+
     List<GatheringWithStatistics> getGatheringsWithStatisticsByGroupId(GroupId groupId);
-} 
+}

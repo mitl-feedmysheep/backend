@@ -6,6 +6,7 @@ import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.GroupId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.stereotype.Service;
@@ -35,4 +36,9 @@ public class GroupQueryService implements GroupQueryUseCase {
     public List<GroupMember> getGroupMembersByGroupId(UUID groupId) {
         return groupPort.findGroupMembersByGroupId(groupId);
     }
-} 
+
+    @Override
+    public GroupMember getGroupMemberByGroupIdAndMemberId(GroupId groupId, MemberId memberId) {
+        return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue());
+    }
+}

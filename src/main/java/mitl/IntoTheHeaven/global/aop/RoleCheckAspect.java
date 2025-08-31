@@ -6,7 +6,7 @@ import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
-import mitl.IntoTheHeaven.application.service.query.ChurchMemberService;
+import mitl.IntoTheHeaven.application.service.query.ChurchQueryService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RoleCheckAspect {
 
-    private final ChurchMemberService churchMemberService;
+    private final ChurchQueryService churchQueryService;
 
     @Before("@annotation(requireChurchRole)")
     public void checkRole(JoinPoint joinPoint, RequireChurchRole requireChurchRole) {
@@ -35,15 +35,17 @@ public class RoleCheckAspect {
         String userId = (String) jwtAuth.getPrincipal();
         String churchId = jwtAuth.getChurchId();
 
-        ChurchRole currentRole = churchMemberService.getCurrentRole(
+        if (churchId == null || churchId.isBlank()) {
+            throw new AccessDeniedException("Church context is required");
+        }
+
+        ChurchRole currentRole = churchQueryService.getCurrentRole(
                 MemberId.from(UUID.fromString(userId)),
-                ChurchId.from(UUID.fromString(churchId))
-        );
+                ChurchId.from(UUID.fromString(churchId)));
 
         if (currentRole == null || !currentRole.hasPermission(requireChurchRole.value())) {
-            throw new AccessDeniedException("Required role: " + requireChurchRole.value() + ", Current role: " + currentRole);
+            throw new AccessDeniedException(
+                    "Required role: " + requireChurchRole.value() + ", Current role: " + currentRole);
         }
     }
 }
-
-
