@@ -13,7 +13,6 @@ import java.util.List;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,6 +32,7 @@ public class JwtTokenProvider {
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
     }
 
+    /* Member Login */
     public String createAccessToken(Authentication authentication) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
@@ -45,11 +45,26 @@ public class JwtTokenProvider {
             .compact();
     }
 
+    /* Admin Login */
+    public String createAccessToken(Authentication authentication, String churchId) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+            .subject(authentication.getName())
+            .issuedAt(now)
+            .expiration(validity)
+            .claim("churchId", churchId)
+            .signWith(key)
+            .compact();
+    }
+
     public Authentication getAuthentication(String token) {
-        String memberId = getUsernameFromToken(token);
-        // Create Authentication object directly without DB lookup (JWT token is already validated)
+        Claims claims = getClaimsFromToken(token);
+        String memberId = claims.getSubject();
+        String churchId = claims.get("churchId", String.class);
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("USER"));
-        return new UsernamePasswordAuthenticationToken(memberId, "", authorities);
+        return new mitl.IntoTheHeaven.global.security.JwtAuthenticationToken(memberId, "", authorities, churchId);
     }
 
     public String getUsernameFromToken(String token) {

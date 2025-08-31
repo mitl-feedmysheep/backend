@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface ChurchQueryUseCase {
     List<Church> getChurchesByMemberId(MemberId memberId);
+
+    /* ADMIN */
+    List<Church> getAdminChurches(MemberId memberId);
 }

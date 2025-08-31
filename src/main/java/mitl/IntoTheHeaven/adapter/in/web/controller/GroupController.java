@@ -7,7 +7,6 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.GroupMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
-import mitl.IntoTheHeaven.application.port.in.query.GroupMemberQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -32,28 +31,27 @@ public class GroupController {
 
     private final GroupQueryUseCase groupQueryUseCase;
     private final GatheringQueryUseCase gatheringQueryUseCase;
-    private final GroupMemberQueryUseCase groupMemberQueryUseCase;
 
     @Operation(summary = "Get All My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getMyGroups(@AuthenticationPrincipal String memberId) {
         List<Group> groups = groupQueryUseCase.getGroupsByMemberId(MemberId.from(UUID.fromString(memberId)));
-        List<GroupResponse> response = GroupResponse.from(groups);  
+        List<GroupResponse> response = GroupResponse.from(groups);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
     @GetMapping("/{groupId}/gatherings")
     public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
-        List<GatheringResponse> response = gatheringQueryUseCase.getGatheringsWithStatisticsByGroupId(GroupId.from(groupId))
+        List<GatheringResponse> response = gatheringQueryUseCase
+                .getGatheringsWithStatisticsByGroupId(GroupId.from(groupId))
                 .stream()
                 .map(gws -> GatheringResponse.from(
-                    gws.getGathering(),
-                    gws.getNth(),
-                    gws.getTotalWorshipAttendanceCount(),
-                    gws.getTotalGatheringAttendanceCount(),
-                    gws.getTotalPrayerRequestCount()
-                ))
+                        gws.getGathering(),
+                        gws.getNth(),
+                        gws.getTotalWorshipAttendanceCount(),
+                        gws.getTotalGatheringAttendanceCount(),
+                        gws.getTotalPrayerRequestCount()))
                 .toList();
         return ResponseEntity.ok(response);
     }
@@ -71,11 +69,10 @@ public class GroupController {
     public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
             @PathVariable UUID groupId,
             @AuthenticationPrincipal String memberId) {
-        GroupMember groupMember = groupMemberQueryUseCase.getGroupMemberByGroupIdAndMemberId(
-                GroupId.from(groupId), 
-                MemberId.from(UUID.fromString(memberId))
-        );
+        GroupMember groupMember = groupQueryUseCase.getGroupMemberByGroupIdAndMemberId(
+                GroupId.from(groupId),
+                MemberId.from(UUID.fromString(memberId)));
         GroupMemberResponse response = GroupMemberResponse.from(groupMember);
         return ResponseEntity.ok(response);
     }
-} 
+}
