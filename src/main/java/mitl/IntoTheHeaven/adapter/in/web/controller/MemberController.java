@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
-import mitl.IntoTheHeaven.application.port.in.command.ChangePasswordUseCase;
+import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangeEmailRequest;
+import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
+
 
 import java.util.UUID;
 
@@ -28,7 +30,7 @@ import java.util.UUID;
 public class MemberController {
 
     private final MemberQueryUseCase memberQueryUseCase;
-    private final ChangePasswordUseCase changePasswordUseCase;
+    private final MemberCommandUseCase memberCommandUseCase;
 
     @Operation(summary = "Get My Info", description = "Retrieves the information of the currently logged-in user.")
     @GetMapping("/me")
@@ -41,7 +43,17 @@ public class MemberController {
     @Operation(summary = "Change Password", description = "Changes the password for the authenticated user.")
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String memberId, @RequestBody @Valid ChangePasswordRequest request) {
-        Boolean result = changePasswordUseCase.changePassword(MemberId.from(UUID.fromString(memberId)), request.getCurrentPassword(), request.getNewPassword());
+        Boolean result = memberCommandUseCase.changePassword(MemberId.from(UUID.fromString(memberId)), request.getCurrentPassword(), request.getNewPassword());
+        if (!result) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Change Email", description = "Changes the email for the authenticated user.")
+    @PostMapping("/email/change")
+    public ResponseEntity<Void> changeEmail(@AuthenticationPrincipal String memberId, @RequestBody @Valid ChangeEmailRequest request) {
+        boolean result = memberCommandUseCase.changeEmail(MemberId.from(UUID.fromString(memberId)), request.getNewEmail());
         if (!result) {
             return ResponseEntity.badRequest().build();
         }

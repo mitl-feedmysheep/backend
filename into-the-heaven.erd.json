@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -5219.7888,
-    "scrollLeft": -2754.2124,
+    "scrollTop": -5122.7888,
+    "scrollLeft": -3774.2124,
     "zoomLevel": 0.85,
     "show": 431,
     "database": 4,
@@ -73,6 +73,7 @@
           "KJWmZf7R9-fGZVIrYISLu",
           "EwZdabOlWGr4IQXqhoJan",
           "-b_wPlz5IU7MbbTz9HGKn",
+          "oGVd9jrpl2TvfUkX2oeOJ",
           "O1XoVV2iWa8W9gXzdzpWH",
           "d6MpJ8sEJWbdr4FM0Q63n",
           "g9BRni_m0HqJtikdgZzqg"
@@ -88,6 +89,7 @@
           "KJWmZf7R9-fGZVIrYISLu",
           "EwZdabOlWGr4IQXqhoJan",
           "-b_wPlz5IU7MbbTz9HGKn",
+          "oGVd9jrpl2TvfUkX2oeOJ",
           "O1XoVV2iWa8W9gXzdzpWH",
           "d6MpJ8sEJWbdr4FM0Q63n",
           "an2piIwA_hCyExp24sQTH",
@@ -103,7 +105,7 @@
           "color": "#4CAF50"
         },
         "meta": {
-          "updateAt": 1750815094192,
+          "updateAt": 1756699292852,
           "createAt": 1731308198714
         }
       },
@@ -2811,6 +2813,26 @@
           "updateAt": 1756689912396,
           "createAt": 1756687751559
         }
+      },
+      "oGVd9jrpl2TvfUkX2oeOJ": {
+        "id": "oGVd9jrpl2TvfUkX2oeOJ",
+        "tableId": "abLDWjEoj5epresetx3Q9",
+        "name": "is_provisioned",
+        "comment": "일괄생성 여부",
+        "dataType": "TINYINT(1)",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 84,
+          "widthComment": 68,
+          "widthDataType": 64,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1756699289850,
+          "createAt": 1756698884194
+        }
       }
     },
     "relationshipEntities": {
@@ -2852,7 +2874,7 @@
           "columnIds": [
             "nYYNgSrqd4I9Rg2GBN1aA"
           ],
-          "x": 3330.1398,
+          "x": 3342.6398,
           "y": 4347.9064,
           "direction": 4
         },
@@ -2909,7 +2931,7 @@
             "nYYNgSrqd4I9Rg2GBN1aA"
           ],
           "x": 3084.1398,
-          "y": 4531.9064,
+          "y": 4543.9064,
           "direction": 1
         },
         "end": {
@@ -3048,8 +3070,8 @@
           "columnIds": [
             "nYYNgSrqd4I9Rg2GBN1aA"
           ],
-          "x": 3330.1398,
-          "y": 4715.9064,
+          "x": 3342.6398,
+          "y": 4739.9064,
           "direction": 8
         },
         "end": {

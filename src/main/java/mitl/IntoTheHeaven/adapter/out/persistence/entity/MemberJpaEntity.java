@@ -79,15 +79,21 @@ public class MemberJpaEntity extends BaseEntity {
     @Column(length = 100)
     private String description;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    /**
+     * 회원 상태
+     */
+    @Column(nullable = false)
+    private Boolean isProvisioned;
+
+    @OneToMany(mappedBy = "member")
     @Builder.Default
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member")
     @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member")
     @Builder.Default
     private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 }

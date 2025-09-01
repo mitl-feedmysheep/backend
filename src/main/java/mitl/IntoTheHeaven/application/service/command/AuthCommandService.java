@@ -12,12 +12,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
+import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class AuthCommandService implements AuthCommandUseCase {
         private final AuthenticationManager authenticationManager;
         private final JwtTokenProvider jwtTokenProvider;
         private final ChurchPort churchPort;
+        private final MemberPort memberPort;
 
         @Override
         public LoginResponse login(LoginRequest request) {
@@ -48,8 +52,12 @@ public class AuthCommandService implements AuthCommandUseCase {
 
                 String accessToken = jwtTokenProvider.createAccessToken(authentication);
 
+                Member member = memberPort.findByEmail(request.getEmail())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+
                 return LoginResponse.builder()
                                 .accessToken(accessToken)
+                                .isProvisioned(member.getIsProvisioned())
                                 .build();
         }
 
@@ -59,7 +67,12 @@ public class AuthCommandService implements AuthCommandUseCase {
                                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
                 // Issue a token without churchId first (GLOBAL-like)
                 String accessToken = jwtTokenProvider.createAccessToken(authentication);
-                return LoginResponse.builder().accessToken(accessToken).build();
+
+                Member member = memberPort.findByEmail(request.getEmail())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+                return LoginResponse.builder().accessToken(accessToken).isProvisioned(member.getIsProvisioned())
+                                .build();
         }
 
         @Override

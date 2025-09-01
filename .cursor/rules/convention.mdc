@@ -529,8 +529,6 @@ To ensure consistency, maintainability, and alignment with our architecture, all
 - **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD ([into-the-heaven.erd.json](mdc:into-the-heaven.erd.json)). The ERD is the single source of truth for the data model.
 
 - **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
-  - **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
-  - **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
   - **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
 
 ### e. Domain Model Design Conventions
@@ -1329,8 +1327,6 @@ To ensure consistency, maintainability, and alignment with our architecture, all
 - **ERD-Driven Relationships**: All entity relationships (`@ManyToOne`, `@OneToMany`, etc.) and column attributes (`nullable`, `length`, etc.) must accurately reflect the definitions in the project's ERD ([into-the-heaven.erd.json](mdc:into-the-heaven.erd.json)). The ERD is the single source of truth for the data model.
 
 - **Relationship Management (`@OneToMany`)**: To maintain data integrity and simplify relationship management in `@OneToMany` associations, the following conventions are mandatory:
-  - **`cascade = CascadeType.ALL`**: This option should be used to propagate all lifecycle operations (persist, merge, remove, etc.) from a parent entity to its children. This simplifies code by allowing operations on the aggregate root to automatically cascade to its members.
-  - **`orphanRemoval = true`**: This must be used alongside `cascade`. It ensures that when a child entity is removed from a parent's collection, it is automatically deleted from the database. This prevents "orphaned" records and maintains data consistency.
   - **`@Builder.Default` on Collections**: When using `@(Super)Builder` on an entity, any collection fields (e.g., `List<T>`) must be initialized (e.g., `= new ArrayList<>()`) and annotated with `@Builder.Default`. This prevents the builder from setting the collection to `null`, thus avoiding potential `NullPointerExceptions`.
 
 ### e. Domain Model Design Conventions

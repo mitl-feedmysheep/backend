@@ -87,7 +87,7 @@ public class GatheringJpaEntity extends BaseEntity {
     @JoinColumn(name = "group_id", nullable = false)
     private GroupJpaEntity group;
 
-    @OneToMany(mappedBy = "gathering", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "gathering")
     @Builder.Default
     private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
 } 

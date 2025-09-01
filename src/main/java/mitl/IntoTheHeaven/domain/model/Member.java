@@ -19,7 +19,9 @@ public class Member extends AggregateRoot<Member, MemberId> {
     private final String phone;
     private final String profileUrl;
     private final String address;
+    private final Boolean isProvisioned;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime deletedAt;
+    
 } 

@@ -2,7 +2,6 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
-import mitl.IntoTheHeaven.application.port.in.command.ChangePasswordUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.enums.Sex;
@@ -17,7 +16,7 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class MemberCommandService implements MemberCommandUseCase, ChangePasswordUseCase {
+public class MemberCommandService implements MemberCommandUseCase {
 
     private final MemberPort memberPort;
     private final PasswordEncoder passwordEncoder;
@@ -61,6 +60,29 @@ public class MemberCommandService implements MemberCommandUseCase, ChangePasswor
 
         memberPort.save(updated);
         
+        return true;
+    }
+
+    @Override
+    public Boolean changeEmail(MemberId memberId, String newEmail) {
+        Member member = memberPort.findById(memberId.getValue())
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        Member updated = Member.builder()
+                .id(member.getId())
+                .name(member.getName())
+                .email(newEmail)
+                .password(member.getPassword())
+                .sex(member.getSex())
+                .birthday(member.getBirthday())
+                .phone(member.getPhone())
+                .profileUrl(member.getProfileUrl())
+                .address(member.getAddress())
+                .isProvisioned(false)
+                .build();
+
+        memberPort.save(updated);
+
         return true;
     }
 } 

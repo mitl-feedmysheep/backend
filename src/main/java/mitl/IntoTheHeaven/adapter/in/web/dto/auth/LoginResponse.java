@@ -9,4 +9,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class LoginResponse {
     private String accessToken;
+    private Boolean isProvisioned;
 } 

@@ -44,7 +44,7 @@ public class GroupMemberJpaEntity extends BaseEntity {
     @Column(nullable = false, length = 20)
     private GroupMemberRole role;
 
-    @OneToMany(mappedBy = "groupMember", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "groupMember")
     @Builder.Default
     private List<GatheringMemberJpaEntity> gatheringMembers = new ArrayList<>();
 } 
