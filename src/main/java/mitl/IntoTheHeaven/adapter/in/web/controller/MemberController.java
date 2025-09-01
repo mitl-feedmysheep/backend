@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.MeResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.member.UpdateMyProfileRequest;
 import mitl.IntoTheHeaven.application.port.in.query.MemberQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,6 +60,20 @@ public class MemberController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Update My Profile", description = "Updates name, sex, birthday, and phone of the authenticated user. Fails if request.id differs from token subject.")
+    @PatchMapping("/me")
+    public ResponseEntity<MeResponse> updateMyProfile(
+            @AuthenticationPrincipal String principalMemberId,
+            @RequestBody @Valid UpdateMyProfileRequest request
+    ) {
+        if (request.getId() == null || !principalMemberId.equals(request.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Member updated = memberCommandUseCase.updateMyProfile(request.toCommand());
+        return ResponseEntity.ok(MeResponse.from(updated));
     }
 
 } 

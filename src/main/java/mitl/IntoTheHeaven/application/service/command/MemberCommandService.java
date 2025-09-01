@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateMyProfileCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.domain.enums.Sex;
@@ -84,5 +85,26 @@ public class MemberCommandService implements MemberCommandUseCase {
         memberPort.save(updated);
 
         return true;
+    }
+
+    @Override
+    public Member updateMyProfile(UpdateMyProfileCommand command) {
+        Member member = memberPort.findById(command.getId().getValue())
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        Member updated = Member.builder()
+                .id(member.getId())
+                .name(command.getName() != null ? command.getName() : member.getName())
+                .email(member.getEmail())
+                .password(member.getPassword())
+                .sex(command.getSex() != null ? Sex.valueOf(command.getSex()) : member.getSex())
+                .birthday(command.getBirthday() != null ? command.getBirthday() : member.getBirthday())
+                .phone(command.getPhone() != null ? command.getPhone() : member.getPhone())
+                .profileUrl(member.getProfileUrl())
+                .address(member.getAddress())
+                .isProvisioned(member.getIsProvisioned())
+                .build();
+
+        return memberPort.save(updated);
     }
 } 
