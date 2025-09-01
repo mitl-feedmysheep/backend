@@ -18,6 +18,7 @@ public class UpdateGatheringMemberCommand {
     private final GroupMemberId groupMemberId;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
+    private final String goal;
     private final String story;
     private final List<PrayerUpdateCommand> prayers;
 
@@ -33,6 +34,7 @@ public class UpdateGatheringMemberCommand {
             groupMemberId,
             request.getWorshipAttendance(),
             request.getGatheringAttendance(),
+            request.getGoal(),
             request.getStory() != null ? request.getStory() : "",
             prayerCommands
         );

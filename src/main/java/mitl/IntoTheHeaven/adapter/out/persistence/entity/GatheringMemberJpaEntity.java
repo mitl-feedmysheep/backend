@@ -52,8 +52,14 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     /**
      * 삶 나눔
      */
-    @Column(length = 500)
+    @Column(name = "story", length = 500, nullable = true)
     private String story;
+
+    /**
+     * 목표 (한주 목표)
+     */
+    @Column(name = "goal", length = 500, nullable = true)
+    private String goal;
 
     @OneToMany(mappedBy = "gatheringMember", cascade = CascadeType.ALL)
     @OrderBy("createdAt ASC")

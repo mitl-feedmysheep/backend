@@ -17,6 +17,8 @@ public class UpdateGatheringMemberRequest {
     @NotNull(message = "Gathering attendance status is required")
     private Boolean gatheringAttendance;
 
+    private String goal;
+
     private String story;
 
     private List<PrayerRequest> prayers;

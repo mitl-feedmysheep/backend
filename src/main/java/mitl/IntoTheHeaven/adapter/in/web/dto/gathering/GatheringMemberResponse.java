@@ -21,6 +21,7 @@ public class GatheringMemberResponse {
     private LocalDate birthday;
     private boolean worshipAttendance;
     private boolean gatheringAttendance;
+    private String goal;
     private String story;
     private List<PrayerResponse> prayers;
 
@@ -33,6 +34,7 @@ public class GatheringMemberResponse {
                 .birthday(gatheringMember.getGroupMember().getMember().getBirthday())
                 .worshipAttendance(gatheringMember.isWorshipAttendance())
                 .gatheringAttendance(gatheringMember.isGatheringAttendance())
+                .goal(gatheringMember.getGoal())
                 .story(gatheringMember.getStory())
                 .prayers(gatheringMember.getPrayers().stream()
                         .sorted(Comparator.comparing(Prayer::getCreatedAt))

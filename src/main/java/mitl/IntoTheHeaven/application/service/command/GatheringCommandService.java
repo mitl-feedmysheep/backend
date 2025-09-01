@@ -43,6 +43,7 @@ public class GatheringCommandService implements GatheringCommandUseCase, UpdateG
                         .groupMember(groupMember)
                         .worshipAttendance(false)
                         .gatheringAttendance(false)
+                        .goal(null)
                         .story(null)
                         .prayers(List.of())
                         .build())
@@ -115,6 +116,7 @@ public class GatheringCommandService implements GatheringCommandUseCase, UpdateG
                 .groupMember(targetGatheringMember.getGroupMember())
                 .worshipAttendance(command.isWorshipAttendance())
                 .gatheringAttendance(command.isGatheringAttendance())
+                .goal(command.getGoal())
                 .story(command.getStory())
                 .prayers(mergedPrayers)
                 .build();

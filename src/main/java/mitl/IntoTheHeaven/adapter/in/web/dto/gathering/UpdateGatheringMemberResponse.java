@@ -15,6 +15,7 @@ public class UpdateGatheringMemberResponse {
     private final UUID id;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
+    private final String goal;
     private final String story;
     private final List<PrayerResponse> prayers;
 
@@ -23,6 +24,7 @@ public class UpdateGatheringMemberResponse {
             gatheringMember.getId().getValue(),
             gatheringMember.isWorshipAttendance(),
             gatheringMember.isGatheringAttendance(),
+            gatheringMember.getGoal(),
             gatheringMember.getStory(),
             gatheringMember.getPrayers().stream()
                 .map(PrayerResponse::from)

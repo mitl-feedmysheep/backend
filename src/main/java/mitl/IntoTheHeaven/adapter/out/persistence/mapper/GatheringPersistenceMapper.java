@@ -46,6 +46,7 @@ public class GatheringPersistenceMapper {
                 .groupMember(memberPersistenceMapper.toGroupMemberDomain(entity.getGroupMember()))
                 .worshipAttendance(entity.isWorshipAttendance())
                 .gatheringAttendance(entity.isGatheringAttendance())
+                .goal(entity.getGoal())
                 .story(entity.getStory())
                 .prayers(entity.getPrayers().stream()
                         .map(this::toDomain)
@@ -114,6 +115,7 @@ public class GatheringPersistenceMapper {
                         .build())
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
+                .goal(domain.getGoal())
                 .story(domain.getStory())
                 .build();
     }
@@ -128,6 +130,7 @@ public class GatheringPersistenceMapper {
                 .gathering(gatheringEntity)
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
+                .goal(domain.getGoal())
                 .story(domain.getStory())
                 .build();
 
@@ -154,6 +157,7 @@ public class GatheringPersistenceMapper {
                 .gathering(gatheringEntity)
                 .worshipAttendance(domain.isWorshipAttendance())
                 .gatheringAttendance(domain.isGatheringAttendance())
+                .goal(domain.getGoal())
                 .story(domain.getStory())
                 .prayers(prayerEntities)
                 .build();

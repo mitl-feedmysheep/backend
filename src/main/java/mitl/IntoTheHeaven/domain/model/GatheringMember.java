@@ -14,6 +14,7 @@ public class GatheringMember extends DomainEntity<GatheringMember, GatheringMemb
     private final GroupMember groupMember;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
+    private final String goal;
     private final String story;
     private final List<Prayer> prayers;
 } 
