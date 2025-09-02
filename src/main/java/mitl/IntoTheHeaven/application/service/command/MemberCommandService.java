@@ -33,6 +33,7 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .birthday(command.getBirthdate())
                 .phone(command.getPhone())
                 .address(command.getAddress())
+                .isProvisioned(false)
                 .build();
 
         return memberPort.save(member);
