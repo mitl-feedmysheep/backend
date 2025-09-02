@@ -16,7 +16,6 @@ import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
-import mitl.IntoTheHeaven.application.port.in.command.UpdateGatheringUseCase;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GatheringMember;
@@ -35,7 +34,6 @@ public class GatheringController {
 
     private final GatheringQueryUseCase gatheringQueryUseCase;
     private final GatheringCommandUseCase gatheringCommandUseCase;
-    private final UpdateGatheringUseCase updateGatheringUseCase;
 
     @Operation(summary = "Create New Gathering", description = "Creates a new gathering with the specified details including date, time, place, and description.")
     @PostMapping
@@ -82,7 +80,7 @@ public class GatheringController {
             @Valid @RequestBody UpdateGatheringRequest request
     ) {
         UpdateGatheringCommand command = UpdateGatheringCommand.from(GatheringId.from(gatheringId), request);
-        Gathering updated = updateGatheringUseCase.updateGathering(command);
+        Gathering updated = gatheringCommandUseCase.updateGathering(command);
         UpdateGatheringResponse response = UpdateGatheringResponse.from(updated);
         return ResponseEntity.ok(response);
     }

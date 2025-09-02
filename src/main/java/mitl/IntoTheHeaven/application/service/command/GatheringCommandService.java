@@ -2,7 +2,6 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
-import mitl.IntoTheHeaven.application.port.in.command.UpdateGatheringUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class GatheringCommandService implements GatheringCommandUseCase, UpdateGatheringUseCase {
+public class GatheringCommandService implements GatheringCommandUseCase {
 
     private final GatheringPort gatheringPort;
     private final MemberPort memberPort;

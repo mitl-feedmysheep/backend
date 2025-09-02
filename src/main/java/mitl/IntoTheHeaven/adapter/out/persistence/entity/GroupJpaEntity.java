@@ -50,11 +50,11 @@ public class GroupJpaEntity extends BaseEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GatheringJpaEntity> gatherings = new ArrayList<>();
 } 

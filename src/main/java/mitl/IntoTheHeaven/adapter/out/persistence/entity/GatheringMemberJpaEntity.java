@@ -61,7 +61,7 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     @Column(name = "goal", length = 500, nullable = true)
     private String goal;
 
-    @OneToMany(mappedBy = "gatheringMember")
+    @OneToMany(mappedBy = "gatheringMember", cascade = CascadeType.ALL)
     @OrderBy("createdAt ASC")
     @BatchSize(size = 10)
     @Builder.Default

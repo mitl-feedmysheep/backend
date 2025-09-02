@@ -85,15 +85,15 @@ public class MemberJpaEntity extends BaseEntity {
     @Column(nullable = false)
     private Boolean isProvisioned;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupMemberJpaEntity> groupMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ChurchMemberJpaEntity> churchMembers = new ArrayList<>();
 }
