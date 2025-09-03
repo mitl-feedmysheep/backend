@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.application.port.out;
 
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
 
@@ -11,4 +12,5 @@ public interface GroupPort {
     List<Group> findGroupsByMemberIdAndChurchId(UUID memberId, UUID churchId);
     List<GroupMember> findGroupMembersByGroupId(UUID groupId);
     GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId);
+    GroupMember updateGroupMemberRole(UUID groupId, UUID memberId, GroupMemberRole newRole);
 } 

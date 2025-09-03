@@ -4,8 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.GatheringResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.group.ChangeGroupMemberRoleRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.GroupMemberResponse;
+import mitl.IntoTheHeaven.application.port.in.command.GroupCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.dto.ChangeGroupMemberRoleCommand;
 import mitl.IntoTheHeaven.application.port.in.query.GatheringQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Group;
@@ -15,8 +18,10 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,6 +36,7 @@ public class GroupController {
 
     private final GroupQueryUseCase groupQueryUseCase;
     private final GatheringQueryUseCase gatheringQueryUseCase;
+    private final GroupCommandUseCase groupCommandUseCase;
 
     @Operation(summary = "Get All My Groups", description = "Retrieves a list of groups the current user belongs to.")
     @GetMapping
@@ -74,5 +80,23 @@ public class GroupController {
                 MemberId.from(UUID.fromString(memberId)));
         GroupMemberResponse response = GroupMemberResponse.from(groupMember);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Change Group Member Role", description = "Changes the role of a member in the group. Leader only.")
+    @PatchMapping("/{groupId}/members/{memberId}/role")
+    public ResponseEntity<GroupMemberResponse> changeGroupMemberRole(
+            @PathVariable UUID groupId,
+            @PathVariable UUID memberId,
+            @AuthenticationPrincipal String requesterId,
+            @RequestBody ChangeGroupMemberRoleRequest request
+    ) {
+        ChangeGroupMemberRoleCommand command = ChangeGroupMemberRoleCommand.from(
+                groupId,
+                memberId,
+                UUID.fromString(requesterId),
+                request
+        );
+        GroupMember updated = groupCommandUseCase.changeGroupMemberRole(command);
+        return ResponseEntity.ok(GroupMemberResponse.from(updated));
     }
 }

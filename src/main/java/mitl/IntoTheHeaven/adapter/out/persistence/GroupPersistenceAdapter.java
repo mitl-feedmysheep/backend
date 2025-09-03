@@ -7,6 +7,8 @@ import mitl.IntoTheHeaven.adapter.out.persistence.mapper.GroupPersistenceMapper;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -52,5 +54,20 @@ public class GroupPersistenceAdapter implements GroupPort {
         return groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, memberId)
                 .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
                 .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", memberId: " + memberId));
+    }
+
+    @Override
+    public GroupMember updateGroupMemberRole(UUID groupId, UUID memberId, GroupMemberRole newRole) {
+        GroupMemberJpaEntity entity = groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, memberId)
+                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", memberId: " + memberId));
+        entity = GroupMemberJpaEntity.builder()
+                .id(entity.getId())
+                .group(entity.getGroup())
+                .member(entity.getMember())
+                .role(newRole)
+                .gatheringMembers(entity.getGatheringMembers())
+                .build();
+        entity = groupMemberJpaRepository.save(entity);
+        return groupPersistenceMapper.toGroupMemberDomain(entity, groupId);
     }
 } 

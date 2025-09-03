@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
 public interface GroupMemberJpaRepository extends JpaRepository<GroupMemberJpaEntity, UUID> {
 
     @EntityGraph(attributePaths = {"member"})
     List<GroupMemberJpaEntity> findByGroupIdOrderByRoleAscMemberBirthdayAsc(UUID groupId);
 
-    @EntityGraph(attributePaths = {"member"})
     Optional<GroupMemberJpaEntity> findByGroup_IdAndMember_Id(UUID groupId, UUID memberId);
 }
