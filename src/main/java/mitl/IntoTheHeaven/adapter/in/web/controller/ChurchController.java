@@ -14,12 +14,10 @@ import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.PrayerQueryUseCase;
-import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.MemberId;
-import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -85,23 +83,21 @@ public class ChurchController {
         }
 
         /* ADMIN */
-    @Operation(summary = "Get Admin Churches", description = "Retrieves churches where the current user is ADMIN.")
-    @RequireChurchRole(ChurchRole.ADMIN)
-    @GetMapping("/admin")
-    public ResponseEntity<List<AdminChurchResponse>> getAdminChurches(@AuthenticationPrincipal String memberId) {
-        List<Church> churches = churchQueryUseCase.getAdminChurches(MemberId.from(UUID.fromString(memberId)));
-        return ResponseEntity.ok(churches.stream()
-                .map(AdminChurchResponse::from)
-                .toList());
-    }
+        @Operation(summary = "Get Admin Churches", description = "Retrieves churches where the current user is ADMIN.")
+        @GetMapping("/admin")
+        public ResponseEntity<List<AdminChurchResponse>> getAdminChurches(@AuthenticationPrincipal String memberId) {
+                List<Church> churches = churchQueryUseCase.getAdminChurches(MemberId.from(UUID.fromString(memberId)));
+                return ResponseEntity.ok(churches.stream()
+                                .map(AdminChurchResponse::from)
+                                .toList());
+        }
 
-    @Operation(summary = "Select Church (Issue context token)", description = "Issues a context token bound to the selected church.")
-    @RequireChurchRole(ChurchRole.ADMIN)
-    @PostMapping("/admin/select-church")
-    public ResponseEntity<LoginResponse> selectChurch(@AuthenticationPrincipal String memberId,
-            @Valid @RequestBody AdminSelectChurchRequest request) {
-        LoginResponse response = authCommandUseCase.selectChurch(MemberId.from(UUID.fromString(memberId)),
-                ChurchId.from(request.getChurchId()));
-        return ResponseEntity.ok(response);
-    }
+        @Operation(summary = "Select Church (Issue context token)", description = "Issues a context token bound to the selected church.")
+        @PostMapping("/admin/select-church")
+        public ResponseEntity<LoginResponse> selectChurch(@AuthenticationPrincipal String memberId,
+                        @Valid @RequestBody AdminSelectChurchRequest request) {
+                LoginResponse response = authCommandUseCase.selectChurch(MemberId.from(UUID.fromString(memberId)),
+                                ChurchId.from(request.getChurchId()));
+                return ResponseEntity.ok(response);
+        }
 }
