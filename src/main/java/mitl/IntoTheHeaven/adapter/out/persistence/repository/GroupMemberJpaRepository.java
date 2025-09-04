@@ -14,5 +14,7 @@ public interface GroupMemberJpaRepository extends JpaRepository<GroupMemberJpaEn
     @EntityGraph(attributePaths = {"member"})
     List<GroupMemberJpaEntity> findByGroupIdOrderByRoleAscMemberBirthdayAsc(UUID groupId);
 
-    Optional<GroupMemberJpaEntity> findByGroup_IdAndMember_Id(UUID groupId, UUID memberId);
+    Optional<GroupMemberJpaEntity> findByGroup_IdAndMember_Id(UUID groupId, UUID groupMemberId);
+
+    Optional<GroupMemberJpaEntity> findById(UUID id);
 }

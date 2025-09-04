@@ -50,24 +50,27 @@ public class GroupPersistenceAdapter implements GroupPort {
     }
 
     @Override
-    public GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID memberId) {
-        return groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, memberId)
+    public GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID groupMemberId) {
+        return groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, groupMemberId)
                 .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
-                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", memberId: " + memberId));
+                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", groupMemberId: " + groupMemberId));
     }
 
     @Override
-    public GroupMember updateGroupMemberRole(UUID groupId, UUID memberId, GroupMemberRole newRole) {
-        GroupMemberJpaEntity entity = groupMemberJpaRepository.findByGroup_IdAndMember_Id(groupId, memberId)
-                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupId: " + groupId + ", memberId: " + memberId));
-        entity = GroupMemberJpaEntity.builder()
-                .id(entity.getId())
-                .group(entity.getGroup())
-                .member(entity.getMember())
-                .role(newRole)
-                .gatheringMembers(entity.getGatheringMembers())
-                .build();
+    public GroupMember findGroupMemberByGroupMemberId(UUID groupMemberId) {
+        return groupMemberJpaRepository.findById(groupMemberId)
+                .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupMemberId))
+                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupMemberId: " + groupMemberId));
+    }
+
+    @Override
+    public GroupMember updateGroupMemberRole(UUID groupMemberId, GroupMemberRole newRole) {
+        GroupMemberJpaEntity entity = groupMemberJpaRepository.findById(groupMemberId)
+                .orElseThrow(() -> new RuntimeException("GroupMember not found for groupMemberId: " + groupMemberId));
+
+        entity.setRole(newRole);
+
         entity = groupMemberJpaRepository.save(entity);
-        return groupPersistenceMapper.toGroupMemberDomain(entity, groupId);
+        return groupPersistenceMapper.toGroupMemberDomain(entity);
     }
 } 

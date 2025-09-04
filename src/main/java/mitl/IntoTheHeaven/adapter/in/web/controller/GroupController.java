@@ -14,6 +14,7 @@ import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.GroupMemberId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.http.ResponseEntity;
@@ -83,17 +84,17 @@ public class GroupController {
     }
 
     @Operation(summary = "Change Group Member Role", description = "Changes the role of a member in the group. Leader only.")
-    @PatchMapping("/{groupId}/members/{memberId}/role")
+    @PatchMapping("/{groupId}/groupMembers/{groupMemberId}/role")
     public ResponseEntity<GroupMemberResponse> changeGroupMemberRole(
             @PathVariable UUID groupId,
-            @PathVariable UUID memberId,
+            @PathVariable UUID groupMemberId,
             @AuthenticationPrincipal String requesterId,
             @RequestBody ChangeGroupMemberRoleRequest request
     ) {
         ChangeGroupMemberRoleCommand command = ChangeGroupMemberRoleCommand.from(
-                groupId,
-                memberId,
-                UUID.fromString(requesterId),
+                GroupId.from(groupId),
+                GroupMemberId.from(groupMemberId),
+                MemberId.from(UUID.fromString(requesterId)),
                 request
         );
         GroupMember updated = groupCommandUseCase.changeGroupMemberRole(command);

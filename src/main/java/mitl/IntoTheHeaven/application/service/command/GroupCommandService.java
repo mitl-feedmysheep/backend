@@ -5,11 +5,13 @@ import mitl.IntoTheHeaven.application.port.in.command.GroupCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.ChangeGroupMemberRoleCommand;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.model.GroupId;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
+import mitl.IntoTheHeaven.domain.model.GroupMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,9 +22,9 @@ public class GroupCommandService implements GroupCommandUseCase {
 
     @Override
     public GroupMember changeGroupMemberRole(ChangeGroupMemberRoleCommand command) {
-        UUID groupId = command.getGroupId().getValue();
-        UUID targetMemberId = command.getTargetMemberId().getValue();
-        UUID requesterId = command.getRequesterMemberId().getValue();
+        GroupId groupId = command.getGroupId();
+        GroupMemberId groupMemberId = command.getGroupMemberId();
+        MemberId requesterId = command.getRequesterMemberId();
         GroupMemberRole newRole = command.getNewRole();
 
         // 1. Role Validation
@@ -31,16 +33,16 @@ public class GroupCommandService implements GroupCommandUseCase {
         }
 
         // 2. Requester Validation
-        GroupMember requester = groupPort.findGroupMemberByGroupIdAndMemberId(groupId, requesterId);
+        GroupMember requester = groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), requesterId.getValue());
         if (requester.getRole() != GroupMemberRole.LEADER) {
             throw new IllegalStateException("Only group leader can change roles");
         }
-        if (requesterId.equals(targetMemberId)) {
+        if (requesterId.getValue().equals(groupMemberId.getValue())) {
             throw new IllegalStateException("Leader cannot change own role");
         }
 
         // 3. Target Member Validation
-        GroupMember targetMember = groupPort.findGroupMemberByGroupIdAndMemberId(groupId, targetMemberId);
+        GroupMember targetMember = groupPort.findGroupMemberByGroupMemberId(groupMemberId.getValue());
         if (targetMember == null) {
             throw new IllegalArgumentException("Target member does not exist");
         }
@@ -48,7 +50,7 @@ public class GroupCommandService implements GroupCommandUseCase {
             throw new IllegalStateException("Leader cannot change role");
         }
 
-        GroupMember updated = groupPort.updateGroupMemberRole(groupId, targetMemberId, newRole);
+        GroupMember updated = groupPort.updateGroupMemberRole(groupMemberId.getValue(), newRole);
         return updated;
     }
 }

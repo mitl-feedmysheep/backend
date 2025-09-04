@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
@@ -40,6 +41,7 @@ public class GroupMemberJpaEntity extends BaseEntity {
     /**
      * 권한 (MEMBER, LEADER)
      */
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private GroupMemberRole role;
