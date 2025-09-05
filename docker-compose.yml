@@ -12,6 +12,11 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
 
+      # --- HTTP compression ---
+      SERVER_COMPRESSION_ENABLED: "true"
+      SERVER_COMPRESSION_MIME_TYPES: application/json,application/javascript,text/html,text/plain
+      SERVER_COMPRESSION_MIN_RESPONSE_SIZE: 1KB
+
       # --- DB (non-secret defaults; secrets via env_file) ---
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
 
