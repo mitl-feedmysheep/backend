@@ -44,7 +44,7 @@ public class GroupPersistenceAdapter implements GroupPort {
 
     @Override
     public List<GroupMember> findGroupMembersByGroupId(UUID groupId) {
-        return groupMemberJpaRepository.findByGroupIdOrderByRoleAscMemberBirthdayAsc(groupId).stream()
+        return groupMemberJpaRepository.findByGroupId(groupId).stream()
                 .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
                 .toList();
     }
