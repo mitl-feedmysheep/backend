@@ -58,6 +58,7 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .phone(member.getPhone())
                 .profileUrl(member.getProfileUrl())
                 .address(member.getAddress())
+                .isProvisioned(member.getIsProvisioned())
                 .build();
 
         memberPort.save(updated);
