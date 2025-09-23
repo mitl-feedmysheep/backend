@@ -63,12 +63,6 @@ public class GatheringJpaEntity extends BaseEntity {
     private String place;
 
     /**
-     * 사진 URL
-     */
-    @Column(name = "photo_url", length = 2048)
-    private String photoUrl;
-
-    /**
      * 리더 코멘트
      */
     @Column(name = "leader_comment", length = 100)
@@ -90,4 +84,15 @@ public class GatheringJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "gathering", cascade = CascadeType.ALL)
     @Builder.Default
     private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
+
+    /**
+     * 사진 미디어 (여러 사진 - 썸네일보다 큰 사이즈들)
+     */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @SQLRestriction("entity_type = 'GATHERING' AND media_type = 'RESIZED_SMALL'")
+    @OrderBy("createdAt ASC") // 등록 순서대로 정렬 (첫 번째가 썸네일)
+    @Builder.Default
+    private List<MediaJpaEntity> photos = new ArrayList<>();
+
 } 

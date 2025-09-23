@@ -57,4 +57,13 @@ public class GroupJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GatheringJpaEntity> gatherings = new ArrayList<>();
+
+    /**
+     * 썸네일 미디어 (자주 사용되므로 Entity에 포함)
+     */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @SQLRestriction("entity_type = 'GROUP' AND media_type = 'THUMBNAIL'")
+    @Builder.Default
+    private List<MediaJpaEntity> thumbnails = new ArrayList<>();
 } 
