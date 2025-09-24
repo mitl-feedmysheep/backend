@@ -42,7 +42,3 @@ services:
 
     ports:
       - "8080:8080"
-
-    # --- Where Media is stored ---
-    volumes:
-      - ~/uploads:/app/uploads  # 호스트의 ~/uploads를 컨테이너의 /app/uploads에 마운트
