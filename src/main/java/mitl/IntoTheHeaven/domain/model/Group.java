@@ -31,7 +31,7 @@ public class Group extends AggregateRoot<Group, GroupId> {
         return medias.stream()
                 .filter(media -> media.getMediaType() == MediaType.THUMBNAIL)
                 .findFirst()
-                .map(Media::getPublicUrl);
+                .map(Media::getUrl);
     }
 
     /**
@@ -41,7 +41,7 @@ public class Group extends AggregateRoot<Group, GroupId> {
         return medias.stream()
                 .filter(media -> media.getMediaType() == MediaType.MEDIUM)
                 .findFirst()
-                .map(Media::getPublicUrl);
+                .map(Media::getUrl);
     }
 
     /**

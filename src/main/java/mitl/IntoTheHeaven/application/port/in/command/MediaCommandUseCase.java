@@ -2,12 +2,11 @@ package mitl.IntoTheHeaven.application.port.in.command;
 
 import mitl.IntoTheHeaven.application.port.in.command.dto.CompleteMediaUploadCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.GeneratePresignedUrlsCommand;
-import mitl.IntoTheHeaven.domain.enums.EntityType;
 import mitl.IntoTheHeaven.domain.model.Media;
+import mitl.IntoTheHeaven.domain.model.MediaId;
 import mitl.IntoTheHeaven.application.dto.PresignedUploadInfo;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface MediaCommandUseCase {
 
@@ -28,7 +27,8 @@ public interface MediaCommandUseCase {
     List<Media> completeUpload(CompleteMediaUploadCommand command);
 
     /**
-     * Delete all media associated with a specific entity (soft delete)
+     * Delete specific media by ID (soft delete)
+     * This will delete all media in the same file group (THUMBNAIL + MEDIUM from same original file)
      */
-    void deleteMediaByEntity(EntityType entityType, UUID entityId);
+    void deleteById(MediaId mediaId);
 }

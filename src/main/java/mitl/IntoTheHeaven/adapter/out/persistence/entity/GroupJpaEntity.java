@@ -59,11 +59,12 @@ public class GroupJpaEntity extends BaseEntity {
     private List<GatheringJpaEntity> gatherings = new ArrayList<>();
 
     /**
-     * 썸네일 미디어 (자주 사용되므로 Entity에 포함)
+     * 그룹 미디어 (EntityGraph로 필요할 때만 로딩)
      */
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    @SQLRestriction("entity_type = 'GROUP' AND media_type = 'THUMBNAIL'")
+    @SQLRestriction("entity_type = 'GROUP'")
+    @OrderBy("createdAt ASC")
     @Builder.Default
-    private List<MediaJpaEntity> thumbnails = new ArrayList<>();
-} 
+    private List<MediaJpaEntity> medias = new ArrayList<>();
+}

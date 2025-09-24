@@ -35,18 +35,12 @@ public class MediaUploadCompleteRequest {
     @Schema(description = "Individual completed upload item")
     public static class CompletedUploadItem {
 
-        @NotNull(message = "Upload ID is required")
-        @Schema(description = "Upload ID from presigned URL response", example = "thumb_20241223_abc123")
-        private String uploadId;
-
         @NotNull(message = "Media type is required")
         @Schema(description = "Type of media", example = "THUMBNAIL")
         private MediaType mediaType;
 
-        @Schema(description = "Final file size uploaded", example = "524288")
-        private Long uploadedFileSize;
-
-        @Schema(description = "MD5 hash for integrity check", example = "d41d8cd98f00b204e9800998ecf8427e")
-        private String md5Hash;
+        @NotNull(message = "Upload URL is required")
+        @Schema(description = "Final uploaded file URL", example = "https://r2.dev/uploads/thumbnail_image.jpg")
+        private String publicUrl;
     }
 }

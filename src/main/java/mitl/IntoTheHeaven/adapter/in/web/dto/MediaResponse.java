@@ -18,7 +18,6 @@ public class MediaResponse {
     private final MediaType mediaType;
     private final EntityType entityType;
     private final UUID entityId;
-    private final String storagePath;
     private final String url;
     private final String accessUrl;
     private final LocalDateTime createdAt;
@@ -32,9 +31,7 @@ public class MediaResponse {
                 .mediaType(media.getMediaType())
                 .entityType(media.getEntityType())
                 .entityId(media.getEntityId())
-                .storagePath(media.getStoragePath())
                 .url(media.getUrl())
-                .accessUrl(media.getAccessUrl()) // 실제 접근 URL
                 .createdAt(media.getCreatedAt())
                 .build();
     }

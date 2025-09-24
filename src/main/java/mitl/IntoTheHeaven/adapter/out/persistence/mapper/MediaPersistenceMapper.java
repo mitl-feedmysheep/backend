@@ -24,7 +24,7 @@ public class MediaPersistenceMapper {
                 .mediaType(entity.getMediaType())
                 .entityType(entity.getEntityType())
                 .entityId(entity.getEntityId())
-                .storagePath(entity.getStoragePath())
+                .fileGroupId(entity.getFileGroupId())
                 .url(entity.getUrl())
                 .createdAt(entity.getCreatedAt())
                 .deletedAt(entity.getDeletedAt())
@@ -44,7 +44,7 @@ public class MediaPersistenceMapper {
                 .mediaType(domain.getMediaType())
                 .entityType(domain.getEntityType())
                 .entityId(domain.getEntityId())
-                .storagePath(domain.getStoragePath())
+                .fileGroupId(domain.getFileGroupId())
                 .url(domain.getUrl())
                 .createdAt(domain.getCreatedAt())
                 .deletedAt(domain.getDeletedAt()) // soft delete 지원

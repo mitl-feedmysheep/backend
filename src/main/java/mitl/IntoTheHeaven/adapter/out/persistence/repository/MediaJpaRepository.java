@@ -18,6 +18,11 @@ public interface MediaJpaRepository extends JpaRepository<MediaJpaEntity, UUID> 
     List<MediaJpaEntity> findByEntityTypeAndEntityId(EntityType entityType, UUID entityId);
 
     /**
+     * 파일 그룹 ID로 미디어 조회 (같은 원본에서 생성된 모든 미디어)
+     */
+    List<MediaJpaEntity> findByFileGroupId(String fileGroupId);
+
+    /**
      * 특정 엔티티의 특정 타입 미디어 조회
      */
     Optional<MediaJpaEntity> findByEntityTypeAndEntityIdAndMediaType(

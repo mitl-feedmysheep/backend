@@ -86,13 +86,12 @@ public class GatheringJpaEntity extends BaseEntity {
     private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
 
     /**
-     * 사진 미디어 (여러 사진 - 썸네일보다 큰 사이즈들)
+     * 모임 미디어 (EntityGraph로 필요할 때만 로딩)
      */
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    @SQLRestriction("entity_type = 'GATHERING' AND media_type = 'RESIZED_SMALL'")
-    @OrderBy("createdAt ASC") // 등록 순서대로 정렬 (첫 번째가 썸네일)
+    @SQLRestriction("entity_type = 'GATHERING'")
+    @OrderBy("createdAt ASC")
     @Builder.Default
-    private List<MediaJpaEntity> photos = new ArrayList<>();
-
+    private List<MediaJpaEntity> medias = new ArrayList<>();
 } 

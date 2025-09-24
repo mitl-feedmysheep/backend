@@ -46,14 +46,14 @@ public class MediaJpaEntity extends BaseEntity {
     private UUID entityId;
 
     /**
-     * 저장소 경로 (로컬/임시)
+     * 파일 그룹 ID (같은 원본에서 생성된 미디어들을 묶는 식별자)
      */
-    @Column(name = "storage_path", length = 1024)
-    private String storagePath;
+    @Column(name = "file_group_id", nullable = false, length = 36)
+    private String fileGroupId;
 
     /**
-     * CDN URL (마이그레이션 후)
+     * 미디어 URL
      */
-    @Column(name = "url", length = 2048)
+    @Column(name = "url", nullable = false, length = 2048)
     private String url;
 }

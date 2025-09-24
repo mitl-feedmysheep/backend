@@ -13,10 +13,10 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
 
     Optional<MemberJpaEntity> findByPhone(String phone);
 
-    @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group"})
+    @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group", "groupMembers.group.medias"})
     Optional<MemberJpaEntity> findWithGroupsById(UUID memberId);
 
-    @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group", "groupMembers.group.church"})
+    @EntityGraph(attributePaths = {"groupMembers", "groupMembers.group", "groupMembers.group.church", "groupMembers.group.medias"})
     Optional<MemberJpaEntity> findWithGroupsAndChurchesById(UUID memberId);
 
     List<MemberJpaEntity> findAllByGroupMembers_Group_Id(UUID groupId);

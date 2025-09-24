@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -4669.7888,
-    "scrollLeft": -2643.2124,
+    "scrollTop": -4278.7888,
+    "scrollLeft": -4250.2124,
     "zoomLevel": 0.85,
     "show": 431,
     "database": 4,
@@ -497,7 +497,7 @@
           "rvuh-g2bWCMFAabj6d44J",
           "mR1N_Ge6bOZsrbi7fF6mV",
           "Fqf2nW9rF2sfxpRkCR_Mm",
-          "S0jZmsa12rB0CPSzUeMWi",
+          "FileGroupIdColumn123456",
           "SoBzGmR4CM7eAM31Uq8OP",
           "FXYCxI0cgjqCn0JI6S3_L",
           "njJehBV-SKWKG5yXaaqM1",
@@ -508,7 +508,7 @@
           "rvuh-g2bWCMFAabj6d44J",
           "mR1N_Ge6bOZsrbi7fF6mV",
           "Fqf2nW9rF2sfxpRkCR_Mm",
-          "S0jZmsa12rB0CPSzUeMWi",
+          "FileGroupIdColumn123456",
           "SoBzGmR4CM7eAM31Uq8OP",
           "FXYCxI0cgjqCn0JI6S3_L",
           "njJehBV-SKWKG5yXaaqM1",
@@ -523,7 +523,7 @@
           "color": "#FFF900"
         },
         "meta": {
-          "updateAt": 1758515668595,
+          "updateAt": 1758694608753,
           "createAt": 1758511689045
         }
       }
@@ -3149,24 +3149,24 @@
           "createAt": 1758511696979
         }
       },
-      "S0jZmsa12rB0CPSzUeMWi": {
-        "id": "S0jZmsa12rB0CPSzUeMWi",
+      "FileGroupIdColumn123456": {
+        "id": "FileGroupIdColumn123456",
         "tableId": "zZXIFkWWi3l31H0PdP4FS",
-        "name": "storage_path",
-        "comment": "저장소 경로 (로컬/임시)",
-        "dataType": "VARCHAR(1024)",
+        "name": "file_group_id",
+        "comment": "파일 그룹 ID (같은 원본에서 생성된 미디어들을 묶는 식별자)",
+        "dataType": "VARCHAR(36)",
         "default": "",
-        "options": 0,
+        "options": 8,
         "ui": {
           "keys": 0,
-          "widthName": 77,
-          "widthComment": 115,
-          "widthDataType": 96,
+          "widthName": 76,
+          "widthComment": 289,
+          "widthDataType": 83,
           "widthDefault": 60
         },
         "meta": {
-          "updateAt": 1758515639182,
-          "createAt": 1758515623355
+          "updateAt": 1758698851341,
+          "createAt": 1758694700000
         }
       },
       "SoBzGmR4CM7eAM31Uq8OP": {
@@ -3176,7 +3176,7 @@
         "comment": "CDN URL",
         "dataType": "VARCHAR(2048)",
         "default": "",
-        "options": 0,
+        "options": 8,
         "ui": {
           "keys": 0,
           "widthName": 60,
@@ -3185,7 +3185,7 @@
           "widthDefault": 60
         },
         "meta": {
-          "updateAt": 1758515659841,
+          "updateAt": 1758694656061,
           "createAt": 1758515640032
         }
       },

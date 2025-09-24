@@ -51,7 +51,7 @@ public class MediaUploadCompleteResponse {
                 .map(media -> CreatedMediaItem.builder()
                         .mediaId(media.getId().getValue())
                         .mediaType(media.getMediaType())
-                        .publicUrl(media.getPublicUrl())
+                        .publicUrl(media.getUrl())
                         .createdAt(media.getCreatedAt())
                         .build())
                 .toList();

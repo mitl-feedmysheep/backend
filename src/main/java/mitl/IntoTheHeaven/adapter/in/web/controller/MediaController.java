@@ -12,8 +12,8 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.MediaUploadCompleteResponse;
 import mitl.IntoTheHeaven.application.port.in.command.MediaCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.GeneratePresignedUrlsCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CompleteMediaUploadCommand;
-import mitl.IntoTheHeaven.domain.enums.EntityType;
 import mitl.IntoTheHeaven.domain.model.Media;
+import mitl.IntoTheHeaven.domain.model.MediaId;
 import mitl.IntoTheHeaven.application.dto.PresignedUploadInfo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,12 +48,11 @@ public class MediaController {
         return ResponseEntity.ok(MediaUploadCompleteResponse.from(medias));
     }
 
-    @Operation(summary = "Delete All Media by Entity", description = "Deletes all media associated with a specific entity")
-    @DeleteMapping
-    public ResponseEntity<Void> deleteMediaByEntity(
-            @Parameter(description = "Entity type (GROUP, GATHERING, MEMBER, CHURCH)") @RequestParam EntityType entityType,
-            @Parameter(description = "Entity ID") @RequestParam UUID entityId) {
-        mediaCommandUseCase.deleteMediaByEntity(entityType, entityId);
+    @Operation(summary = "Delete Media by ID", description = "Deletes a specific media file (includes all sizes from same original file)")
+    @DeleteMapping("/{mediaId}")
+    public ResponseEntity<Void> deleteMediaById(
+            @Parameter(description = "Media ID") @PathVariable UUID mediaId) {
+        mediaCommandUseCase.deleteById(MediaId.from(mediaId));
         return ResponseEntity.noContent().build();
     }
 }

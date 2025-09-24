@@ -20,10 +20,8 @@ public class CompleteMediaUploadCommand {
     @Getter
     @Builder
     public static class CompletedUploadInfo {
-        private final String uploadId;
         private final MediaType mediaType;
-        private final Long uploadedFileSize;
-        private final String md5Hash;
+        private final String publicUrl;
     }
 
     /**
@@ -32,10 +30,8 @@ public class CompleteMediaUploadCommand {
     public static CompleteMediaUploadCommand from(MediaUploadCompleteRequest request) {
         List<CompletedUploadInfo> uploads = request.getUploads().stream()
                 .map(upload -> CompletedUploadInfo.builder()
-                        .uploadId(upload.getUploadId())
                         .mediaType(upload.getMediaType())
-                        .uploadedFileSize(upload.getUploadedFileSize())
-                        .md5Hash(upload.getMd5Hash())
+                        .publicUrl(upload.getPublicUrl())
                         .build())
                 .toList();
 

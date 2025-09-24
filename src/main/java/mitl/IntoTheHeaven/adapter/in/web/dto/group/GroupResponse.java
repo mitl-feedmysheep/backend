@@ -18,9 +18,11 @@ public class GroupResponse {
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final Integer groupMemberCount; // renamed
+    private final String imageUrl;
 
     @Builder
-    public GroupResponse(UUID id, String name, String description, UUID churchId, LocalDate startDate, LocalDate endDate, Integer groupMemberCount) {
+    public GroupResponse(UUID id, String name, String description, UUID churchId, LocalDate startDate,
+            LocalDate endDate, Integer groupMemberCount, String imageUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -28,6 +30,7 @@ public class GroupResponse {
         this.startDate = startDate;
         this.endDate = endDate;
         this.groupMemberCount = groupMemberCount;
+        this.imageUrl = imageUrl;
     }
 
     public static GroupResponse from(Group group) {
@@ -38,6 +41,7 @@ public class GroupResponse {
                 .churchId(group.getChurchId().getValue())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
+                .imageUrl(group.getThumbnailUrl().orElse(null))
                 .build();
     }
 
@@ -50,6 +54,7 @@ public class GroupResponse {
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
                 .groupMemberCount(groupMemberCount)
+                .imageUrl(group.getThumbnailUrl().orElse(null))
                 .build();
     }
 
@@ -58,4 +63,4 @@ public class GroupResponse {
                 .map(GroupResponse::from)
                 .collect(Collectors.toList());
     }
-} 
+}

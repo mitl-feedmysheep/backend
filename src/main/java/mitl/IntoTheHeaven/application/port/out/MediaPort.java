@@ -27,6 +27,11 @@ public interface MediaPort {
     Optional<Media> findById(MediaId mediaId);
 
     /**
+     * 파일 그룹 ID로 미디어 조회 (같은 원본에서 생성된 모든 미디어)
+     */
+    List<Media> findByFileGroupId(String fileGroupId);
+
+    /**
      * 특정 엔티티의 모든 미디어 조회
      */
     List<Media> findByEntity(EntityType entityType, UUID entityId);

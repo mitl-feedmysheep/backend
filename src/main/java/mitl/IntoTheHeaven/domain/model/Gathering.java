@@ -37,7 +37,7 @@ public class Gathering extends AggregateRoot<Gathering, GatheringId> {
         return medias.stream()
                 .filter(media -> media.getMediaType() == MediaType.THUMBNAIL)
                 .findFirst()
-                .map(Media::getPublicUrl);
+                .map(Media::getUrl);
     }
 
     /**
@@ -47,7 +47,7 @@ public class Gathering extends AggregateRoot<Gathering, GatheringId> {
         return medias.stream()
                 .filter(media -> media.getMediaType() == MediaType.MEDIUM)
                 .sorted((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
-                .map(Media::getPublicUrl)
+                .map(Media::getUrl)
                 .toList();
     }
 
@@ -59,7 +59,7 @@ public class Gathering extends AggregateRoot<Gathering, GatheringId> {
                 .filter(media -> media.getMediaType() == MediaType.MEDIUM)
                 .sorted((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
                 .findFirst()
-                .map(Media::getPublicUrl);
+                .map(Media::getUrl);
     }
 
     /**

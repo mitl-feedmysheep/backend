@@ -42,6 +42,12 @@ public class MediaPersistenceAdapter implements MediaPort {
     }
 
     @Override
+    public List<Media> findByFileGroupId(String fileGroupId) {
+        var entities = mediaJpaRepository.findByFileGroupId(fileGroupId);
+        return mediaPersistenceMapper.toDomainList(entities);
+    }
+
+    @Override
     public List<Media> findByEntity(EntityType entityType, UUID entityId) {
         var entities = mediaJpaRepository.findByEntityTypeAndEntityId(entityType, entityId);
         return mediaPersistenceMapper.toDomainList(entities);

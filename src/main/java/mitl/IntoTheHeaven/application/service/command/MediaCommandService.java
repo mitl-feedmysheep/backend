@@ -5,9 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.application.port.in.command.MediaCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CompleteMediaUploadCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.GeneratePresignedUrlsCommand;
-import mitl.IntoTheHeaven.application.port.out.CloudflareR2Port;
+import mitl.IntoTheHeaven.application.port.out.CloudPort;
 import mitl.IntoTheHeaven.application.port.out.MediaPort;
-import mitl.IntoTheHeaven.domain.enums.EntityType;
 import mitl.IntoTheHeaven.domain.enums.MediaType;
 import mitl.IntoTheHeaven.domain.model.Media;
 import mitl.IntoTheHeaven.domain.model.MediaId;
@@ -29,7 +28,7 @@ import java.util.UUID;
 public class MediaCommandService implements MediaCommandUseCase {
 
     private final MediaPort mediaPort;
-    private final CloudflareR2Port cloudflareR2Port;
+    private final CloudPort cloudPort;
 
     @Value("${cloudflare.r2.bucket-name}")
     private String bucketName;
@@ -53,36 +52,30 @@ public class MediaCommandService implements MediaCommandUseCase {
 
         for (MediaType mediaType : mediaTypes) {
             try {
-                // Generate unique upload ID
-                String uploadId = cloudflareR2Port.generateUploadId(mediaType);
-
-                // Generate object key (file path in R2)
-                String objectKey = cloudflareR2Port.generateObjectKey(uploadId, mediaType, command.getFileName());
+                // Generate unique object key (file path in R2)
+                String objectKey = generateObjectKey(mediaType, command);
 
                 // Get max file size for this media type
                 Long maxFileSize = getMaxFileSize(mediaType);
 
                 // Generate presigned upload URL
-                String uploadUrl = cloudflareR2Port.generatePresignedUploadUrl(
+                String uploadUrl = cloudPort.generatePresignedUploadUrl(
                         bucketName, objectKey, command.getContentType(), maxFileSize, expiration);
 
                 // Generate public URL for after upload
-                String publicUrl = cloudflareR2Port.generatePublicUrl(bucketName, objectKey);
+                String publicUrl = cloudPort.generatePublicUrl(objectKey);
 
                 // Create upload item
                 PresignedUploadInfo.UploadItem uploadItem = PresignedUploadInfo.UploadItem.builder()
                         .mediaType(mediaType)
-                        .uploadId(uploadId)
                         .uploadUrl(uploadUrl)
                         .publicUrl(publicUrl)
-                        .method("PUT")
-                        .maxFileSize(maxFileSize)
                         .build();
 
                 uploads.add(uploadItem);
 
-                log.info("Generated presigned URL for entity {}:{}, mediaType: {}, uploadId: {}",
-                        command.getEntityType(), command.getEntityId(), mediaType, uploadId);
+                log.info("Generated presigned URL for entity {}:{}, mediaType: {}, objectKey: {}",
+                        command.getEntityType(), command.getEntityId(), mediaType, objectKey);
 
             } catch (Exception e) {
                 log.error("Failed to generate presigned URL for mediaType: {}", mediaType, e);
@@ -100,41 +93,32 @@ public class MediaCommandService implements MediaCommandUseCase {
     @Override
     public List<Media> completeUpload(CompleteMediaUploadCommand command) {
         List<Media> savedMedias = new ArrayList<>();
+        
+        // Generate fileGroupId for all media in this upload (same original file)
+        String fileGroupId = UUID.randomUUID().toString();
 
         for (CompleteMediaUploadCommand.CompletedUploadInfo upload : command.getUploads()) {
             try {
-                // Generate object key from upload ID
-                String objectKey = cloudflareR2Port.generateObjectKey(upload.getUploadId(), upload.getMediaType(), "");
-
-                // Generate public URL
-                String publicUrl = cloudflareR2Port.generatePublicUrl(bucketName, objectKey);
-
-                // Verify file exists (optional, but good for reliability)
-                if (!cloudflareR2Port.fileExists(bucketName, objectKey)) {
-                    log.warn("File not found in R2 for uploadId: {}, objectKey: {}", upload.getUploadId(), objectKey);
-                    // Continue anyway, might be eventual consistency
-                }
-
-                // Create Media domain object
+                // Create Media domain object with provided URL
                 Media media = Media.builder()
                         .id(MediaId.from(UUID.randomUUID()))
                         .mediaType(upload.getMediaType())
                         .entityType(command.getEntityType())
                         .entityId(command.getEntityId())
-                        .storagePath(null) // Not needed for R2
-                        .url(publicUrl) // R2 public URL
+                        .fileGroupId(fileGroupId) // Same fileGroupId for all media in this upload
+                        .url(upload.getPublicUrl()) // Use provided URL directly
                         .build();
 
                 // Save to database
                 Media savedMedia = mediaPort.save(media);
                 savedMedias.add(savedMedia);
 
-                log.info("Successfully completed upload for entity {}:{}, mediaType: {}, uploadId: {}",
-                        command.getEntityType(), command.getEntityId(), upload.getMediaType(), upload.getUploadId());
+                log.info("Successfully completed upload for entity {}:{}, mediaType: {}, url: {}",
+                        command.getEntityType(), command.getEntityId(), upload.getMediaType(), upload.getPublicUrl());
 
             } catch (Exception e) {
-                log.error("Failed to complete upload for uploadId: {}, mediaType: {}",
-                        upload.getUploadId(), upload.getMediaType(), e);
+                log.error("Failed to complete upload for mediaType: {}, url: {}",
+                        upload.getMediaType(), upload.getPublicUrl(), e);
                 throw new RuntimeException("Failed to complete upload: " + e.getMessage(), e);
             }
         }
@@ -146,18 +130,22 @@ public class MediaCommandService implements MediaCommandUseCase {
     }
 
     @Override
-    public void deleteMediaByEntity(EntityType entityType, UUID entityId) {
-        // 1. Retrieve all media for the given entity
-        List<Media> medias = mediaPort.findByEntity(entityType, entityId);
+    public void deleteById(MediaId mediaId) {
+        // 1. Find the media by ID
+        Media media = mediaPort.findById(mediaId)
+                .orElseThrow(() -> new RuntimeException("Media not found with id: " + mediaId.getValue()));
 
-        // 2. Soft delete each media (R2 files will be cleaned up separately)
-        medias.forEach(media -> {
-            Media deleted = media.delete();
+        // 2. Find all media in the same file group
+        List<Media> groupMedias = mediaPort.findByFileGroupId(media.getFileGroupId());
+
+        // 3. Soft delete all media in the group
+        groupMedias.forEach(groupMedia -> {
+            Media deleted = groupMedia.delete();
             mediaPort.save(deleted);
         });
 
-        log.info("Successfully deleted {} media files for entity {}:{}",
-                medias.size(), entityType, entityId);
+        log.info("Successfully deleted {} media files in file group: {}", 
+                groupMedias.size(), media.getFileGroupId());
     }
 
     /**
@@ -168,5 +156,21 @@ public class MediaCommandService implements MediaCommandUseCase {
             case THUMBNAIL -> maxThumbnailSize;
             case MEDIUM -> maxMediumSize;
         };
+    }
+
+    /**
+     * Generate object key for R2 storage
+     */
+    private String generateObjectKey(MediaType mediaType, GeneratePresignedUrlsCommand command) {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String entityType = command.getEntityType().name();
+        String entityId = command.getEntityId().toString();
+        String extension = command.getFileName().substring(command.getFileName().lastIndexOf(".") + 1).toLowerCase();
+        return String.format("%s_%s_%s_%s.%s",
+                entityType,
+                entityId,
+                mediaType.name().toLowerCase(),
+                timestamp,
+                extension);
     }
 }
