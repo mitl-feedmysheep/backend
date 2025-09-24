@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
-import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class GroupPersistenceMapper {
 
     private final MemberPersistenceMapper memberPersistenceMapper;
+    private final MediaPersistenceMapper mediaPersistenceMapper;
 
     public Group toDomain(GroupJpaEntity entity) {
         return Group.builder()
@@ -29,6 +29,7 @@ public class GroupPersistenceMapper {
                 .churchId(ChurchId.from(entity.getChurch().getId()))
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
+                .medias(mediaPersistenceMapper.toDomainList(entity.getMedias()))
                 .build();
     }
 
@@ -60,4 +61,4 @@ public class GroupPersistenceMapper {
                 .role(entity.getRole())
                 .build();
     }
-} 
+}

@@ -1,0 +1,34 @@
+package mitl.IntoTheHeaven.application.port.in.command;
+
+import mitl.IntoTheHeaven.application.port.in.command.dto.CompleteMediaUploadCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.GeneratePresignedUrlsCommand;
+import mitl.IntoTheHeaven.domain.model.Media;
+import mitl.IntoTheHeaven.domain.model.MediaId;
+import mitl.IntoTheHeaven.application.dto.PresignedUploadInfo;
+
+import java.util.List;
+
+public interface MediaCommandUseCase {
+
+    /**
+     * Generate presigned URLs for direct upload to R2
+     * 
+     * @param command Command containing entity info and file details
+     * @return Domain object with presigned upload information
+     */
+    PresignedUploadInfo generatePresignedUrls(GeneratePresignedUrlsCommand command);
+
+    /**
+     * Complete upload after files are uploaded to R2 via presigned URLs
+     * 
+     * @param command Upload completion command
+     * @return Created media entities (THUMBNAIL, MEDIUM)
+     */
+    List<Media> completeUpload(CompleteMediaUploadCommand command);
+
+    /**
+     * Delete specific media by ID (soft delete)
+     * This will delete all media in the same file group (THUMBNAIL + MEDIUM from same original file)
+     */
+    void deleteById(MediaId mediaId);
+}

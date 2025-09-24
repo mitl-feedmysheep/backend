@@ -63,12 +63,6 @@ public class GatheringJpaEntity extends BaseEntity {
     private String place;
 
     /**
-     * 사진 URL
-     */
-    @Column(name = "photo_url", length = 2048)
-    private String photoUrl;
-
-    /**
      * 리더 코멘트
      */
     @Column(name = "leader_comment", length = 100)
@@ -90,4 +84,14 @@ public class GatheringJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "gathering", cascade = CascadeType.ALL)
     @Builder.Default
     private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
+
+    /**
+     * 모임 미디어 (EntityGraph로 필요할 때만 로딩)
+     */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @SQLRestriction("entity_type = 'GATHERING'")
+    @OrderBy("createdAt ASC")
+    @Builder.Default
+    private List<MediaJpaEntity> medias = new ArrayList<>();
 } 

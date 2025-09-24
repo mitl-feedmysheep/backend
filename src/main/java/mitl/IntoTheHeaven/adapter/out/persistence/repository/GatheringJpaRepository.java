@@ -9,13 +9,16 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface GatheringJpaRepository extends JpaRepository<GatheringJpaEntity, UUID> {
+    
+    @EntityGraph(attributePaths = {"medias"})
     List<GatheringJpaEntity> findAllByGroupId(UUID groupId);
 
     @EntityGraph(attributePaths = {
             "gatheringMembers",
             "gatheringMembers.groupMember",
             "gatheringMembers.groupMember.member",
-            "gatheringMembers.prayers"
+            "gatheringMembers.prayers",
+            "medias"
     })
     Optional<GatheringJpaEntity> findWithDetailsById(UUID id);
 }
