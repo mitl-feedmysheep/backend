@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
@@ -86,12 +87,13 @@ public class GatheringJpaEntity extends BaseEntity {
     private Set<GatheringMemberJpaEntity> gatheringMembers = new HashSet<>();
 
     /**
-     * 모임 미디어 (EntityGraph로 필요할 때만 로딩)
+     * 모임 미디어 (BatchSize로 효율적 로딩)
      */
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @SQLRestriction("entity_type = 'GATHERING'")
     @OrderBy("createdAt ASC")
+    @BatchSize(size = 10)
     @Builder.Default
     private List<MediaJpaEntity> medias = new ArrayList<>();
 } 

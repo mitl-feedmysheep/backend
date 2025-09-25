@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
@@ -59,12 +60,13 @@ public class GroupJpaEntity extends BaseEntity {
     private List<GatheringJpaEntity> gatherings = new ArrayList<>();
 
     /**
-     * 그룹 미디어 (EntityGraph로 필요할 때만 로딩)
+     * 그룹 미디어 (BatchSize로 효율적 로딩)
      */
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @SQLRestriction("entity_type = 'GROUP'")
     @OrderBy("createdAt ASC")
+    @BatchSize(size = 10)
     @Builder.Default
     private List<MediaJpaEntity> medias = new ArrayList<>();
 }

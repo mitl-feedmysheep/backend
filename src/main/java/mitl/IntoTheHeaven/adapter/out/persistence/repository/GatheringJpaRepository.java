@@ -17,8 +17,7 @@ public interface GatheringJpaRepository extends JpaRepository<GatheringJpaEntity
             "gatheringMembers",
             "gatheringMembers.groupMember",
             "gatheringMembers.groupMember.member",
-            "gatheringMembers.prayers",
-            "medias"
+            "gatheringMembers.prayers"
     })
     Optional<GatheringJpaEntity> findWithDetailsById(UUID id);
 }
