@@ -112,6 +112,13 @@ jobs:
           # --- Mail From/Reply-To ---
           MAIL_FROM=${{ secrets.MAIL_FROM }}
           MAIL_REPLY_TO=${{ secrets.MAIL_REPLY_TO }}
+
+          # --- Cloudflare R2 Configuration ---
+          CLOUDFLARE_R2_ACCESS_KEY_ID=${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY=${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET_NAME=${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}
+          CLOUDFLARE_R2_ENDPOINT=${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PUBLIC_DOMAIN=${{ secrets.CLOUDFLARE_R2_PUBLIC_DOMAIN }}
           EOF
 
       - name: Pull image
