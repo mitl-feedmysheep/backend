@@ -50,7 +50,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64  # 🔥 ARM64 → x86_64로 변경 (크로스 컴파일 제거)
+          platforms: linux/amd64,linux/arm64  # 🔥 멀티 플랫폼 지원 (x86_64 + ARM64)
           tags: |
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_SHA }}
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_LATEST }}
