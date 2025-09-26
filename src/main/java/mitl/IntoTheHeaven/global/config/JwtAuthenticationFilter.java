@@ -12,6 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
+import io.jsonwebtoken.ExpiredJwtException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,18 +34,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         return EXCLUDED_PATHS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, request.getRequestURI()));
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         String jwt = resolveToken(request);
 
-        if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-            Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (StringUtils.hasText(jwt)) {
+            try {
+                if (jwtTokenProvider.validateTokenWithException(jwt)) {
+                    Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (ExpiredJwtException e) {
+                // JWT 만료 시 특별한 응답
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"JWT_EXPIRED\",\"message\":\"JWT token has expired. Please login again.\"}");
+                return; // 다음 필터로 진행하지 않음
+            }
         }
 
         filterChain.doFilter(request, response);

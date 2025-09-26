@@ -87,6 +87,23 @@ public class JwtTokenProvider {
         return false;
     }
 
+    public boolean validateTokenWithException(String token) throws ExpiredJwtException {
+        try {
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.info("Expired JWT token.", e);
+            throw e; // ExpiredJwtException은 다시 throw
+        } catch (SecurityException | MalformedJwtException e) {
+            log.info("Invalid JWT token.", e);
+        } catch (UnsupportedJwtException e) {
+            log.info("Unsupported JWT token.", e);
+        } catch (IllegalArgumentException e) {
+            log.info("JWT token compact of handler are invalid.", e);
+        }
+        return false;
+    }
+
     private Claims getClaimsFromToken(String token) {
         return Jwts.parser()
             .verifyWith(key)

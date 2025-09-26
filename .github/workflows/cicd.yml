@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🔥 Gradle 캐싱 추가
+      # Gradle 캐싱 추가
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
@@ -50,13 +50,13 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64  # 🔥 멀티 플랫폼 지원 (x86_64 + ARM64)
+          platforms: linux/amd64/v8
           tags: |
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_SHA }}
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_LATEST }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # 🔥 추가 최적화
+          # 추가 최적화
           build-args: |
             BUILDKIT_INLINE_CACHE=1
           outputs: type=image,push=true

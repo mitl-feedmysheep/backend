@@ -71,7 +71,7 @@ public class SecurityConfig {
 
         http
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
-            // ✅ 예외 처리 설정 추가
+            // 예외 처리 설정 추가
         .exceptionHandling(exceptions -> exceptions
         .authenticationEntryPoint((request, response, authException) -> {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
