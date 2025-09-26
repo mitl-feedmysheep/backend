@@ -41,16 +41,13 @@ jobs:
           echo "IMAGE=${{ secrets.DOCKER_IMAGE }}" >> $GITHUB_OUTPUT
           echo "TAG_SHA=${GITHUB_SHA}" >> $GITHUB_OUTPUT
           echo "TAG_LATEST=latest" >> $GITHUB_OUTPUT
-
-
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64/v8
+          platforms: linux/arm64/v8
           tags: |
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_SHA }}
             ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG_LATEST }}
