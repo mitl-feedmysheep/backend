@@ -72,6 +72,11 @@ public class MediaPersistenceAdapter implements MediaPort {
     }
 
     @Override
+    public List<Media> findByEntityId(UUID entityId) {
+        return mediaPersistenceMapper.toDomainList(mediaJpaRepository.findByEntityId(entityId));
+    }
+
+    @Override
     public List<Media> findAll() {
         var entities = mediaJpaRepository.findAll();
         return mediaPersistenceMapper.toDomainList(entities);

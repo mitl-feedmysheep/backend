@@ -55,4 +55,12 @@ public class MediaController {
         mediaCommandUseCase.deleteById(MediaId.from(mediaId));
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Delete All Media by Entity ID", description = "Deletes all media files associated with a specific entity ID")
+    @DeleteMapping("/entity/{entityId}")
+    public ResponseEntity<Void> deleteMediaByEntityId(
+            @Parameter(description = "Entity ID to delete all associated media") @PathVariable UUID entityId) {
+        mediaCommandUseCase.deleteByEntity(entityId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -148,6 +148,22 @@ public class MediaCommandService implements MediaCommandUseCase {
                 groupMedias.size(), media.getFileGroupId());
     }
 
+    @Override
+    public void deleteByEntity(UUID entityId) {
+        // 1. Find all media associated with the entity
+        List<Media> entityMedias = mediaPort.findByEntityId(entityId);
+
+        if (entityMedias.isEmpty()) {
+            return;
+        }
+
+        // 2. Soft delete all media associated with the entity
+        entityMedias.forEach(media -> {
+            Media deleted = media.delete();
+            mediaPort.save(deleted);
+        });
+    }
+
     /**
      * Get maximum file size for media type
      */

@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.domain.model.MediaId;
 import mitl.IntoTheHeaven.application.dto.PresignedUploadInfo;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface MediaCommandUseCase {
 
@@ -31,4 +32,11 @@ public interface MediaCommandUseCase {
      * This will delete all media in the same file group (THUMBNAIL + MEDIUM from same original file)
      */
     void deleteById(MediaId mediaId);
+
+    /**
+     * Delete all media associated with a specific entity
+     * 
+     * @param entityId Entity ID to delete media for
+     */
+    void deleteByEntity(UUID entityId);
 }

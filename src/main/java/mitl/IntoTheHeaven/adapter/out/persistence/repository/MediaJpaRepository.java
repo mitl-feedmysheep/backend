@@ -42,4 +42,9 @@ public interface MediaJpaRepository extends JpaRepository<MediaJpaEntity, UUID> 
         return findByEntityTypeAndEntityIdAndMediaType(entityType, entityId, MediaType.MEDIUM);
     }
 
+    /**
+     * 특정 엔티티 ID의 모든 미디어 조회 (문자열 ID 기반)
+     */
+    List<MediaJpaEntity> findByEntityId(UUID entityId);
+
 }

@@ -41,7 +41,7 @@ public class GroupResponse {
                 .churchId(group.getChurchId().getValue())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
-                .imageUrl(group.getThumbnailUrl().orElse(null))
+                .imageUrl(group.getMainImageUrl().orElse(null))
                 .build();
     }
 
@@ -54,7 +54,7 @@ public class GroupResponse {
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
                 .groupMemberCount(groupMemberCount)
-                .imageUrl(group.getThumbnailUrl().orElse(null))
+                .imageUrl(group.getMainImageUrl().orElse(null))
                 .build();
     }
 

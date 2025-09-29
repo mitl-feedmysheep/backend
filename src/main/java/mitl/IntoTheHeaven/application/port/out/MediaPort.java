@@ -52,6 +52,11 @@ public interface MediaPort {
     Optional<Media> findMainImageByEntity(EntityType entityType, UUID entityId);
 
     /**
+     * 특정 엔티티 ID의 모든 미디어 조회 (문자열 ID 기반)
+     */
+    List<Media> findByEntityId(UUID entityId);
+
+    /**
      * 모든 미디어 조회
      */
     List<Media> findAll();
