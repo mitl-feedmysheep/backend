@@ -25,7 +25,7 @@ public class Group extends AggregateRoot<Group, GroupId> {
     private final List<Media> medias = new ArrayList<>();
 
     /**
-     * Thumbnail URL for list views (150x150)
+     * Thumbnail URL for list views (200x200)
      */
     public Optional<String> getThumbnailUrl() {
         return medias.stream()
