@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import mitl.IntoTheHeaven.domain.model.Gathering;
+import mitl.IntoTheHeaven.adapter.in.web.dto.MediaResponse;
 
 @Data
 @Builder
@@ -24,6 +25,7 @@ public class GatheringDetailResponse {
     private String place;
     private String leaderComment;
     private String adminComment;
+    private List<MediaResponse> medias;
     private List<GatheringMemberResponse> gatheringMembers;
 
     public static GatheringDetailResponse from(Gathering gathering) {
@@ -37,6 +39,9 @@ public class GatheringDetailResponse {
                 .place(gathering.getPlace())
                 .leaderComment(gathering.getLeaderComment())
                 .adminComment(gathering.getAdminComment())
+                .medias(gathering.getMedias().stream()
+                        .map(MediaResponse::from)
+                        .collect(Collectors.toList()))
                 .gatheringMembers(gathering.getGatheringMembers().stream()
                         .map(GatheringMemberResponse::from)
                         .collect(Collectors.toList()))
