@@ -4,12 +4,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminMemberSearchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.ChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminSelectChurchRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.prayer.PrayerRequestCountByChurchResponse;
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
+import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
+import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
+import mitl.IntoTheHeaven.domain.enums.ChurchRole;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
@@ -26,6 +33,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -98,6 +106,21 @@ public class ChurchController {
                         @Valid @RequestBody AdminSelectChurchRequest request) {
                 LoginResponse response = authCommandUseCase.selectChurch(MemberId.from(UUID.fromString(memberId)),
                                 ChurchId.from(request.getChurchId()));
+                return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Search Church Members", description = "Search members in a church by name or phone number.")
+        @GetMapping("/admin/members")
+        @RequireChurchRole(ChurchRole.ADMIN)
+        public ResponseEntity<List<AdminMemberSearchResponse>> searchChurchMembers(
+                        @RequestParam String searchText) {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) auth;
+                String churchId = jwtAuth.getChurchId();
+
+                List<MemberWithGroups> members = churchQueryUseCase.searchChurchMembers(
+                                ChurchId.from(UUID.fromString(churchId)), searchText);
+                List<AdminMemberSearchResponse> response = AdminMemberSearchResponse.from(members);
                 return ResponseEntity.ok(response);
         }
 }

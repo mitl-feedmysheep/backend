@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.application.port.out;
 
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
@@ -20,4 +21,6 @@ public interface ChurchPort {
     ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
 
     List<ChurchMember> findChurchMembersByMemberIdAndRole(MemberId memberId, ChurchRole role);
+
+    List<MemberWithGroups> findMembersByChurchIdAndSearch(UUID churchId, String searchText);
 }

@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.application.service.query;
 
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
@@ -41,5 +42,14 @@ public class ChurchQueryService implements ChurchQueryUseCase {
                 .map(ChurchMember::getChurchId)
                 .map(id -> churchPort.findById(id.getValue()))
                 .toList();
+    }
+
+    /* ADMIN */
+    @Override
+    public List<MemberWithGroups> searchChurchMembers(ChurchId churchId, String searchText) {
+        if (searchText == null || searchText.trim().isEmpty()) {
+            return List.of();
+        }
+        return churchPort.findMembersByChurchIdAndSearch(churchId.getValue(), searchText.trim());
     }
 }

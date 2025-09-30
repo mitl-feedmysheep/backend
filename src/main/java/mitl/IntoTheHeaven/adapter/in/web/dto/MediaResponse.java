@@ -19,7 +19,6 @@ public class MediaResponse {
     private final EntityType entityType;
     private final UUID entityId;
     private final String url;
-    private final String accessUrl;
     private final LocalDateTime createdAt;
 
     /**
