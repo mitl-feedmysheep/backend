@@ -88,9 +88,10 @@ public class GatheringJpaEntity extends BaseEntity {
 
     /**
      * 모임 미디어 (BatchSize로 효율적 로딩)
+     * Note: Media는 독립적으로 관리되므로 cascade 없이 조회만 가능
      */
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "entity_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "entity_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @SQLRestriction("entity_type = 'GATHERING'")
     @OrderBy("createdAt ASC")
     @BatchSize(size = 10)

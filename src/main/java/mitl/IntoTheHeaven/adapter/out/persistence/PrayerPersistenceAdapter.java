@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
@@ -20,6 +21,11 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QPrayerJpaEntity.prayerJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QGatheringMemberJpaEntity.gatheringMemberJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QGatheringJpaEntity.gatheringJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QGroupJpaEntity.groupJpaEntity;
+
 @Component
 @RequiredArgsConstructor
 public class PrayerPersistenceAdapter implements PrayerPort {
@@ -27,6 +33,7 @@ public class PrayerPersistenceAdapter implements PrayerPort {
     private final PrayerJpaRepository prayerJpaRepository;
     private final MemberJpaRepository memberJpaRepository;
     private final GatheringMemberJpaRepository gatheringMemberJpaRepository;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public long findPrayerRequestCountByMemberIds(List<UUID> memberIds) {
@@ -35,6 +42,18 @@ public class PrayerPersistenceAdapter implements PrayerPort {
                 .map(this::toDomain)
                 .map(Prayer::getPrayerRequest)
                 .count();
+    }
+
+    @Override
+    public Long findPrayerRequestCountByChurchId(UUID churchId) {
+        return queryFactory
+                .select(prayerJpaEntity.count())
+                .from(prayerJpaEntity)
+                .innerJoin(prayerJpaEntity.gatheringMember, gatheringMemberJpaEntity)
+                .innerJoin(gatheringMemberJpaEntity.gathering, gatheringJpaEntity)
+                .innerJoin(gatheringJpaEntity.group, groupJpaEntity)
+                .where(groupJpaEntity.church.id.eq(churchId))
+                .fetchOne();
     }
 
     @Override
@@ -64,7 +83,8 @@ public class PrayerPersistenceAdapter implements PrayerPort {
 
     private PrayerJpaEntity toEntity(Prayer prayer) {
         MemberJpaEntity memberRef = memberJpaRepository.getReferenceById(prayer.getMemberId().getValue());
-        GatheringMemberJpaEntity gatheringMemberRef = gatheringMemberJpaRepository.getReferenceById(prayer.getGatheringMemberId().getValue());
+        GatheringMemberJpaEntity gatheringMemberRef = gatheringMemberJpaRepository
+                .getReferenceById(prayer.getGatheringMemberId().getValue());
         return PrayerJpaEntity.builder()
                 .id(prayer.getId().getValue())
                 .gatheringMember(gatheringMemberRef)

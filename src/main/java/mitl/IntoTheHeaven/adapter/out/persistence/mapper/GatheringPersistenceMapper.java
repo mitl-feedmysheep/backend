@@ -99,6 +99,7 @@ public class GatheringPersistenceMapper {
                                 .collect(Collectors.toSet());
 
                 // 완성된 엔터티를 다시 빌드하여 GatheringMember 리스트 설정
+                // Note: medias는 독립적으로 관리되므로 여기서 설정하지 않음 (빈 리스트로 유지)
                 return GatheringJpaEntity.builder()
                                 .id(domain.getId().getValue())
                                 .name(domain.getName())

@@ -7,8 +7,6 @@ import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +28,9 @@ public class PrayerQueryService implements PrayerQueryUseCase {
         if (church == null) {
             throw new RuntimeException("권한이 없어요 :(");
         }
-        // 2. Retrieve all members of the church using churchPort
-        List<MemberId> memberIds = churchPort.findMemberIdsByChurchId(churchId.getValue());
-        // 3. Get the count of prayer requests for the members using prayerPort
-        Long prayerRequestCount = prayerPort.findPrayerRequestCountByMemberIds(memberIds.stream().map(MemberId::getValue).toList());
 
-        return prayerRequestCount;
+        // 2. Get the count of prayer requests for the church
+        // This counts only prayers that originated from gatherings within the church
+        return prayerPort.findPrayerRequestCountByChurchId(churchId.getValue());
     }
 }

@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface PrayerPort {
     long findPrayerRequestCountByMemberIds(List<UUID> memberIds);
 
+    Long findPrayerRequestCountByChurchId(UUID churchId);
+
     Optional<Prayer> findById(UUID prayerId);
 
     Prayer save(Prayer prayer);
