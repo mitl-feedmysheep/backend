@@ -18,8 +18,4 @@ public interface ChurchMemberJpaRepository extends JpaRepository<ChurchMemberJpa
     ChurchMemberJpaEntity findByMemberIdAndChurchId(UUID memberId, UUID churchId);
 
     List<ChurchMemberJpaEntity> findAllByMemberIdAndRole(UUID memberId, ChurchRole role);
-
-    @EntityGraph(attributePaths = { "member", "member.groupMembers", "member.groupMembers.group" })
-    List<ChurchMemberJpaEntity> findAllByChurchIdAndMember_NameContainingOrMember_PhoneContainingOrderByMember_BirthdayAsc(
-            UUID churchId, String nameSearch, String phoneSearch);
 }
