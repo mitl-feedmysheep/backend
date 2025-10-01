@@ -377,8 +377,114 @@ To prevent the N+1 query problem, we use JPA's EntityGraph feature for eager fet
   ```
 - **Convention**:
   - For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
-  - For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
-  - Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+  - For complex, dynamic, or frequently reused queries, **MUST use QueryDSL** to ensure type safety and maintainability. The project is already configured for QueryDSL.
+  - **Raw JPQL queries (`@Query`) are STRICTLY FORBIDDEN.** This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+
+### h. Query Implementation with QueryDSL (MANDATORY)
+
+**CRITICAL RULE**: All complex queries MUST use QueryDSL instead of JPQL.
+
+- **STRICTLY PROHIBITED**: Raw JPQL queries using `@Query` annotation with JPQL strings
+- **REQUIRED**: QueryDSL for all complex queries requiring type-safe, compile-time verified queries
+
+**Why QueryDSL is Mandatory:**
+1. **Type Safety**: Compile-time error detection prevents runtime query errors
+2. **Refactoring Safety**: IDE automatically updates queries when entities change
+3. **No String-Based Errors**: Eliminates typos and SQL injection risks at runtime
+4. **Better Maintainability**: Clear, readable code that's easier to understand and modify
+5. **IDE Support**: Full code completion, navigation, and refactoring support
+
+**Implementation Pattern:**
+
+```java
+// ❌ STRICTLY FORBIDDEN: JPQL with @Query
+@Query("SELECT DISTINCT v FROM VisitJpaEntity v " +
+       "JOIN v.visitMembers vm " +
+       "WHERE vm.churchMember.id = :churchMemberId " +
+       "ORDER BY v.date DESC")
+List<VisitJpaEntity> findMyVisits(@Param("churchMemberId") UUID churchMemberId);
+
+// ✅ CORRECT: QueryDSL Implementation
+// Step 1: Create Custom Repository Interface
+public interface VisitJpaRepositoryCustom {
+    List<VisitJpaEntity> findMyVisits(UUID churchMemberId);
+}
+
+// Step 2: Implement with QueryDSL
+@Repository
+@RequiredArgsConstructor
+public class VisitJpaRepositoryImpl implements VisitJpaRepositoryCustom {
+    private final JPAQueryFactory queryFactory;
+    
+    @Override
+    public List<VisitJpaEntity> findMyVisits(UUID churchMemberId) {
+        return queryFactory
+                .selectFrom(visitJpaEntity)
+                .distinct()
+                .leftJoin(visitJpaEntity.visitMembers, visitMemberJpaEntity).fetchJoin()
+                .leftJoin(visitMemberJpaEntity.churchMember, churchMemberJpaEntity).fetchJoin()
+                .leftJoin(churchMemberJpaEntity.member, memberJpaEntity).fetchJoin()
+                .leftJoin(visitMemberJpaEntity.prayers, prayerJpaEntity).fetchJoin()
+                .where(visitMemberJpaEntity.churchMember.id.eq(churchMemberId))
+                .orderBy(visitJpaEntity.date.desc(), visitJpaEntity.startedAt.desc())
+                .fetch();
+    }
+}
+
+// Step 3: Extend Main Repository
+public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>, VisitJpaRepositoryCustom {
+    // Simple method name queries are still acceptable
+    List<VisitJpaEntity> findAllByChurchId(UUID churchId);
+}
+```
+
+**When to Use QueryDSL:**
+- ✅ Complex joins (multiple tables)
+- ✅ Dynamic queries (conditional where clauses)
+- ✅ Fetch joins with multiple relationships
+- ✅ Subqueries
+- ✅ Aggregations (GROUP BY, HAVING)
+- ✅ Any query that would require JPQL
+
+**Acceptable Exceptions:**
+- ✅ Simple queries using Spring Data JPA method name conventions (e.g., `findAllByChurchId`, `findById`)
+- ✅ Single-table queries without joins
+- ✅ Basic `@EntityGraph` for simple eager loading
+
+**QueryDSL Best Practices:**
+1. **Static Imports**: Use Q-classes with static imports for cleaner code
+   ```java
+   import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QVisitJpaEntity.visitJpaEntity;
+   ```
+
+2. **Fetch Join for N+1**: Always use `.fetchJoin()` when loading related entities
+   ```java
+   .leftJoin(visitJpaEntity.visitMembers, visitMemberJpaEntity).fetchJoin()
+   ```
+
+3. **Distinct for Collections**: Use `.distinct()` when fetching collections to avoid duplicates
+   ```java
+   .selectFrom(visitJpaEntity).distinct()
+   ```
+
+4. **Null Safety**: Handle nullable fields properly
+   ```java
+   .where(field.isNotNull().and(field.eq(value)))
+   ```
+
+5. **Repository Naming**: Follow the pattern:
+   - Interface: `[Entity]RepositoryCustom`
+   - Implementation: `[Entity]RepositoryImpl`
+
+**Migration Strategy:**
+- All new queries MUST use QueryDSL
+- Existing JPQL queries should be migrated to QueryDSL during refactoring
+- Code reviews will reject any new JPQL `@Query` annotations
+
+**Enforcement:**
+- Pull requests containing `@Query` with JPQL will be automatically rejected
+- Code reviews will require QueryDSL for all complex queries
+- This rule applies to ALL new code and refactored code
 
 ### b. Adapter Responsibilities and Repository Usage
 
@@ -1182,8 +1288,114 @@ To prevent the N+1 query problem, we use JPA's EntityGraph feature for eager fet
   ```
 - **Convention**:
   - For simple, one-off fetch joins, using `@EntityGraph` is acceptable for its simplicity.
-  - For complex, dynamic, or frequently reused queries, consider using QueryDSL to ensure type safety and maintainability. The project is already configured for QueryDSL.
-  - Raw JPQL queries (`@Query`) should be avoided in favor of JPA's method name conventions or QueryDSL. This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+  - For complex, dynamic, or frequently reused queries, **MUST use QueryDSL** to ensure type safety and maintainability. The project is already configured for QueryDSL.
+  - **Raw JPQL queries (`@Query`) are STRICTLY FORBIDDEN.** This enhances type safety and reduces the risk of runtime errors from typos in query strings.
+
+### h. Query Implementation with QueryDSL (MANDATORY)
+
+**CRITICAL RULE**: All complex queries MUST use QueryDSL instead of JPQL.
+
+- **STRICTLY PROHIBITED**: Raw JPQL queries using `@Query` annotation with JPQL strings
+- **REQUIRED**: QueryDSL for all complex queries requiring type-safe, compile-time verified queries
+
+**Why QueryDSL is Mandatory:**
+1. **Type Safety**: Compile-time error detection prevents runtime query errors
+2. **Refactoring Safety**: IDE automatically updates queries when entities change
+3. **No String-Based Errors**: Eliminates typos and SQL injection risks at runtime
+4. **Better Maintainability**: Clear, readable code that's easier to understand and modify
+5. **IDE Support**: Full code completion, navigation, and refactoring support
+
+**Implementation Pattern:**
+
+```java
+// ❌ STRICTLY FORBIDDEN: JPQL with @Query
+@Query("SELECT DISTINCT v FROM VisitJpaEntity v " +
+       "JOIN v.visitMembers vm " +
+       "WHERE vm.churchMember.id = :churchMemberId " +
+       "ORDER BY v.date DESC")
+List<VisitJpaEntity> findMyVisits(@Param("churchMemberId") UUID churchMemberId);
+
+// ✅ CORRECT: QueryDSL Implementation
+// Step 1: Create Custom Repository Interface
+public interface VisitJpaRepositoryCustom {
+    List<VisitJpaEntity> findMyVisits(UUID churchMemberId);
+}
+
+// Step 2: Implement with QueryDSL
+@Repository
+@RequiredArgsConstructor
+public class VisitJpaRepositoryImpl implements VisitJpaRepositoryCustom {
+    private final JPAQueryFactory queryFactory;
+    
+    @Override
+    public List<VisitJpaEntity> findMyVisits(UUID churchMemberId) {
+        return queryFactory
+                .selectFrom(visitJpaEntity)
+                .distinct()
+                .leftJoin(visitJpaEntity.visitMembers, visitMemberJpaEntity).fetchJoin()
+                .leftJoin(visitMemberJpaEntity.churchMember, churchMemberJpaEntity).fetchJoin()
+                .leftJoin(churchMemberJpaEntity.member, memberJpaEntity).fetchJoin()
+                .leftJoin(visitMemberJpaEntity.prayers, prayerJpaEntity).fetchJoin()
+                .where(visitMemberJpaEntity.churchMember.id.eq(churchMemberId))
+                .orderBy(visitJpaEntity.date.desc(), visitJpaEntity.startedAt.desc())
+                .fetch();
+    }
+}
+
+// Step 3: Extend Main Repository
+public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>, VisitJpaRepositoryCustom {
+    // Simple method name queries are still acceptable
+    List<VisitJpaEntity> findAllByChurchId(UUID churchId);
+}
+```
+
+**When to Use QueryDSL:**
+- ✅ Complex joins (multiple tables)
+- ✅ Dynamic queries (conditional where clauses)
+- ✅ Fetch joins with multiple relationships
+- ✅ Subqueries
+- ✅ Aggregations (GROUP BY, HAVING)
+- ✅ Any query that would require JPQL
+
+**Acceptable Exceptions:**
+- ✅ Simple queries using Spring Data JPA method name conventions (e.g., `findAllByChurchId`, `findById`)
+- ✅ Single-table queries without joins
+- ✅ Basic `@EntityGraph` for simple eager loading
+
+**QueryDSL Best Practices:**
+1. **Static Imports**: Use Q-classes with static imports for cleaner code
+   ```java
+   import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QVisitJpaEntity.visitJpaEntity;
+   ```
+
+2. **Fetch Join for N+1**: Always use `.fetchJoin()` when loading related entities
+   ```java
+   .leftJoin(visitJpaEntity.visitMembers, visitMemberJpaEntity).fetchJoin()
+   ```
+
+3. **Distinct for Collections**: Use `.distinct()` when fetching collections to avoid duplicates
+   ```java
+   .selectFrom(visitJpaEntity).distinct()
+   ```
+
+4. **Null Safety**: Handle nullable fields properly
+   ```java
+   .where(field.isNotNull().and(field.eq(value)))
+   ```
+
+5. **Repository Naming**: Follow the pattern:
+   - Interface: `[Entity]RepositoryCustom`
+   - Implementation: `[Entity]RepositoryImpl`
+
+**Migration Strategy:**
+- All new queries MUST use QueryDSL
+- Existing JPQL queries should be migrated to QueryDSL during refactoring
+- Code reviews will reject any new JPQL `@Query` annotations
+
+**Enforcement:**
+- Pull requests containing `@Query` with JPQL will be automatically rejected
+- Code reviews will require QueryDSL for all complex queries
+- This rule applies to ALL new code and refactored code
 
 ### b. Adapter Responsibilities and Repository Usage
 

@@ -49,4 +49,11 @@ public class PrayerJpaEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gathering_member_id")
     private GatheringMemberJpaEntity gatheringMember;
+
+    /**
+     * 심방 멤버 (심방 기도)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visit_member_id")
+    private VisitMemberJpaEntity visitMember;
 } 
