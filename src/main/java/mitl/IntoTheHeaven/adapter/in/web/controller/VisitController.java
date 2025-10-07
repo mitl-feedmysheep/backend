@@ -37,7 +37,6 @@ public class VisitController {
 
     private final VisitQueryUseCase visitQueryUseCase;
     private final VisitCommandUseCase visitCommandUseCase;
-    private final ChurchPort churchPort;
 
     /* ADMIN */
     @Operation(summary = "Create Visit", description = "ADMIN - Create a new visit record with members and prayers")
@@ -45,15 +44,10 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> createVisit(
             @Valid @RequestBody AdminCreateVisitRequest request,
-            @AuthenticationPrincipal JwtAuthenticationToken authentication
-    ) {
+            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
         MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
         ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-        
-        // Get pastor's church member ID from JWT
-        ChurchMember pastor = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
-        
-        CreateVisitCommand command = AdminCreateVisitRequest.toCommand(request, churchId, pastor.getId());
+        CreateVisitCommand command = AdminCreateVisitRequest.toCommand(request, churchId, memberId);
         Visit visit = visitCommandUseCase.createVisit(command);
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -64,8 +58,7 @@ public class VisitController {
     @GetMapping
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<List<AdminVisitListResponse>> getAllVisits(
-            @AuthenticationPrincipal JwtAuthenticationToken authentication
-    ) {
+            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
         ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
         List<Visit> visits = visitQueryUseCase.getAllVisits(churchId);
         List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
@@ -77,8 +70,7 @@ public class VisitController {
     @GetMapping("/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> getVisit(
-            @PathVariable UUID visitId
-    ) {
+            @PathVariable UUID visitId) {
         Visit visit = visitQueryUseCase.getVisitById(VisitId.from(visitId));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.ok(response);
@@ -90,8 +82,7 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> updateVisit(
             @PathVariable UUID visitId,
-            @Valid @RequestBody AdminUpdateVisitRequest request
-    ) {
+            @Valid @RequestBody AdminUpdateVisitRequest request) {
         UpdateVisitCommand command = AdminUpdateVisitRequest.toCommand(request);
         Visit visit = visitCommandUseCase.updateVisit(VisitId.from(visitId), command);
         AdminVisitResponse response = AdminVisitResponse.from(visit);
@@ -103,8 +94,7 @@ public class VisitController {
     @DeleteMapping("/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> deleteVisit(
-            @PathVariable UUID visitId
-    ) {
+            @PathVariable UUID visitId) {
         visitCommandUseCase.deleteVisit(VisitId.from(visitId));
         return ResponseEntity.noContent().build();
     }
@@ -112,15 +102,13 @@ public class VisitController {
     @Operation(summary = "Get My Visits", description = "Get all visits where I participated (ordered by date desc)")
     @GetMapping("/my")
     public ResponseEntity<List<AdminVisitListResponse>> getMyVisits(
-            @AuthenticationPrincipal JwtAuthenticationToken authentication
-    ) {
+            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
         MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
         ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-        
+
         ChurchMember churchMember = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
         List<Visit> visits = visitQueryUseCase.getMyVisits(churchMember.getId());
         List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
         return ResponseEntity.ok(response);
     }
 }
-

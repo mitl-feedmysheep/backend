@@ -11,34 +11,30 @@ import java.util.stream.Collectors;
 
 @Builder
 public record AdminVisitResponse(
-        UUID id,
-        UUID churchId,
-        LocalDate date,
-        LocalDateTime startedAt,
-        LocalDateTime endedAt,
-        String place,
-        Integer expense,
-        String notes,
-        List<VisitMemberResponse> visitMembers,
-        int photoCount,
-        LocalDateTime createdAt
-) {
-    public static AdminVisitResponse from(Visit visit) {
-        return AdminVisitResponse.builder()
-                .id(visit.getId().getValue())
-                .churchId(visit.getChurchId().getValue())
-                .date(visit.getDate())
-                .startedAt(visit.getStartedAt())
-                .endedAt(visit.getEndedAt())
-                .place(visit.getPlace())
-                .expense(visit.getExpense())
-                .notes(visit.getNotes())
-                .visitMembers(visit.getVisitMembers().stream()
-                        .map(VisitMemberResponse::from)
-                        .collect(Collectors.toList()))
-                .photoCount(visit.getPhotoCount())
-                .createdAt(visit.getCreatedAt())
-                .build();
-    }
+                UUID id,
+                UUID churchId,
+                LocalDate date,
+                LocalDateTime startedAt,
+                LocalDateTime endedAt,
+                String place,
+                Integer expense,
+                String notes,
+                List<VisitMemberResponse> visitMembers,
+                LocalDateTime createdAt) {
+        public static AdminVisitResponse from(Visit visit) {
+                return AdminVisitResponse.builder()
+                                .id(visit.getId().getValue())
+                                .churchId(visit.getChurchId().getValue())
+                                .date(visit.getDate())
+                                .startedAt(visit.getStartedAt())
+                                .endedAt(visit.getEndedAt())
+                                .place(visit.getPlace())
+                                .expense(visit.getExpense())
+                                .notes(visit.getNotes())
+                                .visitMembers(visit.getVisitMembers().stream()
+                                                .map(VisitMemberResponse::from)
+                                                .collect(Collectors.toList()))
+                                .createdAt(visit.getCreatedAt())
+                                .build();
+        }
 }
-
