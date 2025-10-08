@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.port.out;
 
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
 
@@ -23,7 +24,7 @@ public interface VisitPort {
     /**
      * Find all visits by church ID
      */
-    List<Visit> findAllByChurchId(ChurchId churchId);
+    List<Visit> findAllByChurchIdAndMemberId(ChurchId churchId, MemberId memberId);
 
     /**
      * Delete visit (soft delete)

@@ -31,7 +31,7 @@ public class VisitPersistenceMapper {
         return Visit.builder()
                 .id(VisitId.from(entity.getId()))
                 .churchId(ChurchId.from(entity.getChurch().getId()))
-                .pastorChurchMemberId(ChurchMemberId.from(entity.getPastor().getId()))
+                .pastorMemberId(ChurchMemberId.from(entity.getPastor().getId()))
                 .date(entity.getDate())
                 .startedAt(entity.getStartedAt())
                 .endedAt(entity.getEndedAt())
@@ -119,7 +119,7 @@ public class VisitPersistenceMapper {
                 .build();
         
         ChurchMemberJpaEntity pastorEntity = ChurchMemberJpaEntity.builder()
-                .id(domain.getPastorChurchMemberId().getValue())
+                .id(domain.getPastorMemberId().getValue())
                 .build();
         
         VisitJpaEntity visitEntity = VisitJpaEntity.builder()

@@ -5,6 +5,7 @@ import mitl.IntoTheHeaven.application.port.in.query.VisitQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.VisitPort;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,8 @@ public class VisitQueryService implements VisitQueryUseCase {
 
     // ADMIN - Get all visits for a church
     @Override
-    public List<Visit> getAllVisits(ChurchId churchId) {
-        return visitPort.findAllByChurchId(churchId);
+    public List<Visit> getAllVisits(ChurchId churchId, MemberId memberId) {
+        return visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
     }
 
     // ADMIN - Get visit by ID
@@ -38,4 +39,3 @@ public class VisitQueryService implements VisitQueryUseCase {
         return visitPort.findMyVisits(churchMemberId);
     }
 }
-

@@ -12,10 +12,8 @@ import mitl.IntoTheHeaven.application.port.in.command.VisitCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.query.VisitQueryUseCase;
-import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
-import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
@@ -39,14 +37,14 @@ public class VisitController {
     private final VisitCommandUseCase visitCommandUseCase;
 
     /* ADMIN */
-    @Operation(summary = "Create Visit", description = "ADMIN - Create a new visit record with members and prayers")
+    @Operation(summary = "Create Visit", description = "ADMIN - Create a new visit record")
     @PostMapping("/admin")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> createVisit(
             @Valid @RequestBody AdminCreateVisitRequest request,
             @AuthenticationPrincipal JwtAuthenticationToken authentication) {
-        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
         ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
+        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
         CreateVisitCommand command = AdminCreateVisitRequest.toCommand(request, churchId, memberId);
         Visit visit = visitCommandUseCase.createVisit(command);
         AdminVisitResponse response = AdminVisitResponse.from(visit);
@@ -54,22 +52,23 @@ public class VisitController {
     }
 
     /* ADMIN */
-    @Operation(summary = "Get All Visits", description = "ADMIN - Get all visits for current church (ordered by date desc)")
-    @GetMapping
+    @Operation(summary = "Get All My Visits", description = "ADMIN - Get all visits for current church and member (ordered by date desc)")
+    @GetMapping("/admin/my")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<List<AdminVisitListResponse>> getAllVisits(
             @AuthenticationPrincipal JwtAuthenticationToken authentication) {
         ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-        List<Visit> visits = visitQueryUseCase.getAllVisits(churchId);
+        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
+        List<Visit> visits = visitQueryUseCase.getAllVisits(churchId, memberId);
         List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
         return ResponseEntity.ok(response);
     }
 
     /* ADMIN */
     @Operation(summary = "Get Visit Detail", description = "ADMIN - Get visit details by ID including members and prayers")
-    @GetMapping("/{visitId}")
+    @GetMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
-    public ResponseEntity<AdminVisitResponse> getVisit(
+    public ResponseEntity<AdminVisitResponse> getVisitDetail(
             @PathVariable UUID visitId) {
         Visit visit = visitQueryUseCase.getVisitById(VisitId.from(visitId));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
@@ -78,7 +77,7 @@ public class VisitController {
 
     /* ADMIN */
     @Operation(summary = "Update Visit", description = "ADMIN - Update visit information including members and prayers")
-    @PutMapping("/{visitId}")
+    @PutMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> updateVisit(
             @PathVariable UUID visitId,
@@ -91,24 +90,11 @@ public class VisitController {
 
     /* ADMIN */
     @Operation(summary = "Delete Visit", description = "ADMIN - Soft delete a visit")
-    @DeleteMapping("/{visitId}")
+    @DeleteMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> deleteVisit(
             @PathVariable UUID visitId) {
         visitCommandUseCase.deleteVisit(VisitId.from(visitId));
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Get My Visits", description = "Get all visits where I participated (ordered by date desc)")
-    @GetMapping("/my")
-    public ResponseEntity<List<AdminVisitListResponse>> getMyVisits(
-            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
-        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
-        ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-
-        ChurchMember churchMember = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
-        List<Visit> visits = visitQueryUseCase.getMyVisits(churchMember.getId());
-        List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
-        return ResponseEntity.ok(response);
     }
 }

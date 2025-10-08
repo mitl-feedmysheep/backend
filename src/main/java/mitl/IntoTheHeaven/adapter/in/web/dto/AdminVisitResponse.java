@@ -20,6 +20,7 @@ public record AdminVisitResponse(
                 Integer expense,
                 String notes,
                 List<VisitMemberResponse> visitMembers,
+                List<MediaResponse> media,
                 LocalDateTime createdAt) {
         public static AdminVisitResponse from(Visit visit) {
                 return AdminVisitResponse.builder()
@@ -33,6 +34,9 @@ public record AdminVisitResponse(
                                 .notes(visit.getNotes())
                                 .visitMembers(visit.getVisitMembers().stream()
                                                 .map(VisitMemberResponse::from)
+                                                .collect(Collectors.toList()))
+                                .media(visit.getMedia().stream()
+                                                .map(MediaResponse::from)
                                                 .collect(Collectors.toList()))
                                 .createdAt(visit.getCreatedAt())
                                 .build();

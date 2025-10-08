@@ -16,7 +16,7 @@ public class Visit extends AggregateRoot<Visit, VisitId> {
 
     private final ChurchId churchId;
     private final Church church;
-    private final ChurchMemberId pastorChurchMemberId;
+    private final ChurchMemberId pastorMemberId;
     private final LocalDate date;
     private final LocalDateTime startedAt;
     private final LocalDateTime endedAt;
@@ -48,4 +48,3 @@ public class Visit extends AggregateRoot<Visit, VisitId> {
         return !media.isEmpty();
     }
 }
-

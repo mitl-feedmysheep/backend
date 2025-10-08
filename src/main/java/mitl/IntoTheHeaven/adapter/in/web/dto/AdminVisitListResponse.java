@@ -1,7 +1,10 @@
 package mitl.IntoTheHeaven.adapter.in.web.dto;
 
 import lombok.Builder;
+import mitl.IntoTheHeaven.domain.model.ChurchMember;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.Visit;
+import mitl.IntoTheHeaven.domain.model.VisitMember;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,10 +21,15 @@ public record AdminVisitListResponse(
         String place,
         Integer expense,
         int memberCount,
-        int photoCount,
-        LocalDateTime createdAt
-) {
+        List<Member> members,
+        LocalDateTime createdAt) {
+
     public static AdminVisitListResponse from(Visit visit) {
+        List<Member> members = visit.getVisitMembers().stream()
+                .map(VisitMember::getChurchMember)
+                .map(ChurchMember::getMember)
+                .collect(Collectors.toList());
+
         return AdminVisitListResponse.builder()
                 .id(visit.getId().getValue())
                 .date(visit.getDate())
@@ -30,7 +38,7 @@ public record AdminVisitListResponse(
                 .place(visit.getPlace())
                 .expense(visit.getExpense())
                 .memberCount(visit.getVisitMembers().size())
-                .photoCount(visit.getPhotoCount())
+                .members(members)
                 .createdAt(visit.getCreatedAt())
                 .build();
     }
@@ -41,4 +49,3 @@ public record AdminVisitListResponse(
                 .collect(Collectors.toList());
     }
 }
-

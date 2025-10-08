@@ -6,6 +6,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.VisitJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.VisitPort;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
 import org.springframework.stereotype.Component;
@@ -35,8 +36,9 @@ public class VisitPersistenceAdapter implements VisitPort {
     }
 
     @Override
-    public List<Visit> findAllByChurchId(ChurchId churchId) {
-        return visitJpaRepository.findAllByChurchIdOrderByDateDescStartedAtDesc(churchId.getValue())
+    public List<Visit> findAllByChurchIdAndMemberId(ChurchId churchId, MemberId memberId) {
+        return visitJpaRepository
+                .findAllByChurchIdAndMemberIdOrderByDateDescStartedAtDesc(churchId.getValue(), memberId.getValue())
                 .stream()
                 .map(visitPersistenceMapper::toDomain)
                 .collect(Collectors.toList());
@@ -56,4 +58,3 @@ public class VisitPersistenceAdapter implements VisitPort {
                 .collect(Collectors.toList());
     }
 }
-

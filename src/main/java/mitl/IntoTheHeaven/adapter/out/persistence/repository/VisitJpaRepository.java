@@ -11,9 +11,15 @@ import java.util.UUID;
 public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>, VisitJpaRepositoryCustom {
 
     /**
-     * Find all visits by church ID with basic info (ordered by date desc)
+     * Find all visits by church ID and member ID with basic info (ordered by date
+     * desc)
      */
-    List<VisitJpaEntity> findAllByChurchIdOrderByDateDescStartedAtDesc(UUID churchId);
+    @EntityGraph(attributePaths = {
+            "visitMembers",
+            "visitMembers.churchMember",
+            "visitMembers.churchMember.member"
+    })
+    List<VisitJpaEntity> findAllByChurchIdAndMemberIdOrderByDateDescStartedAtDesc(UUID churchId, UUID memberId);
 
     /**
      * Find visit by ID with full details (visitMembers, churchMember, prayers)
@@ -26,4 +32,3 @@ public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>,
     })
     Optional<VisitJpaEntity> findWithDetailsById(UUID id);
 }
-
