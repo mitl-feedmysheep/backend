@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class VisitMemberJpaEntity extends BaseEntity {
      */
     @OneToMany(mappedBy = "visitMember", cascade = CascadeType.ALL)
     @OrderBy("createdAt ASC")
+    @BatchSize(size = 100)
     @Builder.Default
     private List<PrayerJpaEntity> prayers = new ArrayList<>();
 }

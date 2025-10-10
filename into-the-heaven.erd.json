@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -5158.9287,
-    "scrollLeft": -4262.8008,
+    "scrollTop": -5200.9287,
+    "scrollLeft": -3366.8008,
     "zoomLevel": 0.88,
     "show": 431,
     "database": 4,
@@ -3842,20 +3842,20 @@
       "HE0PZOjgFZOVweYP8PWlK": {
         "id": "HE0PZOjgFZOVweYP8PWlK",
         "tableId": "cu5zs7tHl9_EJYt_l_Mlf",
-        "name": "visit_id",
+        "name": "visit_member_id",
         "comment": "심방 멤버 아이디",
         "dataType": "CHAR(36)",
         "default": "",
         "options": 0,
         "ui": {
           "keys": 2,
-          "widthName": 60,
+          "widthName": 96,
           "widthComment": 81,
           "widthDataType": 60,
           "widthDefault": 60
         },
         "meta": {
-          "updateAt": 1759303521925,
+          "updateAt": 1760079397693,
           "createAt": 1759303512470
         }
       },

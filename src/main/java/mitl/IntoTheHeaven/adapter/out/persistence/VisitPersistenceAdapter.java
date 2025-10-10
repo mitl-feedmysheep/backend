@@ -38,7 +38,7 @@ public class VisitPersistenceAdapter implements VisitPort {
     @Override
     public List<Visit> findAllByChurchIdAndMemberId(ChurchId churchId, MemberId memberId) {
         return visitJpaRepository
-                .findAllByChurchIdAndMemberIdOrderByDateDescStartedAtDesc(churchId.getValue(), memberId.getValue())
+                .findAllByChurchIdAndMemberId(churchId.getValue(), memberId.getValue())
                 .stream()
                 .map(visitPersistenceMapper::toDomain)
                 .collect(Collectors.toList());

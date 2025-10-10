@@ -11,7 +11,9 @@ import mitl.IntoTheHeaven.domain.model.VisitId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +25,13 @@ public class VisitQueryService implements VisitQueryUseCase {
     // ADMIN - Get all visits for a church
     @Override
     public List<Visit> getAllVisits(ChurchId churchId, MemberId memberId) {
-        return visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
+        List<Visit> visits = visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
+        
+        // Sort by date desc, then startedAt desc
+        return visits.stream()
+                .sorted(Comparator.comparing(Visit::getDate).reversed()
+                        .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
+                .collect(Collectors.toList());
     }
 
     // ADMIN - Get visit by ID

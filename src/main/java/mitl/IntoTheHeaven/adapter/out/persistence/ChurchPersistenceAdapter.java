@@ -61,9 +61,13 @@ public class ChurchPersistenceAdapter implements ChurchPort {
 
         @Override
         public ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId) {
+                ChurchMemberJpaEntity churchMemberJpaEntity = churchMemberJpaRepository
+                                .findByMemberIdAndChurchId(memberId.getValue(), churchId.getValue());
+                if (churchMemberJpaEntity == null) {
+                        return null;
+                }
                 return churchMemberPersistenceMapper.toDomain(
-                                churchMemberJpaRepository.findByMemberIdAndChurchId(memberId.getValue(),
-                                                churchId.getValue()));
+                                churchMemberJpaEntity);
         }
 
         @Override

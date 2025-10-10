@@ -18,10 +18,10 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
 import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
-import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,10 +42,11 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> createVisit(
             @Valid @RequestBody AdminCreateVisitRequest request,
-            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
-        ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
-        CreateVisitCommand command = AdminCreateVisitRequest.toCommand(request, churchId, memberId);
+            @AuthenticationPrincipal String memberId,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
+        CreateVisitCommand command = AdminCreateVisitRequest.toCommand(request,
+                ChurchId.from(UUID.fromString(churchId)),
+                MemberId.from(UUID.fromString(memberId)));
         Visit visit = visitCommandUseCase.createVisit(command);
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -53,13 +54,13 @@ public class VisitController {
 
     /* ADMIN */
     @Operation(summary = "Get All My Visits", description = "ADMIN - Get all visits for current church and member (ordered by date desc)")
-    @GetMapping("/admin/my")
+    @GetMapping("/admin")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<List<AdminVisitListResponse>> getAllVisits(
-            @AuthenticationPrincipal JwtAuthenticationToken authentication) {
-        ChurchId churchId = ChurchId.from(UUID.fromString(authentication.getChurchId()));
-        MemberId memberId = MemberId.from(UUID.fromString(authentication.getName()));
-        List<Visit> visits = visitQueryUseCase.getAllVisits(churchId, memberId);
+            @AuthenticationPrincipal String memberId,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
+        List<Visit> visits = visitQueryUseCase.getAllVisits(ChurchId.from(UUID.fromString(churchId)),
+                MemberId.from(UUID.fromString(memberId)));
         List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
         return ResponseEntity.ok(response);
     }

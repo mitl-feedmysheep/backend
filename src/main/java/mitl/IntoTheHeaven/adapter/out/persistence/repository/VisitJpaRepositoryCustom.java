@@ -11,5 +11,10 @@ public interface VisitJpaRepositoryCustom {
      * Find all visits where the church member participated (ordered by date desc)
      */
     List<VisitJpaEntity> findMyVisits(UUID churchMemberId);
+
+    /**
+     * Find all visits by church ID and member ID where the member participated
+     */
+    List<VisitJpaEntity> findAllByChurchIdAndMemberId(UUID churchId, UUID memberId);
 }
 

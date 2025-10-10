@@ -13,6 +13,7 @@ import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QVisitMemberJpaE
 import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QChurchMemberJpaEntity.churchMemberJpaEntity;
 import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QMemberJpaEntity.memberJpaEntity;
 import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QPrayerJpaEntity.prayerJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QChurchJpaEntity.churchJpaEntity;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,5 +34,18 @@ public class VisitJpaRepositoryImpl implements VisitJpaRepositoryCustom {
                 .orderBy(visitJpaEntity.date.desc(), visitJpaEntity.startedAt.desc())
                 .fetch();
     }
-}
 
+    @Override
+    public List<VisitJpaEntity> findAllByChurchIdAndMemberId(UUID churchId, UUID memberId) {
+        return queryFactory
+                .selectFrom(visitJpaEntity)
+                .distinct()
+                .leftJoin(visitJpaEntity.church, churchJpaEntity).fetchJoin()
+                .leftJoin(visitJpaEntity.pastor, churchMemberJpaEntity).fetchJoin()
+                .leftJoin(churchMemberJpaEntity.member, memberJpaEntity).fetchJoin()
+                .where(
+                        visitJpaEntity.church.id.eq(churchId)
+                                .and(visitJpaEntity.pastor.member.id.eq(memberId)))
+                .fetch();
+    }
+}
