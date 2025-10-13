@@ -22,7 +22,6 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangeEmailRequest;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 
-
 import java.util.UUID;
 
 @Tag(name = "Member", description = "APIs for Member Management")
@@ -44,8 +43,10 @@ public class MemberController {
 
     @Operation(summary = "Change Password", description = "Changes the password for the authenticated user.")
     @PostMapping("/password/change")
-    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String memberId, @RequestBody @Valid ChangePasswordRequest request) {
-        Boolean result = memberCommandUseCase.changePassword(MemberId.from(UUID.fromString(memberId)), request.getCurrentPassword(), request.getNewPassword());
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String memberId,
+            @RequestBody @Valid ChangePasswordRequest request) {
+        Boolean result = memberCommandUseCase.changePassword(MemberId.from(UUID.fromString(memberId)),
+                request.getCurrentPassword(), request.getNewPassword());
         if (!result) {
             return ResponseEntity.badRequest().build();
         }
@@ -54,8 +55,10 @@ public class MemberController {
 
     @Operation(summary = "Change Email", description = "Changes the email for the authenticated user.")
     @PostMapping("/email/change")
-    public ResponseEntity<Void> changeEmail(@AuthenticationPrincipal String memberId, @RequestBody @Valid ChangeEmailRequest request) {
-        boolean result = memberCommandUseCase.changeEmail(MemberId.from(UUID.fromString(memberId)), request.getNewEmail());
+    public ResponseEntity<Void> changeEmail(@AuthenticationPrincipal String memberId,
+            @RequestBody @Valid ChangeEmailRequest request) {
+        boolean result = memberCommandUseCase.changeEmail(MemberId.from(UUID.fromString(memberId)),
+                request.getNewEmail());
         if (!result) {
             return ResponseEntity.badRequest().build();
         }
@@ -66,8 +69,7 @@ public class MemberController {
     @PatchMapping("/me")
     public ResponseEntity<MeResponse> updateMyProfile(
             @AuthenticationPrincipal String principalMemberId,
-            @RequestBody @Valid UpdateMyProfileRequest request
-    ) {
+            @RequestBody @Valid UpdateMyProfileRequest request) {
         if (request.getId() == null || !principalMemberId.equals(request.getId())) {
             return ResponseEntity.status(403).build();
         }
@@ -76,4 +78,4 @@ public class MemberController {
         return ResponseEntity.ok(MeResponse.from(updated));
     }
 
-} 
+}

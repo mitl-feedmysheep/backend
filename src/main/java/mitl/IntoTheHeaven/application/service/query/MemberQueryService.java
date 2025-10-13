@@ -21,7 +21,7 @@ public class MemberQueryService implements MemberQueryUseCase {
   @Override
   public Member getMemberById(MemberId memberId) {
     return memberPort.findById(memberId.getValue())
-            .orElseThrow(() -> new RuntimeException("Member not found"));
+        .orElseThrow(() -> new RuntimeException("Member not found"));
   }
 
   @Override
@@ -38,4 +38,12 @@ public class MemberQueryService implements MemberQueryUseCase {
   public boolean isEmailAvailable(String email) {
     return memberPort.findByEmail(email).isEmpty();
   }
-} 
+
+  @Override
+  public boolean verifyMemberByEmailAndName(String email, String name) {
+    if (memberPort.findByEmailAndName(email, name).isPresent()) {
+      return true;
+    }
+    return false;
+  }
+}

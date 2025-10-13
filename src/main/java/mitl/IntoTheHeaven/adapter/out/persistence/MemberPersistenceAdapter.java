@@ -61,4 +61,10 @@ public class MemberPersistenceAdapter implements MemberPort {
     return memberJpaRepository.findByPhone(phone)
             .map(memberPersistenceMapper::toDomain);
   }
+
+  @Override
+  public Optional<Member> findByEmailAndName(String email, String name) {
+    return memberJpaRepository.findByEmailAndName(email, name)
+            .map(memberPersistenceMapper::toDomain);
+  }
 } 

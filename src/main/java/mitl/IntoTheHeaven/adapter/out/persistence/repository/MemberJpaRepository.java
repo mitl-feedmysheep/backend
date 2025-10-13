@@ -26,4 +26,6 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, UUID
 
     @EntityGraph(attributePaths = {"churchMembers", "churchMembers.church"})
     Optional<MemberJpaEntity> findWithChurchesById(UUID memberId);
+
+    Optional<MemberJpaEntity> findByEmailAndName(String email, String name);
 } 

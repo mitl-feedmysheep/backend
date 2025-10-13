@@ -1,8 +1,9 @@
 package mitl.IntoTheHeaven.domain.enums;
 
 public enum VerificationType {
-    EMAIL,
-    PHONE
+    SIGNUP,
+    PHONE,
+    PASSWORD_RESET
 }
 
 

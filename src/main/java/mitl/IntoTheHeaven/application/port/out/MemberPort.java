@@ -20,4 +20,6 @@ public interface MemberPort {
   Optional<Member> findByEmail(String email);
 
   Optional<Member> findByPhone(String phone);
+
+  Optional<Member> findByEmailAndName(String email, String name);
 } 

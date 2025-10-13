@@ -23,4 +23,12 @@ public interface MemberQueryUseCase {
      * @return true if the email is not used yet
      */
     boolean isEmailAvailable(String email);
+
+    /**
+     * Verifies if a member exists with the given email and name combination.
+     * @param email member's email
+     * @param name member's name
+     * @return true if a member with the given email and name exists
+     */
+    boolean verifyMemberByEmailAndName(String email, String name);
 } 
