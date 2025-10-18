@@ -16,7 +16,6 @@ public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>,
             "visitMembers",
             "visitMembers.churchMember",
             "visitMembers.churchMember.member",
-            "visitMembers.prayers"
     })
     Optional<VisitJpaEntity> findWithDetailsById(UUID id);
 }
