@@ -16,9 +16,12 @@ import java.util.stream.Collectors;
 public class VisitPersistenceMapper {
 
     private final MemberPersistenceMapper memberPersistenceMapper;
+    private final MediaPersistenceMapper mediaPersistenceMapper;
 
-    public VisitPersistenceMapper(MemberPersistenceMapper memberPersistenceMapper) {
+    public VisitPersistenceMapper(MemberPersistenceMapper memberPersistenceMapper,
+                                  MediaPersistenceMapper mediaPersistenceMapper) {
         this.memberPersistenceMapper = memberPersistenceMapper;
+        this.mediaPersistenceMapper = mediaPersistenceMapper;
     }
 
     /**
@@ -41,6 +44,7 @@ public class VisitPersistenceMapper {
                 .visitMembers(entity.getVisitMembers().stream()
                         .map(this::toVisitMemberDomain)
                         .collect(Collectors.toList()))
+                .medias(mediaPersistenceMapper.toDomainList(entity.getMedias()))
                 .createdAt(entity.getCreatedAt())
                 .deletedAt(entity.getDeletedAt())
                 .build();

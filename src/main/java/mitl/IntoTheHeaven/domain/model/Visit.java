@@ -30,7 +30,7 @@ public class Visit extends AggregateRoot<Visit, VisitId> {
     private final List<VisitMember> visitMembers = new ArrayList<>();
 
     @Builder.Default
-    private final List<Media> media = new ArrayList<>();
+    private final List<Media> medias = new ArrayList<>();
 
     /**
      * Delete visit (soft delete)
@@ -45,6 +45,6 @@ public class Visit extends AggregateRoot<Visit, VisitId> {
      * Check if visit has photos
      */
     public boolean hasPhotos() {
-        return !media.isEmpty();
+        return !medias.isEmpty();
     }
 }

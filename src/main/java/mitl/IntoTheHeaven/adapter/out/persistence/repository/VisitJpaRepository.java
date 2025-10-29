@@ -11,6 +11,7 @@ public interface VisitJpaRepository extends JpaRepository<VisitJpaEntity, UUID>,
 
     /**
      * Find visit by ID with full details (visitMembers, churchMember, prayers)
+     * Note: medias는 @BatchSize로 처리 (multiple bag fetch exception 방지)
      */
     @EntityGraph(attributePaths = {
             "visitMembers",

@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
@@ -81,5 +82,17 @@ public class VisitJpaEntity extends BaseEntity {
     @OrderBy("createdAt DESC")
     @Builder.Default
     private List<VisitMemberJpaEntity> visitMembers = new ArrayList<>();
+
+    /**
+     * 심방 미디어 (BatchSize로 효율적 로딩)
+     * Note: Media는 독립적으로 관리되므로 cascade 없이 조회만 가능
+     */
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "entity_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @SQLRestriction("entity_type = 'VISIT'")
+    @OrderBy("createdAt ASC")
+    @BatchSize(size = 10)
+    @Builder.Default
+    private List<MediaJpaEntity> medias = new ArrayList<>();
 }
 
