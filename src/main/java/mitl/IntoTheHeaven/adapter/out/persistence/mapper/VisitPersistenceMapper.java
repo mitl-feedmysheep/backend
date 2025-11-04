@@ -19,7 +19,7 @@ public class VisitPersistenceMapper {
     private final MediaPersistenceMapper mediaPersistenceMapper;
 
     public VisitPersistenceMapper(MemberPersistenceMapper memberPersistenceMapper,
-                                  MediaPersistenceMapper mediaPersistenceMapper) {
+            MediaPersistenceMapper mediaPersistenceMapper) {
         this.memberPersistenceMapper = memberPersistenceMapper;
         this.mediaPersistenceMapper = mediaPersistenceMapper;
     }
@@ -99,8 +99,8 @@ public class VisitPersistenceMapper {
         }
         return Prayer.builder()
                 .id(PrayerId.from(entity.getId()))
-                .member(entity.getMember() != null 
-                        ? memberPersistenceMapper.toDomain(entity.getMember()) 
+                .member(entity.getMember() != null
+                        ? memberPersistenceMapper.toDomain(entity.getMember())
                         : null)
                 .visitMember(null) // Prevent circular reference
                 .prayerRequest(entity.getPrayerRequest())
@@ -121,11 +121,11 @@ public class VisitPersistenceMapper {
         ChurchJpaEntity churchEntity = ChurchJpaEntity.builder()
                 .id(churchId)
                 .build();
-        
+
         ChurchMemberJpaEntity pastorEntity = ChurchMemberJpaEntity.builder()
                 .id(domain.getPastorMemberId().getValue())
                 .build();
-        
+
         VisitJpaEntity visitEntity = VisitJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .church(churchEntity)
@@ -158,12 +158,19 @@ public class VisitPersistenceMapper {
                 .id(domain.getChurchMemberId().getValue())
                 .build();
 
-        VisitMemberJpaEntity visitMemberEntity = VisitMemberJpaEntity.builder()
+        VisitMemberJpaEntity.VisitMemberJpaEntityBuilder<?, ?> builder = VisitMemberJpaEntity.builder()
                 .id(domain.getId().getValue())
                 .visit(visitEntity)
                 .churchMember(churchMemberEntity)
                 .story(domain.getStory())
-                .build();
+                .createdAt(domain.getCreatedAt());
+
+        // Set deletedAt if present (for soft delete)
+        if (domain.getDeletedAt() != null) {
+            builder.deletedAt(domain.getDeletedAt());
+        }
+
+        VisitMemberJpaEntity visitMemberEntity = builder.build();
 
         // Convert and add prayers
         List<PrayerJpaEntity> prayerEntities = domain.getPrayers().stream()
@@ -190,4 +197,3 @@ public class VisitPersistenceMapper {
                 .build();
     }
 }
-

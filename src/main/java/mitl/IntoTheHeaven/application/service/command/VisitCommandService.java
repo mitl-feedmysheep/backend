@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.VisitCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.dto.AddVisitMembersCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.VisitMemberCommand;
@@ -11,6 +12,7 @@ import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,12 +54,7 @@ public class VisitCommandService implements VisitCommandUseCase {
                 Visit existingVisit = visitPort.findById(visitId)
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
 
-                // Create updated VisitMembers
-                List<VisitMember> updatedVisitMembers = command.visitMembers().stream()
-                                .map(vmCmd -> createVisitMember(vmCmd, visitId))
-                                .collect(Collectors.toList());
-
-                // Update Visit
+                // Update Visit basic information only
                 Visit updatedVisit = existingVisit.toBuilder()
                                 .date(command.date())
                                 .startedAt(command.startedAt())
@@ -65,7 +62,6 @@ public class VisitCommandService implements VisitCommandUseCase {
                                 .place(command.place())
                                 .expense(command.expense())
                                 .notes(command.notes())
-                                .visitMembers(updatedVisitMembers)
                                 .build();
 
                 return visitPort.save(updatedVisit);
@@ -79,29 +75,65 @@ public class VisitCommandService implements VisitCommandUseCase {
                 visitPort.delete(visit);
         }
 
-        /**
-         * Create VisitMember from command
-         */
-        private VisitMember createVisitMember(VisitMemberCommand command, VisitId visitId) {
-                VisitMemberId visitMemberId = VisitMemberId.from(UUID.randomUUID());
+        // ADMIN - Add members to visit
+        @Override
+        public Visit addMembersToVisit(VisitId visitId, AddVisitMembersCommand command) {
+                Visit visit = visitPort.findById(visitId)
+                                .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
 
-                // Create Prayers
-                List<Prayer> prayers = command.prayers().stream()
-                                .map(prayerCmd -> Prayer.builder()
-                                                .id(PrayerId.from(UUID.randomUUID()))
-                                                .visitMemberId(visitMemberId)
-                                                .prayerRequest(prayerCmd.prayerRequest())
-                                                .description(prayerCmd.description())
-                                                .isAnswered(false)
+                // Find ChurchMembers and validate
+                List<ChurchMember> churchMembers = command.memberIds().stream()
+                                .map(memberId -> {
+                                        ChurchMember churchMember = churchPort.findChurchMemberByMemberIdAndChurchId(
+                                                        memberId, visit.getChurchId());
+                                        if (churchMember == null) {
+                                                throw new IllegalArgumentException(
+                                                                "Church member not found for memberId: "
+                                                                                + memberId.getValue()
+                                                                                + " and churchId: "
+                                                                                + visit.getChurchId().getValue());
+                                        }
+                                        return churchMember;
+                                })
+                                .collect(Collectors.toList());
+
+                // Create new VisitMembers without story and prayers
+                List<VisitMember> newVisitMembers = churchMembers.stream()
+                                .map(churchMember -> VisitMember.builder()
+                                                .id(VisitMemberId.from(UUID.randomUUID()))
+                                                .visitId(visitId)
+                                                .churchMemberId(churchMember.getId())
+                                                .story(null)
+                                                .prayers(new ArrayList<>())
                                                 .build())
                                 .collect(Collectors.toList());
 
-                return VisitMember.builder()
-                                .id(visitMemberId)
-                                .visitId(visitId)
-                                .churchMemberId(command.churchMemberId())
-                                .story(command.story())
-                                .prayers(prayers)
+                // Add new members to existing visit members
+                List<VisitMember> allVisitMembers = new ArrayList<>(visit.getVisitMembers());
+                allVisitMembers.addAll(newVisitMembers);
+
+                Visit updatedVisit = visit.toBuilder()
+                                .visitMembers(allVisitMembers)
                                 .build();
+
+                return visitPort.save(updatedVisit);
+        }
+
+        // ADMIN - Remove member from visit (soft delete)
+        @Override
+        public Visit removeMemberFromVisit(VisitId visitId, VisitMemberId visitMemberId) {
+                Visit visit = visitPort.findById(visitId)
+                                .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
+
+                // Soft delete the visit member by setting deletedAt
+                List<VisitMember> updatedVisitMembers = visit.getVisitMembers().stream()
+                                .map(vm -> vm.getId().equals(visitMemberId) ? vm.delete() : vm)
+                                .collect(Collectors.toList());
+
+                Visit updatedVisit = visit.toBuilder()
+                                .visitMembers(updatedVisitMembers)
+                                .build();
+
+                return visitPort.save(updatedVisit);
         }
 }

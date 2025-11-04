@@ -4,11 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.in.web.dto.AdminAddVisitMembersRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminCreateVisitRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminUpdateVisitRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminVisitListResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminVisitResponse;
 import mitl.IntoTheHeaven.application.port.in.command.VisitCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.dto.AddVisitMembersCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.query.VisitQueryUseCase;
@@ -17,6 +19,7 @@ import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
+import mitl.IntoTheHeaven.domain.model.VisitMemberId;
 import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,6 +99,30 @@ public class VisitController {
     public ResponseEntity<Void> deleteVisit(
             @PathVariable UUID visitId) {
         visitCommandUseCase.deleteVisit(VisitId.from(visitId));
+        return ResponseEntity.noContent().build();
+    }
+
+    /* ADMIN */
+    @Operation(summary = "Add Members to Visit", description = "ADMIN - Add multiple members to a visit")
+    @PostMapping("/admin/{visitId}/members")
+    @RequireChurchRole(ChurchRole.ADMIN)
+    public ResponseEntity<AdminVisitResponse> addMembersToVisit(
+            @PathVariable UUID visitId,
+            @Valid @RequestBody AdminAddVisitMembersRequest request) {
+        AddVisitMembersCommand command = AdminAddVisitMembersRequest.toCommand(request);
+        Visit visit = visitCommandUseCase.addMembersToVisit(VisitId.from(visitId), command);
+        AdminVisitResponse response = AdminVisitResponse.from(visit);
+        return ResponseEntity.ok(response);
+    }
+
+    /* ADMIN */
+    @Operation(summary = "Remove Member from Visit", description = "ADMIN - Remove a member from a visit")
+    @DeleteMapping("/admin/{visitId}/members/{visitMemberId}")
+    @RequireChurchRole(ChurchRole.ADMIN)
+    public ResponseEntity<Void> removeMemberFromVisit(
+            @PathVariable UUID visitId,
+            @PathVariable UUID visitMemberId) {
+        visitCommandUseCase.removeMemberFromVisit(VisitId.from(visitId), VisitMemberId.from(visitMemberId));
         return ResponseEntity.noContent().build();
     }
 }
