@@ -6,6 +6,9 @@
       "type": "shell",
       "command": "./gradlew",
       "args": ["clean", "build", "--continuous"],
+      "options": {
+        "cwd": "${workspaceFolder:backend}"
+      },
       "isBackground": true,
       "problemMatcher": [
         {
@@ -23,12 +26,19 @@
           ],
           "background": {
             "activeOnStart": true,
-            "beginsPattern": ".*BUILD SUCCESSFUL.*",
+            "beginsPattern": ".*BUILD SUCCESSFUL.*|.*BUILD FAILED.*",
             "endsPattern": ".*Waiting for changes.*"
           }
         }
       ],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": false,
+        "showReuseMessage": true,
+        "echo": true
+      }
     }
   ]
 }
