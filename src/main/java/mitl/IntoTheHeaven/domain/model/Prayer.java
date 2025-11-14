@@ -14,6 +14,8 @@ public class Prayer extends DomainEntity<Prayer, PrayerId> {
     private final MemberId memberId;
     private final GatheringMemberId gatheringMemberId;
     private final GatheringMember gatheringMember;
+    private final VisitMemberId visitMemberId;
+    private final VisitMember visitMember;
     private final String prayerRequest;
     private final String description;
     private final boolean isAnswered;

@@ -13,6 +13,7 @@ public class ChurchMember extends DomainEntity<ChurchMember, ChurchMemberId> {
 
     private final ChurchId churchId;
     private final MemberId memberId;
+    private final Member member;
     private final ChurchRole role;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;

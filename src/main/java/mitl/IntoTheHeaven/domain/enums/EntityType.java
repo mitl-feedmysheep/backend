@@ -7,5 +7,6 @@ public enum EntityType {
     GROUP,       // GROUP
     GATHERING,   // GATHERING
     MEMBER,      // MEMBER
-    CHURCH       // CHURCH
+    CHURCH,      // CHURCH
+    VISIT,       // VISIT
 }
