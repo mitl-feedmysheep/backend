@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminAddVisitMembersRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminCreateVisitRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminUpdateVisitRequest;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Tag(name = "Visit", description = "APIs for Visit Management (Admin Only)")
 @RestController
 @RequestMapping("/visits")
@@ -73,7 +75,7 @@ public class VisitController {
     @GetMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> getVisitDetail(
-            @PathVariable UUID visitId) {
+            @PathVariable("visitId") UUID visitId) {
         Visit visit = visitQueryUseCase.getVisitById(VisitId.from(visitId));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.ok(response);
@@ -84,7 +86,7 @@ public class VisitController {
     @PutMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> updateVisit(
-            @PathVariable UUID visitId,
+            @PathVariable("visitId") UUID visitId,
             @Valid @RequestBody AdminUpdateVisitRequest request) {
         UpdateVisitCommand command = AdminUpdateVisitRequest.toCommand(request);
         Visit visit = visitCommandUseCase.updateVisit(VisitId.from(visitId), command);
@@ -97,7 +99,7 @@ public class VisitController {
     @DeleteMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> deleteVisit(
-            @PathVariable UUID visitId) {
+            @PathVariable("visitId") UUID visitId) {
         visitCommandUseCase.deleteVisit(VisitId.from(visitId));
         return ResponseEntity.noContent().build();
     }
@@ -107,7 +109,7 @@ public class VisitController {
     @PostMapping("/admin/{visitId}/members")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> addMembersToVisit(
-            @PathVariable UUID visitId,
+            @PathVariable("visitId") UUID visitId,
             @Valid @RequestBody AdminAddVisitMembersRequest request) {
         AddVisitMembersCommand command = AdminAddVisitMembersRequest.toCommand(request);
         Visit visit = visitCommandUseCase.addMembersToVisit(VisitId.from(visitId), command);
@@ -120,8 +122,8 @@ public class VisitController {
     @DeleteMapping("/admin/{visitId}/members/{visitMemberId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> removeMemberFromVisit(
-            @PathVariable UUID visitId,
-            @PathVariable UUID visitMemberId) {
+            @PathVariable("visitId") UUID visitId,
+            @PathVariable("visitMemberId") UUID visitMemberId) {
         visitCommandUseCase.removeMemberFromVisit(VisitId.from(visitId), VisitMemberId.from(visitMemberId));
         return ResponseEntity.noContent().build();
     }

@@ -49,7 +49,7 @@ public class GatheringController {
     @Operation(summary = "Get Gathering Details", description = "Retrieves detailed information of a specific gathering, including its members and prayers.")
     @GetMapping("/{gatheringId}")
     public ResponseEntity<GatheringDetailResponse> getGatheringDetail(
-            @PathVariable UUID gatheringId
+            @PathVariable("gatheringId") UUID gatheringId
     ) {
         Gathering gathering = gatheringQueryUseCase.getGatheringDetail(GatheringId.from(gatheringId));
         GatheringDetailResponse response = GatheringDetailResponse.from(gathering);
@@ -59,8 +59,8 @@ public class GatheringController {
     @Operation(summary = "Update Gathering Member and create prayer requests", description = "Updates attendance, story sharing, and prayer requests for a specific gathering member.")
     @PatchMapping("/{gatheringId}/groupMember/{groupMemberId}")
     public ResponseEntity<UpdateGatheringMemberResponse> updateGatheringMember(
-            @PathVariable UUID gatheringId,
-            @PathVariable UUID groupMemberId,
+            @PathVariable("gatheringId") UUID gatheringId,
+            @PathVariable("groupMemberId") UUID groupMemberId,
             @Valid @RequestBody UpdateGatheringMemberRequest request
     ) {
         UpdateGatheringMemberCommand command = UpdateGatheringMemberCommand.from(
@@ -76,7 +76,7 @@ public class GatheringController {
     @Operation(summary = "Update Gathering", description = "Partially updates gathering fields: name, description, date, startedAt, endedAt, place.")
     @PatchMapping("/{gatheringId}")
     public ResponseEntity<UpdateGatheringResponse> updateGathering(
-            @PathVariable UUID gatheringId,
+            @PathVariable("gatheringId") UUID gatheringId,
             @Valid @RequestBody UpdateGatheringRequest request
     ) {
         UpdateGatheringCommand command = UpdateGatheringCommand.from(GatheringId.from(gatheringId), request);

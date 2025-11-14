@@ -5,7 +5,6 @@ import mitl.IntoTheHeaven.application.port.in.command.VisitCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.AddVisitMembersCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitCommand;
-import mitl.IntoTheHeaven.application.port.in.command.dto.VisitMemberCommand;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.application.port.out.VisitPort;
 import mitl.IntoTheHeaven.domain.model.*;
@@ -14,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -96,6 +96,21 @@ public class VisitCommandService implements VisitCommandUseCase {
                                         return churchMember;
                                 })
                                 .collect(Collectors.toList());
+
+                // Check for duplicate members (already added to this visit)
+                Set<ChurchMemberId> existingChurchMemberIds = visit.getVisitMembers().stream()
+                                .map(VisitMember::getChurchMemberId)
+                                .collect(Collectors.toSet());
+
+                List<ChurchMemberId> duplicateChurchMembers = churchMembers.stream()
+                                .filter(cm -> existingChurchMemberIds.contains(cm.getId()))
+                                .map(ChurchMember::getId)
+                                .collect(Collectors.toList());
+
+                if (!duplicateChurchMembers.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                        "Some members are already added to this visit: " + duplicateChurchMembers);
+                }
 
                 // Create new VisitMembers without story and prayers
                 List<VisitMember> newVisitMembers = churchMembers.stream()

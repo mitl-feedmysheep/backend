@@ -16,6 +16,7 @@ import java.util.UUID;
 public class MemberWithGroups {
 
     private final MemberId id;
+    private final UUID churchMemberId;
     private final String name;
     private final String email;
     private final Sex sex;
