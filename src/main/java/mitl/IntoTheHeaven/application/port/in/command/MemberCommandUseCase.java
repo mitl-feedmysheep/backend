@@ -13,4 +13,6 @@ public interface MemberCommandUseCase {
     Boolean changeEmail(MemberId memberId, String newEmail);
 
     Member updateMyProfile(UpdateMyProfileCommand command);
+
+    void resetPasswordByEmail(String email, String newPassword);
 } 

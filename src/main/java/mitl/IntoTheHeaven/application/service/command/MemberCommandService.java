@@ -19,94 +19,117 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MemberCommandService implements MemberCommandUseCase {
 
-    private final MemberPort memberPort;
-    private final PasswordEncoder passwordEncoder;
+        private final MemberPort memberPort;
+        private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public Member signUp(SignUpCommand command) {
-        Member member = Member.builder()
-                .id(MemberId.from(UUID.randomUUID())) // Generate a new UUID for the member
-                .name(command.getName())
-                .email(command.getEmail())
-                .password(passwordEncoder.encode(command.getPassword()))
-                .sex(Sex.valueOf(command.getSex()))
-                .birthday(command.getBirthdate())
-                .phone(command.getPhone())
-                .address(command.getAddress())
-                .isProvisioned(false)
-                .build();
+        @Override
+        public Member signUp(SignUpCommand command) {
+                Member member = Member.builder()
+                                .id(MemberId.from(UUID.randomUUID())) // Generate a new UUID for the member
+                                .name(command.getName())
+                                .email(command.getEmail())
+                                .password(passwordEncoder.encode(command.getPassword()))
+                                .sex(Sex.valueOf(command.getSex()))
+                                .birthday(command.getBirthdate())
+                                .phone(command.getPhone())
+                                .address(command.getAddress())
+                                .isProvisioned(false)
+                                .build();
 
-        return memberPort.save(member);
-    }
-
-    @Override
-    public Boolean changePassword(MemberId memberId, String currentPassword, String newPassword) {
-        Member member = memberPort.findById(memberId.getValue())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-
-        if (!passwordEncoder.matches(currentPassword, member.getPassword())) {
-            return false;
+                return memberPort.save(member);
         }
 
-        Member updated = Member.builder()
-                .id(member.getId())
-                .name(member.getName())
-                .email(member.getEmail())
-                .password(passwordEncoder.encode(newPassword))
-                .sex(member.getSex())
-                .birthday(member.getBirthday())
-                .phone(member.getPhone())
-                .profileUrl(member.getProfileUrl())
-                .address(member.getAddress())
-                .isProvisioned(member.getIsProvisioned())
-                .build();
+        @Override
+        public Boolean changePassword(MemberId memberId, String currentPassword, String newPassword) {
+                Member member = memberPort.findById(memberId.getValue())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
 
-        memberPort.save(updated);
-        
-        return true;
-    }
+                if (!passwordEncoder.matches(currentPassword, member.getPassword())) {
+                        return false;
+                }
 
-    @Override
-    public Boolean changeEmail(MemberId memberId, String newEmail) {
-        Member member = memberPort.findById(memberId.getValue())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+                Member updated = Member.builder()
+                                .id(member.getId())
+                                .name(member.getName())
+                                .email(member.getEmail())
+                                .password(passwordEncoder.encode(newPassword))
+                                .sex(member.getSex())
+                                .birthday(member.getBirthday())
+                                .phone(member.getPhone())
+                                .profileUrl(member.getProfileUrl())
+                                .address(member.getAddress())
+                                .isProvisioned(member.getIsProvisioned())
+                                .build();
 
-        Member updated = Member.builder()
-                .id(member.getId())
-                .name(member.getName())
-                .email(newEmail)
-                .password(member.getPassword())
-                .sex(member.getSex())
-                .birthday(member.getBirthday())
-                .phone(member.getPhone())
-                .profileUrl(member.getProfileUrl())
-                .address(member.getAddress())
-                .isProvisioned(false)
-                .build();
+                memberPort.save(updated);
 
-        memberPort.save(updated);
+                return true;
+        }
 
-        return true;
-    }
+        @Override
+        public Boolean changeEmail(MemberId memberId, String newEmail) {
+                Member member = memberPort.findById(memberId.getValue())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
 
-    @Override
-    public Member updateMyProfile(UpdateMyProfileCommand command) {
-        Member member = memberPort.findById(command.getId().getValue())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+                Member updated = Member.builder()
+                                .id(member.getId())
+                                .name(member.getName())
+                                .email(newEmail)
+                                .password(member.getPassword())
+                                .sex(member.getSex())
+                                .birthday(member.getBirthday())
+                                .phone(member.getPhone())
+                                .profileUrl(member.getProfileUrl())
+                                .address(member.getAddress())
+                                .isProvisioned(false)
+                                .build();
 
-        Member updated = Member.builder()
-                .id(member.getId())
-                .name(command.getName() != null ? command.getName() : member.getName())
-                .email(member.getEmail())
-                .password(member.getPassword())
-                .sex(command.getSex() != null ? Sex.valueOf(command.getSex()) : member.getSex())
-                .birthday(command.getBirthday() != null ? command.getBirthday() : member.getBirthday())
-                .phone(command.getPhone() != null ? command.getPhone() : member.getPhone())
-                .profileUrl(member.getProfileUrl())
-                .address(member.getAddress())
-                .isProvisioned(member.getIsProvisioned())
-                .build();
+                memberPort.save(updated);
 
-        return memberPort.save(updated);
-    }
-} 
+                return true;
+        }
+
+        @Override
+        public Member updateMyProfile(UpdateMyProfileCommand command) {
+                Member member = memberPort.findById(command.getId().getValue())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+                Member updated = Member.builder()
+                                .id(member.getId())
+                                .name(command.getName() != null ? command.getName() : member.getName())
+                                .email(member.getEmail())
+                                .password(member.getPassword())
+                                .sex(command.getSex() != null ? Sex.valueOf(command.getSex()) : member.getSex())
+                                .birthday(command.getBirthday() != null ? command.getBirthday() : member.getBirthday())
+                                .phone(command.getPhone() != null ? command.getPhone() : member.getPhone())
+                                .profileUrl(member.getProfileUrl())
+                                .address(member.getAddress())
+                                .isProvisioned(member.getIsProvisioned())
+                                .build();
+
+                return memberPort.save(updated);
+        }
+
+        @Override
+        public void resetPasswordByEmail(String email, String newPassword) {
+                // Find member by email
+                Member member = memberPort.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+                // Update password
+                Member updated = Member.builder()
+                                .id(member.getId())
+                                .name(member.getName())
+                                .email(member.getEmail())
+                                .password(passwordEncoder.encode(newPassword))
+                                .sex(member.getSex())
+                                .birthday(member.getBirthday())
+                                .phone(member.getPhone())
+                                .profileUrl(member.getProfileUrl())
+                                .address(member.getAddress())
+                                .isProvisioned(member.getIsProvisioned())
+                                .build();
+
+                memberPort.save(updated);
+        }
+}

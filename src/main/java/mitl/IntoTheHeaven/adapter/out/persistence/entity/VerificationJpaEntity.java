@@ -3,7 +3,6 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -30,5 +29,3 @@ public class VerificationJpaEntity extends BaseEntity {
     @Column(name = "code", length = 10, nullable = false)
     private String code;
 }
-
-

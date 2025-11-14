@@ -25,29 +25,29 @@ public class EmailVerificationService implements VerificationCommandUseCase {
 
     @Override
     @Transactional
-    public void sendEmailVerificationCode(String email) {
+    public void sendEmailVerificationCode(String email, VerificationType type) {
         String code = generateRandomCode(CODE_LENGTH);
 
         VerificationJpaEntity entity = VerificationJpaEntity.builder()
                 .id(UUID.randomUUID())
-                .type(VerificationType.EMAIL)
+                .type(type)
                 .typeValue(email.toLowerCase(Locale.ROOT))
                 .code(code)
                 .build();
 
         verificationRepository.save(entity);
 
-        String subject = "Your verification code";
-        String body = "Your verification code is: " + code + "\nIt expires in 10 minutes.";
+        String subject = getEmailSubject(type);
+        String body = getEmailBody(type, code);
         emailPort.sendTextEmail(email, subject, body);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean confirmEmailVerificationCode(String email, String code) {
+    public boolean confirmEmailVerificationCode(String email, String code, VerificationType type) {
         // Find the latest verification entity for the given email
         VerificationJpaEntity entity = verificationRepository
-                .findTopByTypeAndTypeValueOrderByCreatedAtDesc(VerificationType.EMAIL, email.toLowerCase(Locale.ROOT))
+                .findTopByTypeAndTypeValueOrderByCreatedAtDesc(type, email.toLowerCase(Locale.ROOT))
                 .orElse(null);
 
         if (entity == null) {
@@ -59,14 +59,31 @@ public class EmailVerificationService implements VerificationCommandUseCase {
             return false;
         }
 
-        // Check if createdAt is within 1 hour
+        // Check if createdAt is within 10 minutes
         // Assume getCreatedAt() returns a java.time.LocalDateTime
         java.time.LocalDateTime createdAt = entity.getCreatedAt();
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
         java.time.Duration duration = java.time.Duration.between(createdAt, now);
 
-        // 1 hour = 60 minutes
-        return duration.toMinutes() <= 60;
+        // 10 minutes
+        return duration.toMinutes() <= 10;
+    }
+
+    private String getEmailSubject(VerificationType type) {
+        return switch (type) {
+            case SIGNUP -> "Your verification code";
+            case PASSWORD_RESET -> "Password Reset Verification Code";
+            default -> "Verification Code";
+        };
+    }
+
+    private String getEmailBody(VerificationType type, String code) {
+        String message = switch (type) {
+            case SIGNUP -> "Your verification code is: " + code;
+            case PASSWORD_RESET -> "Your password reset verification code is: " + code;
+            default -> "Your verification code is: " + code;
+        };
+        return message + "\nIt expires in 10 minutes.";
     }
 
     private String generateRandomCode(int length) {
@@ -79,5 +96,3 @@ public class EmailVerificationService implements VerificationCommandUseCase {
         return builder.toString();
     }
 }
-
-
