@@ -10,13 +10,12 @@ import java.util.List;
 
 public interface VisitQueryUseCase {
 
-    // ADMIN - Get all visits for a church
-    List<Visit> getAllVisits(ChurchId churchId, MemberId memberId);
+    // ADMIN - Get all my visits for a church
+    List<Visit> getAllMyVisits(ChurchId churchId, MemberId memberId);
 
-    // ADMIN - Get visit by ID
-    Visit getVisitById(VisitId visitId);
+    // ADMIN - Get visit by ID with church ownership verification
+    Visit getVisitById(VisitId visitId, ChurchId churchId);
 
     // Get my visits (visits where I participated)
     List<Visit> getMyVisits(ChurchMemberId churchMemberId);
 }
-

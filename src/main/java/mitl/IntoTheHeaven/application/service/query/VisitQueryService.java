@@ -20,36 +20,43 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class VisitQueryService implements VisitQueryUseCase {
 
-    private final VisitPort visitPort;
+        private final VisitPort visitPort;
 
-    // ADMIN - Get all visits for a church
-    @Override
-    public List<Visit> getAllVisits(ChurchId churchId, MemberId memberId) {
-        List<Visit> visits = visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
+        // ADMIN - Get all my visits for a church
+        @Override
+        public List<Visit> getAllMyVisits(ChurchId churchId, MemberId memberId) {
+                List<Visit> visits = visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
 
-        // Sort by date desc, then startedAt desc
-        return visits.stream()
-                .sorted(Comparator.comparing(Visit::getDate).reversed()
-                        .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
-                .collect(Collectors.toList());
-    }
+                // Sort by date desc, then startedAt desc
+                return visits.stream()
+                                .sorted(Comparator.comparing(Visit::getDate).reversed()
+                                                .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
+                                .collect(Collectors.toList());
+        }
 
-    // ADMIN - Get visit by ID
-    @Override
-    public Visit getVisitById(VisitId visitId) {
-        return visitPort.findDetailById(visitId)
-                .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
-    }
+        // ADMIN - Get visit by ID with church ownership verification
+        @Override
+        public Visit getVisitById(VisitId visitId, ChurchId churchId) {
+                Visit visit = visitPort.findDetailById(visitId)
+                                .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
 
-    // Get my visits (visits where I participated)
-    @Override
-    public List<Visit> getMyVisits(ChurchMemberId churchMemberId) {
-        List<Visit> visits = visitPort.findMyVisits(churchMemberId);
+                // Verify church ownership
+                if (!visit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
 
-        // Sort by date desc, then startedAt desc
-        return visits.stream()
-                .sorted(Comparator.comparing(Visit::getDate).reversed()
-                        .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
-                .collect(Collectors.toList());
-    }
+                return visit;
+        }
+
+        // Get my visits (visits where I participated)
+        @Override
+        public List<Visit> getMyVisits(ChurchMemberId churchMemberId) {
+                List<Visit> visits = visitPort.findMyVisits(churchMemberId);
+
+                // Sort by date desc, then startedAt desc
+                return visits.stream()
+                                .sorted(Comparator.comparing(Visit::getDate).reversed()
+                                                .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
+                                .collect(Collectors.toList());
+        }
 }

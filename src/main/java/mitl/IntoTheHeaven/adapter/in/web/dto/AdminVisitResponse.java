@@ -5,6 +5,7 @@ import mitl.IntoTheHeaven.domain.model.Visit;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,6 +34,15 @@ public record AdminVisitResponse(
                                 .expense(visit.getExpense())
                                 .notes(visit.getNotes())
                                 .visitMembers(visit.getVisitMembers().stream()
+                                                // Sort by birthday ascending (oldest first)
+                                                .sorted(Comparator.comparing(vm -> vm.getChurchMember() != null
+                                                                && vm.getChurchMember().getMember() != null
+                                                                && vm.getChurchMember().getMember()
+                                                                                .getBirthday() != null
+                                                                                                ? vm.getChurchMember()
+                                                                                                                .getMember()
+                                                                                                                .getBirthday()
+                                                                                                : LocalDate.MAX))
                                                 .map(VisitMemberResponse::from)
                                                 .collect(Collectors.toList()))
                                 .medias(visit.getMedias().stream()

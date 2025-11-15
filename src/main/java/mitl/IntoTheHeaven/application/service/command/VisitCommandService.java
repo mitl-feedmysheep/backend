@@ -53,9 +53,14 @@ public class VisitCommandService implements VisitCommandUseCase {
 
         // ADMIN - Update visit
         @Override
-        public Visit updateVisit(VisitId visitId, UpdateVisitCommand command) {
+        public Visit updateVisit(VisitId visitId, UpdateVisitCommand command, ChurchId churchId) {
                 Visit existingVisit = visitPort.findDetailById(visitId)
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
+
+                // Verify church ownership
+                if (!existingVisit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
 
                 // Update Visit basic information only
                 Visit updatedVisit = existingVisit.toBuilder()
@@ -72,17 +77,28 @@ public class VisitCommandService implements VisitCommandUseCase {
 
         // ADMIN - Delete visit (soft delete)
         @Override
-        public void deleteVisit(VisitId visitId) {
+        public void deleteVisit(VisitId visitId, ChurchId churchId) {
                 Visit visit = visitPort.findDetailById(visitId)
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
+
+                // Verify church ownership
+                if (!visit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
+
                 visitPort.delete(visit);
         }
 
         // ADMIN - Add members to visit
         @Override
-        public Visit addMembersToVisit(VisitId visitId, AddVisitMembersCommand command) {
+        public Visit addMembersToVisit(VisitId visitId, AddVisitMembersCommand command, ChurchId churchId) {
                 Visit visit = visitPort.findDetailById(visitId)
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
+
+                // Verify church ownership
+                if (!visit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
 
                 // Find ChurchMembers and validate
                 List<ChurchMember> churchMembers = command.memberIds().stream()
@@ -139,9 +155,14 @@ public class VisitCommandService implements VisitCommandUseCase {
 
         // ADMIN - Remove member from visit (soft delete)
         @Override
-        public Visit removeMemberFromVisit(VisitId visitId, VisitMemberId visitMemberId) {
+        public Visit removeMemberFromVisit(VisitId visitId, VisitMemberId visitMemberId, ChurchId churchId) {
                 Visit visit = visitPort.findDetailById(visitId)
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
+
+                // Verify church ownership
+                if (!visit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
 
                 // Soft delete the visit member by setting deletedAt
                 List<VisitMember> updatedVisitMembers = visit.getVisitMembers().stream()
@@ -157,10 +178,15 @@ public class VisitCommandService implements VisitCommandUseCase {
 
         // ADMIN - Update visit member story and prayers
         @Override
-        public VisitMember updateVisitMember(UpdateVisitMemberCommand command) {
+        public VisitMember updateVisitMember(UpdateVisitMemberCommand command, ChurchId churchId) {
                 // 1. Retrieve existing visit with detailed information
                 Visit existingVisit = visitPort.findDetailById(command.getVisitId())
                                 .orElseThrow(() -> new IllegalArgumentException("Visit not found"));
+
+                // Verify church ownership
+                if (!existingVisit.getChurchId().equals(churchId)) {
+                        throw new IllegalArgumentException("Access denied: Visit does not belong to your church");
+                }
 
                 // 2. Find VisitMember to update
                 VisitMember targetVisitMember = existingVisit.getVisitMembers().stream()

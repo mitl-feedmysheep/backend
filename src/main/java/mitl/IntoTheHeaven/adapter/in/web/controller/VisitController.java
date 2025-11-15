@@ -65,10 +65,10 @@ public class VisitController {
     @Operation(summary = "Get All My Visits", description = "ADMIN - Get all visits for current church and member (ordered by date desc)")
     @GetMapping("/admin")
     @RequireChurchRole(ChurchRole.ADMIN)
-    public ResponseEntity<List<AdminVisitListResponse>> getAllVisits(
+    public ResponseEntity<List<AdminVisitListResponse>> getAllMyVisits(
             @AuthenticationPrincipal String memberId,
             @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
-        List<Visit> visits = visitQueryUseCase.getAllVisits(ChurchId.from(UUID.fromString(churchId)),
+        List<Visit> visits = visitQueryUseCase.getAllMyVisits(ChurchId.from(UUID.fromString(churchId)),
                 MemberId.from(UUID.fromString(memberId)));
         List<AdminVisitListResponse> response = AdminVisitListResponse.from(visits);
         return ResponseEntity.ok(response);
@@ -79,8 +79,9 @@ public class VisitController {
     @GetMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> getVisitDetail(
-            @PathVariable("visitId") UUID visitId) {
-        Visit visit = visitQueryUseCase.getVisitById(VisitId.from(visitId));
+            @PathVariable("visitId") UUID visitId,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
+        Visit visit = visitQueryUseCase.getVisitById(VisitId.from(visitId), ChurchId.from(UUID.fromString(churchId)));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.ok(response);
     }
@@ -91,9 +92,11 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> updateVisit(
             @PathVariable("visitId") UUID visitId,
-            @Valid @RequestBody AdminUpdateVisitRequest request) {
+            @Valid @RequestBody AdminUpdateVisitRequest request,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
         UpdateVisitCommand command = AdminUpdateVisitRequest.toCommand(request);
-        Visit visit = visitCommandUseCase.updateVisit(VisitId.from(visitId), command);
+        Visit visit = visitCommandUseCase.updateVisit(VisitId.from(visitId), command,
+                ChurchId.from(UUID.fromString(churchId)));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.ok(response);
     }
@@ -103,8 +106,9 @@ public class VisitController {
     @DeleteMapping("/admin/{visitId}")
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> deleteVisit(
-            @PathVariable("visitId") UUID visitId) {
-        visitCommandUseCase.deleteVisit(VisitId.from(visitId));
+            @PathVariable("visitId") UUID visitId,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
+        visitCommandUseCase.deleteVisit(VisitId.from(visitId), ChurchId.from(UUID.fromString(churchId)));
         return ResponseEntity.noContent().build();
     }
 
@@ -114,9 +118,11 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<AdminVisitResponse> addMembersToVisit(
             @PathVariable("visitId") UUID visitId,
-            @Valid @RequestBody AdminAddVisitMembersRequest request) {
+            @Valid @RequestBody AdminAddVisitMembersRequest request,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
         AddVisitMembersCommand command = AdminAddVisitMembersRequest.toCommand(request);
-        Visit visit = visitCommandUseCase.addMembersToVisit(VisitId.from(visitId), command);
+        Visit visit = visitCommandUseCase.addMembersToVisit(VisitId.from(visitId), command,
+                ChurchId.from(UUID.fromString(churchId)));
         AdminVisitResponse response = AdminVisitResponse.from(visit);
         return ResponseEntity.ok(response);
     }
@@ -127,8 +133,10 @@ public class VisitController {
     @RequireChurchRole(ChurchRole.ADMIN)
     public ResponseEntity<Void> removeMemberFromVisit(
             @PathVariable("visitId") UUID visitId,
-            @PathVariable("visitMemberId") UUID visitMemberId) {
-        visitCommandUseCase.removeMemberFromVisit(VisitId.from(visitId), VisitMemberId.from(visitMemberId));
+            @PathVariable("visitMemberId") UUID visitMemberId,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
+        visitCommandUseCase.removeMemberFromVisit(VisitId.from(visitId), VisitMemberId.from(visitMemberId),
+                ChurchId.from(UUID.fromString(churchId)));
         return ResponseEntity.noContent().build();
     }
 
@@ -139,12 +147,14 @@ public class VisitController {
     public ResponseEntity<UpdateVisitMemberResponse> updateVisitMember(
             @PathVariable("visitId") UUID visitId,
             @PathVariable("visitMemberId") UUID visitMemberId,
-            @Valid @RequestBody UpdateVisitMemberRequest request) {
+            @Valid @RequestBody UpdateVisitMemberRequest request,
+            @CurrentSecurityContext(expression = "authentication.churchId") String churchId) {
         UpdateVisitMemberCommand command = UpdateVisitMemberCommand.from(
                 VisitId.from(visitId),
                 VisitMemberId.from(visitMemberId),
                 request);
-        VisitMember visitMember = visitCommandUseCase.updateVisitMember(command);
+        VisitMember visitMember = visitCommandUseCase.updateVisitMember(command,
+                ChurchId.from(UUID.fromString(churchId)));
         UpdateVisitMemberResponse response = UpdateVisitMemberResponse.from(visitMember);
         return ResponseEntity.ok(response);
     }
