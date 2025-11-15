@@ -15,6 +15,7 @@ import java.util.List;
 public class AdminMemberSearchResponse {
 
     private final String memberId;
+    private final String churchMemberId;
     private final String name;
     private final String email;
     private final String phone;
@@ -52,6 +53,7 @@ public class AdminMemberSearchResponse {
 
         return AdminMemberSearchResponse.builder()
                 .memberId(memberWithGroups.getId().getValue().toString())
+                .churchMemberId(memberWithGroups.getChurchMemberId().toString())
                 .name(memberWithGroups.getName())
                 .email(memberWithGroups.getEmail())
                 .phone(memberWithGroups.getPhone())

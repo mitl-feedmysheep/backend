@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.adapter.in.web.dto;
 import lombok.Builder;
 import mitl.IntoTheHeaven.domain.model.VisitMember;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,6 +13,8 @@ public record VisitMemberResponse(
                 UUID id,
                 UUID churchMemberId,
                 String memberName,
+                String sex,
+                LocalDate birthday,
                 String story,
                 List<PrayerResponse> prayers) {
         public static VisitMemberResponse from(VisitMember visitMember) {
@@ -21,6 +24,17 @@ public record VisitMemberResponse(
                                 .memberName(visitMember.getChurchMember() != null
                                                 && visitMember.getChurchMember().getMember() != null
                                                                 ? visitMember.getChurchMember().getMember().getName()
+                                                                : null)
+                                .sex(visitMember.getChurchMember() != null
+                                                && visitMember.getChurchMember().getMember() != null
+                                                && visitMember.getChurchMember().getMember().getSex() != null
+                                                                ? visitMember.getChurchMember().getMember().getSex()
+                                                                                .getValue()
+                                                                : null)
+                                .birthday(visitMember.getChurchMember() != null
+                                                && visitMember.getChurchMember().getMember() != null
+                                                                ? visitMember.getChurchMember().getMember()
+                                                                                .getBirthday()
                                                                 : null)
                                 .story(visitMember.getStory())
                                 .prayers(visitMember.getPrayers().stream()

@@ -62,7 +62,7 @@ public class ChurchController {
         @Operation(summary = "Get Groups in Church", description = "Retrieves a list of groups within a specific church that the current user belongs to.")
         @GetMapping("/{churchId}/groups")
         public ResponseEntity<List<GroupResponse>> getGroupsInChurch(
-                        @PathVariable UUID churchId,
+                        @PathVariable("churchId") UUID churchId,
                         @AuthenticationPrincipal String memberId) {
                 List<Group> groups = groupQueryUseCase.getGroupsByMemberIdAndChurchId(
                                 MemberId.from(UUID.fromString(memberId)),
@@ -78,7 +78,7 @@ public class ChurchController {
         @Operation(summary = "Get Prayer Requests in Church", description = "Retrieves a count of prayer requests within a specific church that the current user belongs to.")
         @GetMapping("/{churchId}/prayer-request-count")
         public ResponseEntity<PrayerRequestCountByChurchResponse> getPrayerRequestsInChurch(
-                        @PathVariable UUID churchId,
+                        @PathVariable("churchId") UUID churchId,
                         @AuthenticationPrincipal String memberId) {
                 Long prayerRequestCount = prayerQueryUseCase.getPrayerRequestCountByMemberIdAndChurchId(
                                 MemberId.from(UUID.fromString(memberId)),
@@ -113,7 +113,7 @@ public class ChurchController {
         @GetMapping("/admin/members")
         @RequireChurchRole(ChurchRole.ADMIN)
         public ResponseEntity<List<AdminMemberSearchResponse>> searchChurchMembers(
-                        @RequestParam String searchText) {
+                        @RequestParam("searchText") String searchText) {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) auth;
                 String churchId = jwtAuth.getChurchId();

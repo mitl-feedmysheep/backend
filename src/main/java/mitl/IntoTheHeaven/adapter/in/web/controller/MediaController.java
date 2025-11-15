@@ -51,7 +51,7 @@ public class MediaController {
     @Operation(summary = "Delete Media by ID", description = "Deletes a specific media file (includes all sizes from same original file)")
     @DeleteMapping("/{mediaId}")
     public ResponseEntity<Void> deleteMediaById(
-            @Parameter(description = "Media ID") @PathVariable UUID mediaId) {
+            @Parameter(description = "Media ID") @PathVariable("mediaId") UUID mediaId) {
         mediaCommandUseCase.deleteById(MediaId.from(mediaId));
         return ResponseEntity.noContent().build();
     }
@@ -59,7 +59,7 @@ public class MediaController {
     @Operation(summary = "Delete All Media by Entity ID", description = "Deletes all media files associated with a specific entity ID")
     @DeleteMapping("/entity/{entityId}")
     public ResponseEntity<Void> deleteMediaByEntityId(
-            @Parameter(description = "Entity ID to delete all associated media") @PathVariable UUID entityId) {
+            @Parameter(description = "Entity ID to delete all associated media") @PathVariable("entityId") UUID entityId) {
         mediaCommandUseCase.deleteByEntity(entityId);
         return ResponseEntity.noContent().build();
     }

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.global.util.JwtTokenProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -35,8 +37,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        if (requestURI == null) {
+            return false;
+        }
         return EXCLUDED_PATHS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, request.getRequestURI()));
+                .anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
     }
 
     @Override
@@ -50,7 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (ExpiredJwtException e) {
-                // JWT 만료 시 특별한 응답
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"JWT_EXPIRED\",\"message\":\"JWT token has expired. Please login again.\"}");

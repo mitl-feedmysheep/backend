@@ -24,7 +24,7 @@ public class PrayerController {
 
     @Operation(summary = "Delete Prayer", description = "Deletes a prayer by ID (soft delete).")
     @DeleteMapping("/{prayerId}")
-    public ResponseEntity<Void> deletePrayer(@PathVariable UUID prayerId) {
+    public ResponseEntity<Void> deletePrayer(@PathVariable("prayerId") UUID prayerId) {
         prayerCommandUseCase.delete(PrayerId.from(prayerId));
         return ResponseEntity.ok().build();
     }

@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.VisitJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.VisitMemberJpaEntity;
@@ -188,12 +189,29 @@ public class VisitPersistenceMapper {
         if (domain == null) {
             return null;
         }
-        return PrayerJpaEntity.builder()
+
+        // Build member entity reference if member exists
+        MemberJpaEntity memberEntity = null;
+        if (domain.getMember() != null) {
+            memberEntity = MemberJpaEntity.builder()
+                    .id(domain.getMember().getId().getValue())
+                    .build();
+        }
+
+        PrayerJpaEntity.PrayerJpaEntityBuilder<?, ?> builder = PrayerJpaEntity.builder()
                 .id(domain.getId().getValue())
+                .member(memberEntity)
                 .visitMember(visitMemberEntity)
                 .prayerRequest(domain.getPrayerRequest())
                 .description(domain.getDescription())
                 .isAnswered(domain.isAnswered())
-                .build();
+                .createdAt(domain.getCreatedAt());
+
+        // Set deletedAt if present (for soft delete)
+        if (domain.getDeletedAt() != null) {
+            builder.deletedAt(domain.getDeletedAt());
+        }
+
+        return builder.build();
     }
 }

@@ -117,6 +117,7 @@ public class ChurchPersistenceAdapter implements ChurchPort {
 
                                         return MemberWithGroups.builder()
                                                         .id(MemberId.from(memberEntity.getId()))
+                                                        .churchMemberId(churchMemberEntity.getId())
                                                         .name(memberEntity.getName())
                                                         .email(memberEntity.getEmail())
                                                         .sex(memberEntity.getSex())

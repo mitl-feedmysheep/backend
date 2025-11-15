@@ -49,7 +49,7 @@ public class GroupController {
 
     @Operation(summary = "Get Gatherings in Group", description = "Retrieves a list of gatherings within a specific group.")
     @GetMapping("/{groupId}/gatherings")
-    public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable UUID groupId) {
+    public ResponseEntity<List<GatheringResponse>> getGatheringsInGroup(@PathVariable("groupId") UUID groupId) {
         List<GatheringResponse> response = gatheringQueryUseCase
                 .getGatheringsWithStatisticsByGroupId(GroupId.from(groupId))
                 .stream()
@@ -65,7 +65,7 @@ public class GroupController {
 
     @Operation(summary = "Get Members in Group", description = "Retrieves a list of members with roles in a specific group.")
     @GetMapping("/{groupId}/members")
-    public ResponseEntity<List<GroupMemberResponse>> getMembersInGroup(@PathVariable UUID groupId) {
+    public ResponseEntity<List<GroupMemberResponse>> getMembersInGroup(@PathVariable("groupId") UUID groupId) {
         List<GroupMember> groupMembers = groupQueryUseCase.getGroupMembersByGroupId(groupId);
         List<GroupMemberResponse> response = GroupMemberResponse.from(groupMembers);
         return ResponseEntity.ok(response);
@@ -74,7 +74,7 @@ public class GroupController {
     @Operation(summary = "Get My Info in Group", description = "Retrieves my information and role in a specific group.")
     @GetMapping("/{groupId}/me")
     public ResponseEntity<GroupMemberResponse> getMyInfoInGroup(
-            @PathVariable UUID groupId,
+            @PathVariable("groupId") UUID groupId,
             @AuthenticationPrincipal String memberId) {
         GroupMember groupMember = groupQueryUseCase.getGroupMemberByGroupIdAndMemberId(
                 GroupId.from(groupId),
@@ -86,8 +86,8 @@ public class GroupController {
     @Operation(summary = "Change Group Member Role", description = "Changes the role of a member in the group. Leader only.")
     @PatchMapping("/{groupId}/groupMembers/{groupMemberId}/role")
     public ResponseEntity<GroupMemberResponse> changeGroupMemberRole(
-            @PathVariable UUID groupId,
-            @PathVariable UUID groupMemberId,
+            @PathVariable("groupId") UUID groupId,
+            @PathVariable("groupMemberId") UUID groupMemberId,
             @AuthenticationPrincipal String requesterId,
             @RequestBody ChangeGroupMemberRoleRequest request
     ) {

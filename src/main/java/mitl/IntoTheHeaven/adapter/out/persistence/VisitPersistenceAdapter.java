@@ -30,7 +30,7 @@ public class VisitPersistenceAdapter implements VisitPort {
     }
 
     @Override
-    public Optional<Visit> findById(VisitId visitId) {
+    public Optional<Visit> findDetailById(VisitId visitId) {
         return visitJpaRepository.findWithDetailsById(visitId.getValue())
                 .map(visitPersistenceMapper::toDomain);
     }

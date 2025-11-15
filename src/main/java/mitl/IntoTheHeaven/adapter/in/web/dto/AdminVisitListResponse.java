@@ -20,6 +20,7 @@ public record AdminVisitListResponse(
         LocalDateTime endedAt,
         String place,
         Integer expense,
+        String notes,
         int memberCount,
         List<Member> members,
         LocalDateTime createdAt) {
@@ -37,6 +38,7 @@ public record AdminVisitListResponse(
                 .endedAt(visit.getEndedAt())
                 .place(visit.getPlace())
                 .expense(visit.getExpense())
+                .notes(visit.getNotes())
                 .memberCount(visit.getVisitMembers().size())
                 .members(members)
                 .createdAt(visit.getCreatedAt())
