@@ -17,9 +17,9 @@ public interface VisitPort {
     Visit save(Visit visit);
 
     /**
-     * Find visit by ID
+     * Find visit by ID with detailed information (visit members and prayers)
      */
-    Optional<Visit> findById(VisitId visitId);
+    Optional<Visit> findDetailById(VisitId visitId);
 
     /**
      * Find all visits by church ID
@@ -36,4 +36,3 @@ public interface VisitPort {
      */
     List<Visit> findMyVisits(ChurchMemberId pastorChurchMemberId);
 }
-

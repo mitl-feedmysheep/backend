@@ -10,16 +10,20 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.AdminCreateVisitRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminUpdateVisitRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminVisitListResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.AdminVisitResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.visit.UpdateVisitMemberRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.visit.UpdateVisitMemberResponse;
 import mitl.IntoTheHeaven.application.port.in.command.VisitCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.AddVisitMembersCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateVisitCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateVisitMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.query.VisitQueryUseCase;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Visit;
 import mitl.IntoTheHeaven.domain.model.VisitId;
+import mitl.IntoTheHeaven.domain.model.VisitMember;
 import mitl.IntoTheHeaven.domain.model.VisitMemberId;
 import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
 import org.springframework.http.HttpStatus;
@@ -126,5 +130,22 @@ public class VisitController {
             @PathVariable("visitMemberId") UUID visitMemberId) {
         visitCommandUseCase.removeMemberFromVisit(VisitId.from(visitId), VisitMemberId.from(visitMemberId));
         return ResponseEntity.noContent().build();
+    }
+
+    /* ADMIN */
+    @Operation(summary = "Update Visit Member story and prayers", description = "ADMIN - Update a visit member's story and prayer requests")
+    @PatchMapping("/admin/{visitId}/visitMembers/{visitMemberId}")
+    @RequireChurchRole(ChurchRole.ADMIN)
+    public ResponseEntity<UpdateVisitMemberResponse> updateVisitMember(
+            @PathVariable("visitId") UUID visitId,
+            @PathVariable("visitMemberId") UUID visitMemberId,
+            @Valid @RequestBody UpdateVisitMemberRequest request) {
+        UpdateVisitMemberCommand command = UpdateVisitMemberCommand.from(
+                VisitId.from(visitId),
+                VisitMemberId.from(visitMemberId),
+                request);
+        VisitMember visitMember = visitCommandUseCase.updateVisitMember(command);
+        UpdateVisitMemberResponse response = UpdateVisitMemberResponse.from(visitMember);
+        return ResponseEntity.ok(response);
     }
 }

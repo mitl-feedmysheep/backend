@@ -26,7 +26,7 @@ public class VisitQueryService implements VisitQueryUseCase {
     @Override
     public List<Visit> getAllVisits(ChurchId churchId, MemberId memberId) {
         List<Visit> visits = visitPort.findAllByChurchIdAndMemberId(churchId, memberId);
-        
+
         // Sort by date desc, then startedAt desc
         return visits.stream()
                 .sorted(Comparator.comparing(Visit::getDate).reversed()
@@ -37,13 +37,19 @@ public class VisitQueryService implements VisitQueryUseCase {
     // ADMIN - Get visit by ID
     @Override
     public Visit getVisitById(VisitId visitId) {
-        return visitPort.findById(visitId)
+        return visitPort.findDetailById(visitId)
                 .orElseThrow(() -> new IllegalArgumentException("Visit not found: " + visitId));
     }
 
     // Get my visits (visits where I participated)
     @Override
     public List<Visit> getMyVisits(ChurchMemberId churchMemberId) {
-        return visitPort.findMyVisits(churchMemberId);
+        List<Visit> visits = visitPort.findMyVisits(churchMemberId);
+
+        // Sort by date desc, then startedAt desc
+        return visits.stream()
+                .sorted(Comparator.comparing(Visit::getDate).reversed()
+                        .thenComparing(Comparator.comparing(Visit::getStartedAt).reversed()))
+                .collect(Collectors.toList());
     }
 }
