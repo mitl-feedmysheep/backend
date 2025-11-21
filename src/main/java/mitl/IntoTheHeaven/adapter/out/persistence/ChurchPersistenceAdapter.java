@@ -60,6 +60,14 @@ public class ChurchPersistenceAdapter implements ChurchPort {
         }
 
         @Override
+        public List<ChurchMember> findChurchMembersByMemberId(MemberId memberId) {
+                return churchMemberJpaRepository.findAllByMemberId(memberId.getValue())
+                                .stream()
+                                .map(churchMemberPersistenceMapper::toDomain)
+                                .collect(Collectors.toList());
+        }
+
+        @Override
         public ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId) {
                 ChurchMemberJpaEntity churchMemberJpaEntity = churchMemberJpaRepository
                                 .findByMemberIdAndChurchId(memberId.getValue(), churchId.getValue());
@@ -68,14 +76,6 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                 }
                 return churchMemberPersistenceMapper.toDomain(
                                 churchMemberJpaEntity);
-        }
-
-        @Override
-        public List<ChurchMember> findChurchMembersByMemberIdAndRole(MemberId memberId, ChurchRole role) {
-                return churchMemberJpaRepository.findAllByMemberIdAndRole(memberId.getValue(), role)
-                                .stream()
-                                .map(churchMember -> churchMemberPersistenceMapper.toDomain(churchMember))
-                                .toList();
         }
 
         @Override

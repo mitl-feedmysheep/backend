@@ -11,9 +11,7 @@ public enum ChurchRole {
         this.level = level;
     }
 
-    public boolean hasPermission(ChurchRole required) {
+    public boolean hasPermissionOver(ChurchRole required) {
         return this.level >= required.level;
     }
 }
-
-

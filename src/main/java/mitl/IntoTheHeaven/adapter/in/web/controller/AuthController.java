@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -60,7 +62,8 @@ public class AuthController {
     @Operation(summary = "Confirm Email Verification Code", description = "Confirms the verification code for the specified email.")
     @PostMapping("/verification/email/confirm")
     public ResponseEntity<?> confirmEmailVerification(@RequestBody @Valid ConfirmEmailVerificationRequest request) {
-        boolean ok = verificationCommandUseCase.confirmEmailVerificationCode(request.getEmail(), request.getCode(), request.getType());
+        boolean ok = verificationCommandUseCase.confirmEmailVerificationCode(request.getEmail(), request.getCode(),
+                request.getType());
         if (ok) {
             return ResponseEntity.ok().build();
         }

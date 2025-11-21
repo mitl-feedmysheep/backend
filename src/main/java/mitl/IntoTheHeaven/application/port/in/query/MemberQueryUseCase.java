@@ -6,9 +6,17 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 import java.util.List;
 import java.util.UUID;
 
+import mitl.IntoTheHeaven.application.port.in.query.dto.AdminMeResponse;
+import mitl.IntoTheHeaven.domain.model.ChurchId;
+
 public interface MemberQueryUseCase {
     Member getMemberById(MemberId memberId);
     List<Member> getMembersByGroupId(UUID groupId);
+
+    /**
+     * ADMIN - Get admin user info in specific church context
+     */
+    AdminMeResponse getAdminMyInfo(MemberId memberId, ChurchId churchId);
 
     /**
      * Checks availability of a phone number for signup.

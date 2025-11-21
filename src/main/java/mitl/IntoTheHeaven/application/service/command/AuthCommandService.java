@@ -78,7 +78,7 @@ public class AuthCommandService implements AuthCommandUseCase {
         @Override
         public LoginResponse selectChurch(MemberId memberId, ChurchId churchId) {
                 ChurchMember cm = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
-                if (cm == null || cm.getRole() != ChurchRole.ADMIN) {
+                if (cm == null || !cm.getRole().hasPermissionOver(ChurchRole.LEADER)) {
                         throw new RuntimeException("Not an admin of the selected church");
                 }
                 Authentication auth = new UsernamePasswordAuthenticationToken(

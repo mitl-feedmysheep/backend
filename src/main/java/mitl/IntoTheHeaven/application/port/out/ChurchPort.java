@@ -18,9 +18,9 @@ public interface ChurchPort {
     List<MemberId> findMemberIdsByChurchId(UUID churchId);
 
     /* ADMIN */
-    ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
+    List<ChurchMember> findChurchMembersByMemberId(MemberId memberId);
 
-    List<ChurchMember> findChurchMembersByMemberIdAndRole(MemberId memberId, ChurchRole role);
+    ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
 
     List<MemberWithGroups> findMembersByChurchIdAndSearch(UUID churchId, String searchText);
 }

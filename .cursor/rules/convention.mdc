@@ -744,7 +744,7 @@ public enum ChurchRole {
 
     private final int level;
 
-    public boolean hasPermission(ChurchRole required) {
+    public boolean hasPermissionOver(ChurchRole required) {
         return this.level >= required.level;
     }
 }
@@ -831,7 +831,7 @@ public class RolePermissionAspect {
         );
 
         // Permission validation
-        if (currentRole == null || !currentRole.hasPermission(requireRole.value())) {
+        if (currentRole == null || !currentRole.hasPermissionOver(requireRole.value())) {
             throw new AccessDeniedException(
                 String.format("Required role: %s, Current role: %s",
                     requireRole.value(), currentRole)
@@ -1655,7 +1655,7 @@ public enum ChurchRole {
 
     private final int level;
 
-    public boolean hasPermission(ChurchRole required) {
+    public boolean hasPermissionOver(ChurchRole required) {
         return this.level >= required.level;
     }
 }
@@ -1742,7 +1742,7 @@ public class RolePermissionAspect {
         );
 
         // Permission validation
-        if (currentRole == null || !currentRole.hasPermission(requireRole.value())) {
+        if (currentRole == null || !currentRole.hasPermissionOver(requireRole.value())) {
             throw new AccessDeniedException(
                 String.format("Required role: %s, Current role: %s",
                     requireRole.value(), currentRole)

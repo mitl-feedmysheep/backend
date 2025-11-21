@@ -111,7 +111,7 @@ public class ChurchController {
 
         @Operation(summary = "Search Church Members", description = "Search members in a church by name or phone number.")
         @GetMapping("/admin/members")
-        @RequireChurchRole(ChurchRole.ADMIN)
+        @RequireChurchRole(ChurchRole.LEADER)
         public ResponseEntity<List<AdminMemberSearchResponse>> searchChurchMembers(
                         @RequestParam("searchText") String searchText) {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();

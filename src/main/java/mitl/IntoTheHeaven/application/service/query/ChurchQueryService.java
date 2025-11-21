@@ -10,7 +10,6 @@ import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,7 @@ public class ChurchQueryService implements ChurchQueryUseCase {
     }
 
     /* ADMIN */
-    @Cacheable(value = "member-roles", key = "#memberId + ':' + #churchId")
+    @Override
     public ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId) {
         return churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId)
                 .getRole();
@@ -37,8 +36,9 @@ public class ChurchQueryService implements ChurchQueryUseCase {
 
     @Override
     public List<Church> getAdminChurches(MemberId memberId) {
-        return churchPort.findChurchMembersByMemberIdAndRole(memberId, ChurchRole.ADMIN)
+        return churchPort.findChurchMembersByMemberId(memberId)
                 .stream()
+                .filter(churchMember -> churchMember.getRole().hasPermissionOver(ChurchRole.LEADER))
                 .map(ChurchMember::getChurchId)
                 .map(id -> churchPort.findById(id.getValue()))
                 .toList();

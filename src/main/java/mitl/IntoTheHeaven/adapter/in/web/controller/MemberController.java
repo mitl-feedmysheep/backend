@@ -3,14 +3,24 @@ package mitl.IntoTheHeaven.adapter.in.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangeEmailRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.MeResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.UpdateMyProfileRequest;
+import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.MemberQueryUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.dto.AdminMeResponse;
+import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
+import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
+
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,11 +28,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
-import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
-import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangeEmailRequest;
-import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
-
-import java.util.UUID;
 
 @Tag(name = "Member", description = "APIs for Member Management")
 @RestController
@@ -76,6 +81,20 @@ public class MemberController {
 
         Member updated = memberCommandUseCase.updateMyProfile(request.toCommand());
         return ResponseEntity.ok(MeResponse.from(updated));
+    }
+
+    @Operation(summary = "Get My Admin Info in Church", description = "Retrieves my information including role in the current church context. Intended for admin context usage.")
+    @GetMapping("/admin/me")
+    public ResponseEntity<AdminMeResponse> getAdminMe(
+            @AuthenticationPrincipal String memberId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) auth;
+        String churchId = jwtAuth.getChurchId();
+
+        AdminMeResponse response = memberQueryUseCase.getAdminMyInfo(
+                MemberId.from(UUID.fromString(memberId)),
+                ChurchId.from(UUID.fromString(churchId)));
+        return ResponseEntity.ok(response);
     }
 
 }

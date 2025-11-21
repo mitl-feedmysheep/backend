@@ -43,7 +43,7 @@ public class RoleCheckAspect {
                 MemberId.from(UUID.fromString(userId)),
                 ChurchId.from(UUID.fromString(churchId)));
 
-        if (currentRole == null || !currentRole.hasPermission(requireChurchRole.value())) {
+        if (currentRole == null || !currentRole.hasPermissionOver(requireChurchRole.value())) {
             throw new AccessDeniedException(
                     "Required role: " + requireChurchRole.value() + ", Current role: " + currentRole);
         }
