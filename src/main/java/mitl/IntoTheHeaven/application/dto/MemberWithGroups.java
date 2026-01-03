@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
@@ -24,6 +25,9 @@ public class MemberWithGroups {
     private final String phone;
     private final String address;
     private final String description;
+    private final String occupation;
+    private final BaptismStatus baptismStatus;
+    private final String mbti;
     private final List<GroupInfo> groups;
 
     @Getter

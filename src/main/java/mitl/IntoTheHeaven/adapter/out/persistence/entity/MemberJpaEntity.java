@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
@@ -78,6 +79,25 @@ public class MemberJpaEntity extends BaseEntity {
      */
     @Column(length = 100)
     private String description;
+
+    /**
+     * 직업
+     */
+    @Column(length = 100)
+    private String occupation;
+
+    /**
+     * 세례 상태
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "baptism_status", length = 20)
+    private BaptismStatus baptismStatus;
+
+    /**
+     * MBTI
+     */
+    @Column(length = 4)
+    private String mbti;
 
     /**
      * 회원 상태

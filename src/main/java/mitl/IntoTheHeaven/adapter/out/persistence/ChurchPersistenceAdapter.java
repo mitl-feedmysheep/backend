@@ -10,7 +10,6 @@ import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchPersistenceMapper
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberPersistenceMapper;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
-import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
@@ -18,6 +17,7 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -80,6 +80,9 @@ public class ChurchPersistenceAdapter implements ChurchPort {
 
         @Override
         public List<MemberWithGroups> findMembersByChurchIdAndSearch(UUID churchId, String searchText) {
+                // Get current year for filtering groups
+                int currentYear = LocalDate.now().getYear();
+
                 // QueryDSL로 해당 교회의 멤버와 해당 교회의 그룹만 JOIN
                 List<ChurchMemberJpaEntity> churchMemberEntities = queryFactory
                                 .selectFrom(churchMemberJpaEntity)
@@ -103,11 +106,14 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                 .map(churchMemberEntity -> {
                                         MemberJpaEntity memberEntity = churchMemberEntity.getMember();
 
+                                        // Filter groups by current year (endDate year equals current year)
                                         List<MemberWithGroups.GroupInfo> groups = memberEntity.getGroupMembers()
                                                         .stream()
                                                         .filter(gm -> gm.getGroup() != null
                                                                         && gm.getGroup().getChurch().getId()
-                                                                                        .equals(churchId))
+                                                                                        .equals(churchId)
+                                                                        && gm.getGroup().getEndDate() != null
+                                                                        && gm.getGroup().getEndDate().getYear() == currentYear)
                                                         .map(gm -> MemberWithGroups.GroupInfo.builder()
                                                                         .groupId(gm.getGroup().getId())
                                                                         .groupName(gm.getGroup().getName())
@@ -125,6 +131,9 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                                         .phone(memberEntity.getPhone())
                                                         .address(memberEntity.getAddress())
                                                         .description(memberEntity.getDescription())
+                                                        .occupation(memberEntity.getOccupation())
+                                                        .baptismStatus(memberEntity.getBaptismStatus())
+                                                        .mbti(memberEntity.getMbti())
                                                         .groups(groups)
                                                         .build();
                                 })

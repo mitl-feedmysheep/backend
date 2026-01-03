@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 
@@ -26,6 +27,9 @@ public class AdminMemberSearchResponse {
 
     private final String address;
     private final String description;
+    private final String occupation;
+    private final BaptismStatus baptismStatus;
+    private final String mbti;
     private final List<AdminGroupInfo> groups;
 
     @Getter
@@ -61,6 +65,9 @@ public class AdminMemberSearchResponse {
                 .birthday(memberWithGroups.getBirthday())
                 .address(memberWithGroups.getAddress())
                 .description(memberWithGroups.getDescription())
+                .occupation(memberWithGroups.getOccupation())
+                .baptismStatus(memberWithGroups.getBaptismStatus())
+                .mbti(memberWithGroups.getMbti())
                 .groups(groups)
                 .build();
     }

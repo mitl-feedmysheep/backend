@@ -12,6 +12,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +42,8 @@ public class GroupPersistenceAdapter implements GroupPort {
                                                                 .equals(churchId))
                                                 .map(groupMember -> groupPersistenceMapper
                                                                 .toDomain(groupMember.getGroup()))
+                                                .sorted(Comparator.comparing(Group::getEndDate,
+                                                                Comparator.nullsLast(Comparator.reverseOrder())))
                                                 .toList())
                                 .orElse(Collections.emptyList());
         }
