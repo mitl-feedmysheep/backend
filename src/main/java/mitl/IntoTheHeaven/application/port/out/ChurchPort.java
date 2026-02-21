@@ -7,7 +7,11 @@ import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
+import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
+import mitl.IntoTheHeaven.domain.model.Member;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ChurchPort {
@@ -16,6 +20,16 @@ public interface ChurchPort {
     Church findById(UUID churchId);
 
     List<MemberId> findMemberIdsByChurchId(UUID churchId);
+
+    List<Member> findBirthdayMembersByChurchIdAndMonth(UUID churchId, int month);
+
+    List<Church> findAllChurches();
+
+    Optional<ChurchMemberRequest> findPendingJoinRequest(UUID memberId, UUID churchId);
+
+    List<ChurchMemberRequest> findJoinRequestsByMemberId(UUID memberId);
+
+    ChurchMemberRequest saveJoinRequest(ChurchMemberRequest request);
 
     /* ADMIN */
     List<ChurchMember> findChurchMembersByMemberId(MemberId memberId);

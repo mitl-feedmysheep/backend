@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"JWT_EXPIRED\",\"message\":\"JWT token has expired. Please login again.\"}");
-                return; // 다음 필터로 진행하지 않음
+                return;
             }
         }
 

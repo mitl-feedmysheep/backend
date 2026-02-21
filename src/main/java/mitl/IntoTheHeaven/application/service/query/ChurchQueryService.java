@@ -7,7 +7,9 @@ import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
+import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
 import mitl.IntoTheHeaven.domain.model.Church;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.stereotype.Service;
@@ -25,6 +27,21 @@ public class ChurchQueryService implements ChurchQueryUseCase {
     @Override
     public List<Church> getChurchesByMemberId(MemberId memberId) {
         return churchPort.findChurchesByMemberId(memberId.getValue());
+    }
+
+    @Override
+    public List<Church> getAllChurches() {
+        return churchPort.findAllChurches();
+    }
+
+    @Override
+    public List<ChurchMemberRequest> getMyJoinRequests(MemberId memberId) {
+        return churchPort.findJoinRequestsByMemberId(memberId.getValue());
+    }
+
+    @Override
+    public List<Member> getBirthdayMembers(ChurchId churchId, int month) {
+        return churchPort.findBirthdayMembersByChurchIdAndMonth(churchId.getValue(), month);
     }
 
     /* ADMIN */

@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminMemberSearchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.ChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminChurchResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.BirthdayMemberResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.JoinRequestResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminSelectChurchRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
@@ -15,10 +17,13 @@ import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
 import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
+import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
+import mitl.IntoTheHeaven.domain.model.Member;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.ChurchCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.PrayerQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Church;
@@ -46,6 +51,7 @@ import java.util.UUID;
 public class ChurchController {
 
         private final ChurchQueryUseCase churchQueryUseCase;
+        private final ChurchCommandUseCase churchCommandUseCase;
         private final AuthCommandUseCase authCommandUseCase;
         private final GroupQueryUseCase groupQueryUseCase;
         private final PrayerQueryUseCase prayerQueryUseCase;
@@ -88,6 +94,51 @@ public class ChurchController {
                                 .from(prayerRequestCount);
 
                 return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Get Birthday Members", description = "Retrieves members whose birthday falls in the specified month within a church.")
+        @GetMapping("/{churchId}/birthday-members")
+        public ResponseEntity<List<BirthdayMemberResponse>> getBirthdayMembers(
+                        @PathVariable("churchId") UUID churchId,
+                        @RequestParam("month") int month) {
+                List<Member> members = churchQueryUseCase.getBirthdayMembers(
+                                ChurchId.from(churchId), month);
+                List<BirthdayMemberResponse> response = members.stream()
+                                .map(m -> BirthdayMemberResponse.builder()
+                                                .memberId(m.getId().getValue())
+                                                .name(m.getName())
+                                                .birthday(m.getBirthday())
+                                                .sex(m.getSex())
+                                                .build())
+                                .toList();
+                return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Get All Churches", description = "Retrieves a list of all registered churches.")
+        @GetMapping("/all")
+        public ResponseEntity<List<ChurchResponse>> getAllChurches() {
+                List<Church> churches = churchQueryUseCase.getAllChurches();
+                return ResponseEntity.ok(ChurchResponse.from(churches));
+        }
+
+        @Operation(summary = "Create Join Request", description = "Creates a join request to a specific church for the current user.")
+        @PostMapping("/{churchId}/join-request")
+        public ResponseEntity<JoinRequestResponse> createJoinRequest(
+                        @PathVariable("churchId") UUID churchId,
+                        @AuthenticationPrincipal String memberId) {
+                ChurchMemberRequest request = churchCommandUseCase.createJoinRequest(
+                                MemberId.from(UUID.fromString(memberId)),
+                                ChurchId.from(churchId));
+                return ResponseEntity.ok(JoinRequestResponse.from(request));
+        }
+
+        @Operation(summary = "Get My Join Requests", description = "Retrieves the join request status for the current user.")
+        @GetMapping("/join-request/status")
+        public ResponseEntity<List<JoinRequestResponse>> getMyJoinRequests(
+                        @AuthenticationPrincipal String memberId) {
+                List<ChurchMemberRequest> requests = churchQueryUseCase
+                                .getMyJoinRequests(MemberId.from(UUID.fromString(memberId)));
+                return ResponseEntity.ok(JoinRequestResponse.from(requests));
         }
 
         /* ADMIN */

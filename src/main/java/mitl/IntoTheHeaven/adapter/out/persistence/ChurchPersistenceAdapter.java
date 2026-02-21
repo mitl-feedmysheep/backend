@@ -1,24 +1,34 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberRequestJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ChurchJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ChurchMemberJpaRepository;
+import mitl.IntoTheHeaven.adapter.out.persistence.repository.ChurchMemberRequestJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchPersistenceMapper;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberPersistenceMapper;
+import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberRequestPersistenceMapper;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
+import mitl.IntoTheHeaven.domain.enums.RequestStatus;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
+import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
+import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,8 +43,11 @@ public class ChurchPersistenceAdapter implements ChurchPort {
 
         private final ChurchJpaRepository churchJpaRepository;
         private final ChurchMemberJpaRepository churchMemberJpaRepository;
+        private final ChurchMemberRequestJpaRepository churchMemberRequestJpaRepository;
         private final ChurchPersistenceMapper churchPersistenceMapper;
         private final ChurchMemberPersistenceMapper churchMemberPersistenceMapper;
+        private final ChurchMemberRequestPersistenceMapper churchMemberRequestPersistenceMapper;
+        private final MemberPersistenceMapper memberPersistenceMapper;
         private final JPAQueryFactory queryFactory;
 
         @Override
@@ -57,6 +70,70 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                 .stream()
                                 .map(churchMember -> MemberId.from(churchMember.getMember().getId()))
                                 .toList();
+        }
+
+        @Override
+        public List<Member> findBirthdayMembersByChurchIdAndMonth(UUID churchId, int month) {
+                List<MemberJpaEntity> members = queryFactory
+                                .select(memberJpaEntity)
+                                .from(churchMemberJpaEntity)
+                                .join(churchMemberJpaEntity.member, memberJpaEntity)
+                                .where(
+                                                churchMemberJpaEntity.church.id.eq(churchId),
+                                                memberJpaEntity.birthday.isNotNull(),
+                                                Expressions.numberTemplate(Integer.class,
+                                                                "MONTH({0})", memberJpaEntity.birthday).eq(month))
+                                .orderBy(Expressions.numberTemplate(Integer.class,
+                                                "DAY({0})", memberJpaEntity.birthday).asc())
+                                .fetch();
+
+                return members.stream()
+                                .map(memberPersistenceMapper::toDomain)
+                                .toList();
+        }
+
+        @Override
+        public List<Church> findAllChurches() {
+                return churchJpaRepository.findAll()
+                                .stream()
+                                .map(churchPersistenceMapper::toDomain)
+                                .toList();
+        }
+
+        @Override
+        public Optional<ChurchMemberRequest> findPendingJoinRequest(UUID memberId, UUID churchId) {
+                return churchMemberRequestJpaRepository
+                                .findByMemberIdAndChurchIdAndStatus(memberId, churchId, RequestStatus.PENDING)
+                                .map(churchMemberRequestPersistenceMapper::toDomain);
+        }
+
+        @Override
+        public List<ChurchMemberRequest> findJoinRequestsByMemberId(UUID memberId) {
+                return churchMemberRequestJpaRepository.findAllByMemberId(memberId)
+                                .stream()
+                                .map(churchMemberRequestPersistenceMapper::toDomain)
+                                .toList();
+        }
+
+        @Override
+        public ChurchMemberRequest saveJoinRequest(ChurchMemberRequest request) {
+                ChurchMemberRequestJpaEntity entity = ChurchMemberRequestJpaEntity.builder()
+                                .id(request.getId().getValue())
+                                .member(MemberJpaEntity.builder().id(request.getMemberId().getValue()).build())
+                                .church(ChurchJpaEntity.builder().id(request.getChurchId().getValue()).build())
+                                .status(request.getStatus())
+                                .build();
+                ChurchMemberRequestJpaEntity saved = churchMemberRequestJpaRepository.save(entity);
+
+                return ChurchMemberRequest.builder()
+                                .id(request.getId())
+                                .memberId(request.getMemberId())
+                                .churchId(request.getChurchId())
+                                .status(saved.getStatus())
+                                .churchName(request.getChurchName())
+                                .createdAt(saved.getCreatedAt())
+                                .updatedAt(saved.getUpdatedAt())
+                                .build();
         }
 
         @Override
