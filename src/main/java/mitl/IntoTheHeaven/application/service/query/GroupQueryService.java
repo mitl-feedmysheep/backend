@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.application.service.query;
 
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.application.dto.GroupWithLeader;
 import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
@@ -54,5 +55,10 @@ public class GroupQueryService implements GroupQueryUseCase {
     @Override
     public GroupMember getGroupMemberByGroupIdAndMemberId(GroupId groupId, MemberId memberId) {
         return groupPort.findGroupMemberByGroupIdAndMemberId(groupId.getValue(), memberId.getValue());
+    }
+
+    @Override
+    public List<GroupWithLeader> getGroupsWithLeaderByChurchId(ChurchId churchId) {
+        return groupPort.findGroupsWithLeaderByChurchId(churchId.getValue());
     }
 }

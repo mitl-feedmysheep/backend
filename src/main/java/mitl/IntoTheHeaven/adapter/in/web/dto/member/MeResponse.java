@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.member;
 
 import lombok.Builder;
 import lombok.Getter;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
 
@@ -21,6 +22,10 @@ public class MeResponse {
     private final LocalDate birthday;
     private final String phone;
     private final String profileUrl;
+    private final String address;
+    private final String occupation;
+    private final BaptismStatus baptismStatus;
+    private final String mbti;
 
     public static MeResponse from(Member member) {
         return MeResponse.builder()
@@ -31,6 +36,10 @@ public class MeResponse {
                 .birthday(member.getBirthday())
                 .phone(member.getPhone())
                 .profileUrl(member.getProfileUrl())
+                .address(member.getAddress())
+                .occupation(member.getOccupation())
+                .baptismStatus(member.getBaptismStatus())
+                .mbti(member.getMbti())
                 .build();
     }
 

@@ -1,9 +1,12 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.repository.GroupJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GroupMemberJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.MemberJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.GroupPersistenceMapper;
+import mitl.IntoTheHeaven.application.dto.GroupWithLeader;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
@@ -11,6 +14,7 @@ import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -21,6 +25,7 @@ import java.util.UUID;
 public class GroupPersistenceAdapter implements GroupPort {
 
         private final MemberJpaRepository memberJpaRepository;
+        private final GroupJpaRepository groupJpaRepository;
         private final GroupMemberJpaRepository groupMemberJpaRepository;
         private final GroupPersistenceMapper groupPersistenceMapper;
 
@@ -81,5 +86,33 @@ public class GroupPersistenceAdapter implements GroupPort {
 
                 entity = groupMemberJpaRepository.save(entity);
                 return groupPersistenceMapper.toGroupMemberDomain(entity);
+        }
+
+        @Override
+        public List<GroupWithLeader> findGroupsWithLeaderByChurchId(UUID churchId) {
+                int currentYear = LocalDate.now().getYear();
+                LocalDate yearStart = LocalDate.of(currentYear, 1, 1);
+                LocalDate yearEnd = LocalDate.of(currentYear, 12, 31);
+
+                List<GroupJpaEntity> groups = groupJpaRepository
+                                .findAllByChurchIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                                                churchId, yearEnd, yearStart);
+
+                return groups.stream()
+                                .map(group -> {
+                                        String leaderName = group.getGroupMembers().stream()
+                                                        .filter(gm -> gm.getRole() == GroupMemberRole.LEADER)
+                                                        .findFirst()
+                                                        .map(gm -> gm.getMember().getName())
+                                                        .orElse(null);
+
+                                        return GroupWithLeader.builder()
+                                                        .groupId(group.getId())
+                                                        .groupName(group.getName())
+                                                        .leaderName(leaderName)
+                                                        .build();
+                                })
+                                .sorted(Comparator.comparing(GroupWithLeader::getGroupName))
+                                .toList();
         }
 }

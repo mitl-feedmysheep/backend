@@ -27,6 +27,10 @@ public class MemberPersistenceMapper {
                 .phone(entity.getPhone())
                 .profileUrl(entity.getProfileUrl())
                 .address(entity.getAddress())
+                .description(entity.getDescription())
+                .occupation(entity.getOccupation())
+                .baptismStatus(entity.getBaptismStatus())
+                .mbti(entity.getMbti())
                 .isProvisioned(entity.getIsProvisioned())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -48,6 +52,10 @@ public class MemberPersistenceMapper {
                 .phone(domain.getPhone())
                 .profileUrl(domain.getProfileUrl())
                 .address(domain.getAddress())
+                .description(domain.getDescription())
+                .occupation(domain.getOccupation())
+                .baptismStatus(domain.getBaptismStatus())
+                .mbti(domain.getMbti())
                 .isProvisioned(domain.getIsProvisioned())
                 .build();
     }

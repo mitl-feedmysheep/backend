@@ -20,11 +20,21 @@ public class UpdateMyProfileRequest {
     private String name;
 
     @Pattern(regexp = "M|F", message = "Sex must be either M or F")
-    private String sex; // optional
+    private String sex;
 
-    private LocalDate birthday; // optional
+    private LocalDate birthday;
 
-    private String phone; // optional
+    private String phone;
+
+    private String address;
+
+    private String occupation;
+
+    @Pattern(regexp = "BAPTIZED|NOT_BAPTIZED|PAEDOBAPTISM", message = "Invalid baptism status")
+    private String baptismStatus;
+
+    @Pattern(regexp = "[A-Z]{4}", message = "MBTI must be exactly 4 uppercase letters")
+    private String mbti;
 
     public UpdateMyProfileCommand toCommand() {
         return UpdateMyProfileCommand.builder()
@@ -33,6 +43,10 @@ public class UpdateMyProfileRequest {
                 .sex(sex)
                 .birthday(birthday)
                 .phone(phone)
+                .address(address)
+                .occupation(occupation)
+                .baptismStatus(baptismStatus)
+                .mbti(mbti)
                 .build();
     }
 }

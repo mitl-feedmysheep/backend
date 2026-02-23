@@ -18,6 +18,10 @@ public class UpdateMyProfileCommand {
     private String sex; // "M" or "F"
     private LocalDate birthday;
     private String phone;
+    private String address;
+    private String occupation;
+    private String baptismStatus; // "BAPTIZED", "NOT_BAPTIZED", "PAEDOBAPTISM"
+    private String mbti;
 }
 
 

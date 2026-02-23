@@ -10,6 +10,8 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.BirthdayMemberResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.JoinRequestResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupWithLeaderResponse;
+import mitl.IntoTheHeaven.application.dto.GroupWithLeader;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminSelectChurchRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.prayer.PrayerRequestCountByChurchResponse;
@@ -112,6 +114,15 @@ public class ChurchController {
                                                 .build())
                                 .toList();
                 return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Get Groups with Leaders in Church", description = "Retrieves all groups and their leaders in a specific church. The caller must be a member of the church.")
+        @GetMapping("/{churchId}/groups-with-leaders")
+        public ResponseEntity<List<GroupWithLeaderResponse>> getGroupsWithLeaders(
+                        @PathVariable("churchId") UUID churchId,
+                        @AuthenticationPrincipal String memberId) {
+                List<GroupWithLeader> groups = groupQueryUseCase.getGroupsWithLeaderByChurchId(ChurchId.from(churchId));
+                return ResponseEntity.ok(GroupWithLeaderResponse.from(groups));
         }
 
         @Operation(summary = "Get All Churches", description = "Retrieves a list of all registered churches.")

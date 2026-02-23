@@ -5,6 +5,7 @@ import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateMyProfileCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SignUpCommand;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
@@ -25,7 +26,7 @@ public class MemberCommandService implements MemberCommandUseCase {
         @Override
         public Member signUp(SignUpCommand command) {
                 Member member = Member.builder()
-                                .id(MemberId.from(UUID.randomUUID())) // Generate a new UUID for the member
+                                .id(MemberId.from(UUID.randomUUID()))
                                 .name(command.getName())
                                 .email(command.getEmail())
                                 .password(passwordEncoder.encode(command.getPassword()))
@@ -48,21 +49,11 @@ public class MemberCommandService implements MemberCommandUseCase {
                         return false;
                 }
 
-                Member updated = Member.builder()
-                                .id(member.getId())
-                                .name(member.getName())
-                                .email(member.getEmail())
+                Member updated = member.toBuilder()
                                 .password(passwordEncoder.encode(newPassword))
-                                .sex(member.getSex())
-                                .birthday(member.getBirthday())
-                                .phone(member.getPhone())
-                                .profileUrl(member.getProfileUrl())
-                                .address(member.getAddress())
-                                .isProvisioned(member.getIsProvisioned())
                                 .build();
 
                 memberPort.save(updated);
-
                 return true;
         }
 
@@ -71,21 +62,11 @@ public class MemberCommandService implements MemberCommandUseCase {
                 Member member = memberPort.findById(memberId.getValue())
                                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-                Member updated = Member.builder()
-                                .id(member.getId())
-                                .name(member.getName())
+                Member updated = member.toBuilder()
                                 .email(newEmail)
-                                .password(member.getPassword())
-                                .sex(member.getSex())
-                                .birthday(member.getBirthday())
-                                .phone(member.getPhone())
-                                .profileUrl(member.getProfileUrl())
-                                .address(member.getAddress())
-                                .isProvisioned(false)
                                 .build();
 
                 memberPort.save(updated);
-
                 return true;
         }
 
@@ -94,40 +75,27 @@ public class MemberCommandService implements MemberCommandUseCase {
                 Member member = memberPort.findById(command.getId().getValue())
                                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-                Member updated = Member.builder()
-                                .id(member.getId())
-                                .name(command.getName() != null ? command.getName() : member.getName())
-                                .email(member.getEmail())
-                                .password(member.getPassword())
-                                .sex(command.getSex() != null ? Sex.valueOf(command.getSex()) : member.getSex())
-                                .birthday(command.getBirthday() != null ? command.getBirthday() : member.getBirthday())
-                                .phone(command.getPhone() != null ? command.getPhone() : member.getPhone())
-                                .profileUrl(member.getProfileUrl())
-                                .address(member.getAddress())
-                                .isProvisioned(member.getIsProvisioned())
-                                .build();
+                Member.MemberBuilder<?, ?> builder = member.toBuilder();
 
-                return memberPort.save(updated);
+                if (command.getName() != null) builder.name(command.getName());
+                if (command.getSex() != null) builder.sex(Sex.valueOf(command.getSex()));
+                if (command.getBirthday() != null) builder.birthday(command.getBirthday());
+                if (command.getPhone() != null) builder.phone(command.getPhone());
+                if (command.getAddress() != null) builder.address(command.getAddress());
+                if (command.getOccupation() != null) builder.occupation(command.getOccupation());
+                if (command.getBaptismStatus() != null) builder.baptismStatus(BaptismStatus.valueOf(command.getBaptismStatus()));
+                if (command.getMbti() != null) builder.mbti(command.getMbti());
+
+                return memberPort.save(builder.build());
         }
 
         @Override
         public void resetPasswordByEmail(String email, String newPassword) {
-                // Find member by email
                 Member member = memberPort.findByEmail(email)
                                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-                // Update password
-                Member updated = Member.builder()
-                                .id(member.getId())
-                                .name(member.getName())
-                                .email(member.getEmail())
+                Member updated = member.toBuilder()
                                 .password(passwordEncoder.encode(newPassword))
-                                .sex(member.getSex())
-                                .birthday(member.getBirthday())
-                                .phone(member.getPhone())
-                                .profileUrl(member.getProfileUrl())
-                                .address(member.getAddress())
-                                .isProvisioned(member.getIsProvisioned())
                                 .build();
 
                 memberPort.save(updated);
