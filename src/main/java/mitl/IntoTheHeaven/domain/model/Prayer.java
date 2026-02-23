@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.domain.DomainEntity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -22,9 +23,18 @@ public class Prayer extends DomainEntity<Prayer, PrayerId> {
     private final LocalDateTime createdAt;
     private final LocalDateTime deletedAt;
 
+    private final String groupName;
+    private final LocalDate gatheringDate;
+
     public Prayer delete() {
         return this.toBuilder()
                 .deletedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public Prayer markAnswered(boolean answered) {
+        return this.toBuilder()
+                .isAnswered(answered)
                 .build();
     }
 } 

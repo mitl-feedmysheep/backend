@@ -6,11 +6,14 @@ import mitl.IntoTheHeaven.application.port.out.PrayerPort;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
+import mitl.IntoTheHeaven.domain.model.Prayer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,5 +35,10 @@ public class PrayerQueryService implements PrayerQueryUseCase {
         // 2. Get the count of prayer requests for the church
         // This counts only prayers that originated from gatherings within the church
         return prayerPort.findPrayerRequestCountByChurchId(churchId.getValue());
+    }
+
+    @Override
+    public List<Prayer> getMyPrayers(MemberId memberId) {
+        return prayerPort.findAllByMemberId(memberId.getValue());
     }
 }

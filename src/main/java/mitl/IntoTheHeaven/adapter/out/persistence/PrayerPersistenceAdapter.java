@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringMemberJpaEntity;
@@ -16,6 +17,7 @@ import mitl.IntoTheHeaven.domain.model.PrayerId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -68,11 +70,48 @@ public class PrayerPersistenceAdapter implements PrayerPort {
         return toDomain(saved);
     }
 
+    @Override
+    public List<Prayer> findAllByMemberId(UUID memberId) {
+        List<Tuple> results = queryFactory
+                .select(
+                        prayerJpaEntity.id,
+                        prayerJpaEntity.prayerRequest,
+                        prayerJpaEntity.description,
+                        prayerJpaEntity.isAnswered,
+                        prayerJpaEntity.createdAt,
+                        prayerJpaEntity.deletedAt,
+                        gatheringJpaEntity.date,
+                        groupJpaEntity.name
+                )
+                .from(prayerJpaEntity)
+                .leftJoin(prayerJpaEntity.gatheringMember, gatheringMemberJpaEntity)
+                .leftJoin(gatheringMemberJpaEntity.gathering, gatheringJpaEntity)
+                .leftJoin(gatheringJpaEntity.group, groupJpaEntity)
+                .where(prayerJpaEntity.member.id.eq(memberId))
+                .orderBy(prayerJpaEntity.createdAt.desc())
+                .fetch();
+
+        return results.stream()
+                .map(tuple -> (Prayer) Prayer.builder()
+                        .id(PrayerId.from(tuple.get(prayerJpaEntity.id)))
+                        .memberId(MemberId.from(memberId))
+                        .prayerRequest(tuple.get(prayerJpaEntity.prayerRequest))
+                        .description(tuple.get(prayerJpaEntity.description))
+                        .isAnswered(Boolean.TRUE.equals(tuple.get(prayerJpaEntity.isAnswered)))
+                        .createdAt(tuple.get(prayerJpaEntity.createdAt))
+                        .deletedAt(tuple.get(prayerJpaEntity.deletedAt))
+                        .groupName(tuple.get(groupJpaEntity.name))
+                        .gatheringDate(tuple.get(gatheringJpaEntity.date))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     private Prayer toDomain(PrayerJpaEntity prayerJpaEntity) {
         return Prayer.builder()
                 .id(PrayerId.from(prayerJpaEntity.getId()))
                 .memberId(MemberId.from(prayerJpaEntity.getMember().getId()))
-                .gatheringMemberId(GatheringMemberId.from(prayerJpaEntity.getGatheringMember().getId()))
+                .gatheringMemberId(prayerJpaEntity.getGatheringMember() != null
+                        ? GatheringMemberId.from(prayerJpaEntity.getGatheringMember().getId()) : null)
                 .prayerRequest(prayerJpaEntity.getPrayerRequest())
                 .description(prayerJpaEntity.getDescription())
                 .isAnswered(prayerJpaEntity.isAnswered())

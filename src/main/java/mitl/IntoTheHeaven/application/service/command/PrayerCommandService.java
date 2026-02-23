@@ -22,6 +22,14 @@ public class PrayerCommandService implements PrayerCommandUseCase {
         Prayer deleted = prayer.delete();
         prayerPort.save(deleted);
     }
+
+    @Override
+    public void updateAnswered(PrayerId prayerId, boolean isAnswered) {
+        Prayer prayer = prayerPort.findById(prayerId.getValue())
+                .orElseThrow(() -> new RuntimeException("Prayer not found"));
+        Prayer updated = prayer.markAnswered(isAnswered);
+        prayerPort.save(updated);
+    }
 }
 
 
