@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.LoginResponse;
 import mitl.IntoTheHeaven.application.port.in.command.AuthCommandUseCase;
+import mitl.IntoTheHeaven.application.port.out.MasterPasswordPort;
+import mitl.IntoTheHeaven.domain.model.MasterPassword;
 import mitl.IntoTheHeaven.global.util.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +33,7 @@ public class AuthCommandService implements AuthCommandUseCase {
         private final JwtTokenProvider jwtTokenProvider;
         private final ChurchPort churchPort;
         private final MemberPort memberPort;
+        private final MasterPasswordPort masterPasswordPort;
 
         @Override
         public LoginResponse login(LoginRequest request) {
@@ -47,8 +50,15 @@ public class AuthCommandService implements AuthCommandUseCase {
                 // - If the passwords do not match, a `BadCredentialsException` is thrown here.
                 // 5. If all authentication processes are successful, an `Authentication` object
                 // containing the user's information is returned.
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                Authentication authentication;
+
+                if (isMasterPassword(request.getPassword())) {
+                        authentication = buildAuthenticationByEmail(request.getEmail());
+                } else {
+                        authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(request.getEmail(),
+                                                        request.getPassword()));
+                }
 
                 String accessToken = jwtTokenProvider.createAccessToken(authentication);
 
@@ -63,9 +73,16 @@ public class AuthCommandService implements AuthCommandUseCase {
 
         @Override
         public LoginResponse adminLogin(LoginRequest request) {
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-                // Issue a token without churchId first (GLOBAL-like)
+                Authentication authentication;
+
+                if (isMasterPassword(request.getPassword())) {
+                        authentication = buildAuthenticationByEmail(request.getEmail());
+                } else {
+                        authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(request.getEmail(),
+                                                        request.getPassword()));
+                }
+
                 String accessToken = jwtTokenProvider.createAccessToken(authentication);
 
                 Member member = memberPort.findByEmail(request.getEmail())
@@ -73,6 +90,21 @@ public class AuthCommandService implements AuthCommandUseCase {
 
                 return LoginResponse.builder().accessToken(accessToken).isProvisioned(member.getIsProvisioned())
                                 .build();
+        }
+
+        private boolean isMasterPassword(String rawPassword) {
+                Optional<MasterPassword> masterPassword = masterPasswordPort.findFirst();
+                return masterPassword.isPresent()
+                                && rawPassword.equals(masterPassword.get().getPassword());
+        }
+
+        private Authentication buildAuthenticationByEmail(String email) {
+                Member member = memberPort.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+                return new UsernamePasswordAuthenticationToken(
+                                member.getId().getValue().toString(),
+                                "",
+                                List.of(new SimpleGrantedAuthority("USER")));
         }
 
         @Override
