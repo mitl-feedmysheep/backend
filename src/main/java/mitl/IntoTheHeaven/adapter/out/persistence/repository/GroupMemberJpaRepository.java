@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.repository;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,6 +14,9 @@ public interface GroupMemberJpaRepository extends JpaRepository<GroupMemberJpaEn
 
     @EntityGraph(attributePaths = {"member"})
     List<GroupMemberJpaEntity> findByGroupId(UUID groupId);
+
+    @EntityGraph(attributePaths = {"member"})
+    List<GroupMemberJpaEntity> findByGroupIdAndStatus(UUID groupId, GroupMemberStatus status);
 
     Optional<GroupMemberJpaEntity> findByGroup_IdAndMember_Id(UUID groupId, UUID groupMemberId);
 

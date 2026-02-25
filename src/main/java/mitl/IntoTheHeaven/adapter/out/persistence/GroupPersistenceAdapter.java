@@ -11,6 +11,7 @@ import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,7 @@ public class GroupPersistenceAdapter implements GroupPort {
         public List<Group> findGroupsByMemberId(UUID memberId) {
                 return memberJpaRepository.findWithGroupsById(memberId)
                                 .map(member -> member.getGroupMembers().stream()
+                                                .filter(gm -> gm.getStatus() == GroupMemberStatus.ACTIVE)
                                                 .map(groupMember -> groupPersistenceMapper
                                                                 .toDomain(groupMember.getGroup()))
                                                 .toList())
@@ -43,6 +45,7 @@ public class GroupPersistenceAdapter implements GroupPort {
         public List<Group> findGroupsByMemberIdAndChurchId(UUID memberId, UUID churchId) {
                 return memberJpaRepository.findWithGroupsAndChurchesById(memberId)
                                 .map(member -> member.getGroupMembers().stream()
+                                                .filter(gm -> gm.getStatus() == GroupMemberStatus.ACTIVE)
                                                 .filter(groupMember -> groupMember.getGroup().getChurch().getId()
                                                                 .equals(churchId))
                                                 .map(groupMember -> groupPersistenceMapper
@@ -55,6 +58,13 @@ public class GroupPersistenceAdapter implements GroupPort {
 
         @Override
         public List<GroupMember> findGroupMembersByGroupId(UUID groupId) {
+                return groupMemberJpaRepository.findByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE).stream()
+                                .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
+                                .toList();
+        }
+
+        @Override
+        public List<GroupMember> findAllGroupMembersByGroupId(UUID groupId) {
                 return groupMemberJpaRepository.findByGroupId(groupId).stream()
                                 .map(entity -> groupPersistenceMapper.toGroupMemberDomain(entity, groupId))
                                 .toList();
@@ -101,6 +111,7 @@ public class GroupPersistenceAdapter implements GroupPort {
                 return groups.stream()
                                 .map(group -> {
                                         String leaderName = group.getGroupMembers().stream()
+                                                        .filter(gm -> gm.getStatus() == GroupMemberStatus.ACTIVE)
                                                         .filter(gm -> gm.getRole() == GroupMemberRole.LEADER)
                                                         .findFirst()
                                                         .map(gm -> gm.getMember().getName())

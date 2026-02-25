@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -4900.5758,
-    "scrollLeft": -3972.8814,
+    "scrollTop": -5672.5758,
+    "scrollLeft": -4152.8814,
     "zoomLevel": 0.73,
     "show": 431,
     "database": 4,
@@ -261,6 +261,7 @@
           "tal8IAUY8N30hD2en_uxd",
           "jSetm-ou68Gnw4c9J9uJq",
           "ZLlf0tQ0dwfG6aD-JDuKc",
+          "gm_status_col_2026Feb25",
           "raxtfGHvzbDxSCgKaRL2k",
           "8-hiZ5_gG4Fc5d_KRnV_Q",
           "ZmVaV787_IhJ2SxN7FN1s"
@@ -272,6 +273,7 @@
           "tal8IAUY8N30hD2en_uxd",
           "jSetm-ou68Gnw4c9J9uJq",
           "ZLlf0tQ0dwfG6aD-JDuKc",
+          "gm_status_col_2026Feb25",
           "raxtfGHvzbDxSCgKaRL2k",
           "Th2X0j3tBIeF-9QjTWZez",
           "8-hiZ5_gG4Fc5d_KRnV_Q",
@@ -2895,6 +2897,26 @@
           "createAt": 1750816143460
         }
       },
+      "gm_status_col_2026Feb25": {
+        "id": "gm_status_col_2026Feb25",
+        "tableId": "4vBp6rlXF2dvuWszklmHe",
+        "name": "status",
+        "comment": "상태 (ACTIVE, GRADUATED)",
+        "dataType": "VARCHAR(20)",
+        "default": "ACTIVE",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 157,
+          "widthDataType": 83,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1740470400000,
+          "createAt": 1740470400000
+        }
+      },
       "cPmPM_Hy7_lNE0O74-hVd": {
         "id": "cPmPM_Hy7_lNE0O74-hVd",
         "tableId": "ym3QPcrDvBYAXT_T2Z6bX",
@@ -5033,7 +5055,7 @@
             "tal8IAUY8N30hD2en_uxd"
           ],
           "x": 2412.1826,
-          "y": 4488.1289,
+          "y": 4494.1289,
           "direction": 1
         },
         "meta": {
@@ -5060,8 +5082,8 @@
           "columnIds": [
             "jSetm-ou68Gnw4c9J9uJq"
           ],
-          "x": 2976.1826,
-          "y": 4544.1289,
+          "x": 2994.1826,
+          "y": 4556.1289,
           "direction": 2
         },
         "meta": {
@@ -5136,7 +5158,7 @@
             "bOyQ-g7uXDVIiIX5uLxjj"
           ],
           "x": 2412.1826,
-          "y": 4600.1289,
+          "y": 4618.1289,
           "direction": 1
         },
         "end": {

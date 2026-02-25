@@ -37,6 +37,7 @@ public class GatheringPersistenceMapper {
                                 .leaderComment(entity.getLeaderComment())
                                 .adminComment(entity.getAdminComment())
                                 .gatheringMembers(entity.getGatheringMembers().stream()
+                                                .filter(gm -> gm.getGroupMember() != null)
                                                 .map(this::toDomain)
                                                 .collect(Collectors.toList()))
                                 .medias(mediaPersistenceMapper.toDomainList(entity.getMedias()))
@@ -46,7 +47,7 @@ public class GatheringPersistenceMapper {
         private GatheringMember toDomain(GatheringMemberJpaEntity entity) {
                 return GatheringMember.builder()
                                 .id(GatheringMemberId.from(entity.getId()))
-                                .gatheringId(GatheringId.from(entity.getGathering().getId())) // 단방향 참조: ID만 사용
+                                .gatheringId(GatheringId.from(entity.getGathering().getId()))
                                 .groupMember(memberPersistenceMapper.toGroupMemberDomain(entity.getGroupMember()))
                                 .worshipAttendance(entity.isWorshipAttendance())
                                 .gatheringAttendance(entity.isGatheringAttendance())

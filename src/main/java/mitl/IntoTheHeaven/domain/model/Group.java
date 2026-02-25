@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.domain.model;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.domain.enums.GroupType;
 import mitl.IntoTheHeaven.domain.enums.MediaType;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
@@ -18,6 +19,7 @@ public class Group extends AggregateRoot<Group, GroupId> {
     private final String name;
     private final String description;
     private final ChurchId churchId;
+    private final GroupType type;
     private final LocalDate startDate;
     private final LocalDate endDate;
 

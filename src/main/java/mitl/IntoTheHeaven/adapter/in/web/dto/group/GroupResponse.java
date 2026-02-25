@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.group;
 
 import lombok.Builder;
 import lombok.Getter;
+import mitl.IntoTheHeaven.domain.enums.GroupType;
 import mitl.IntoTheHeaven.domain.model.Group;
 
 import java.time.LocalDate;
@@ -15,18 +16,20 @@ public class GroupResponse {
     private final String name;
     private final String description;
     private final UUID churchId;
+    private final GroupType type;
     private final LocalDate startDate;
     private final LocalDate endDate;
-    private final Integer groupMemberCount; // renamed
+    private final Integer groupMemberCount;
     private final String imageUrl;
 
     @Builder
-    public GroupResponse(UUID id, String name, String description, UUID churchId, LocalDate startDate,
-            LocalDate endDate, Integer groupMemberCount, String imageUrl) {
+    public GroupResponse(UUID id, String name, String description, UUID churchId, GroupType type,
+            LocalDate startDate, LocalDate endDate, Integer groupMemberCount, String imageUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.churchId = churchId;
+        this.type = type;
         this.startDate = startDate;
         this.endDate = endDate;
         this.groupMemberCount = groupMemberCount;
@@ -39,6 +42,7 @@ public class GroupResponse {
                 .name(group.getName())
                 .description(group.getDescription())
                 .churchId(group.getChurchId().getValue())
+                .type(group.getType())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
                 .imageUrl(group.getMainImageUrl().orElse(null))
@@ -51,6 +55,7 @@ public class GroupResponse {
                 .name(group.getName())
                 .description(group.getDescription())
                 .churchId(group.getChurchId().getValue())
+                .type(group.getType())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
                 .groupMemberCount(groupMemberCount)

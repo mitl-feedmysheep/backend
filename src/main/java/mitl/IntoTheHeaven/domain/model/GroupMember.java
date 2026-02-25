@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.domain.model;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.global.domain.DomainEntity;
 
 @Getter
@@ -10,6 +11,7 @@ import mitl.IntoTheHeaven.global.domain.DomainEntity;
 public class GroupMember extends DomainEntity<GroupMember, GroupMemberId> {
 
     private final GroupId groupId;
-    private final Member member;  // MemberId 대신 Member 전체 정보
+    private final Member member;
     private final GroupMemberRole role;
+    private final GroupMemberStatus status;
 } 
