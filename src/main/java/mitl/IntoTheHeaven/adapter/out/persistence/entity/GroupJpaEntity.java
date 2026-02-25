@@ -3,6 +3,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import mitl.IntoTheHeaven.domain.enums.GroupType;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
@@ -21,16 +22,24 @@ import java.util.List;
 public class GroupJpaEntity extends BaseEntity {
 
     /**
-     * 그룹 이름
+     * Group name
      */
     @Column(nullable = false, length = 50)
     private String name;
 
     /**
-     * 설명
+     * Description
      */
     @Column(length = 100)
     private String description;
+
+    /**
+     * Group type (NORMAL, NEWCOMER, PRAISE_TEAM)
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private GroupType type = GroupType.NORMAL;
 
     /**
      * 교회

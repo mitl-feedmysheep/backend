@@ -27,6 +27,7 @@ public class GroupPersistenceMapper {
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .churchId(ChurchId.from(entity.getChurch().getId()))
+                .type(entity.getType())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .medias(mediaPersistenceMapper.toDomainList(entity.getMedias()))
@@ -39,6 +40,7 @@ public class GroupPersistenceMapper {
                 .name(domain.getName())
                 .description(domain.getDescription())
                 .church(ChurchJpaEntity.builder().id(domain.getChurchId().getValue()).build())
+                .type(domain.getType())
                 .startDate(domain.getStartDate())
                 .endDate(domain.getEndDate())
                 .build();
