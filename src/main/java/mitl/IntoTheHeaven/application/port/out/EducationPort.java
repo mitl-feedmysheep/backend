@@ -25,7 +25,7 @@ public interface EducationPort {
 
     List<EducationProgress> findProgressByGatheringId(UUID gatheringId);
 
-    void softDeleteGroupMember(UUID groupMemberId);
+    void graduateGroupMember(UUID groupMemberId);
 
     void addGroupMember(UUID groupId, UUID memberId);
 }

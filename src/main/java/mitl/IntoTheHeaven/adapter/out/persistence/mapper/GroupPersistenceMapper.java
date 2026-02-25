@@ -52,6 +52,7 @@ public class GroupPersistenceMapper {
                 .groupId(GroupId.from(entity.getGroup().getId()))
                 .member(memberPersistenceMapper.toDomain(entity.getMember()))
                 .role(entity.getRole())
+                .status(entity.getStatus())
                 .build();
     }
 
@@ -61,6 +62,7 @@ public class GroupPersistenceMapper {
                 .groupId(GroupId.from(groupId))
                 .member(memberPersistenceMapper.toDomain(entity.getMember()))
                 .role(entity.getRole())
+                .status(entity.getStatus())
                 .build();
     }
 }

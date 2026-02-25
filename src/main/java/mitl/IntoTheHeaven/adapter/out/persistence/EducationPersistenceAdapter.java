@@ -13,11 +13,11 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.EducationProgressJp
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GroupMemberJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.EducationPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.domain.model.EducationProgram;
 import mitl.IntoTheHeaven.domain.model.EducationProgress;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -92,10 +92,10 @@ public class EducationPersistenceAdapter implements EducationPort {
     }
 
     @Override
-    public void softDeleteGroupMember(UUID groupMemberId) {
+    public void graduateGroupMember(UUID groupMemberId) {
         queryFactory
                 .update(groupMemberJpaEntity)
-                .set(groupMemberJpaEntity.deletedAt, LocalDateTime.now())
+                .set(groupMemberJpaEntity.status, GroupMemberStatus.GRADUATED)
                 .where(groupMemberJpaEntity.id.eq(groupMemberId))
                 .execute();
     }
@@ -107,6 +107,7 @@ public class EducationPersistenceAdapter implements EducationPort {
                 .group(GroupJpaEntity.builder().id(groupId).build())
                 .member(MemberJpaEntity.builder().id(memberId).build())
                 .role(GroupMemberRole.MEMBER)
+                .status(GroupMemberStatus.ACTIVE)
                 .build();
         groupMemberRepository.save(newMember);
     }

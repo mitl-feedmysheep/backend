@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -45,6 +46,15 @@ public class GroupMemberJpaEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private GroupMemberRole role;
+
+    /**
+     * Member status (ACTIVE, GRADUATED)
+     */
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private GroupMemberStatus status = GroupMemberStatus.ACTIVE;
 
     @OneToMany(mappedBy = "groupMember", cascade = CascadeType.ALL)
     @Builder.Default

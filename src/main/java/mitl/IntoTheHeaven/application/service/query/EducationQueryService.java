@@ -31,7 +31,7 @@ public class EducationQueryService implements EducationQueryUseCase {
                 .orElseThrow(() -> new RuntimeException(
                         "Education program not found for group: " + groupId.getValue()));
 
-        List<GroupMember> groupMembers = groupPort.findGroupMembersByGroupId(groupId.getValue());
+        List<GroupMember> groupMembers = groupPort.findAllGroupMembersByGroupId(groupId.getValue());
 
         List<UUID> groupMemberIds = groupMembers.stream()
                 .map(gm -> gm.getId().getValue())

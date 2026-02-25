@@ -46,7 +46,7 @@ public class EducationController {
     @Operation(summary = "Create Education Program", description = "Creates an education program for a group.")
     @PostMapping("/groups/{groupId}/education-program")
     public ResponseEntity<EducationProgramResponse> createProgram(
-            @PathVariable UUID groupId,
+            @PathVariable("groupId") UUID groupId,
             @RequestBody @Valid CreateEducationProgramRequest request) {
         CreateEducationProgramCommand command = new CreateEducationProgramCommand(
                 GroupId.from(groupId),
@@ -61,7 +61,7 @@ public class EducationController {
 
     @Operation(summary = "Get Education Program", description = "Retrieves the education program with all members' progress for a group.")
     @GetMapping("/groups/{groupId}/education-program")
-    public ResponseEntity<EducationProgramResponse> getProgram(@PathVariable UUID groupId) {
+    public ResponseEntity<EducationProgramResponse> getProgram(@PathVariable("groupId") UUID groupId) {
         EducationProgramWithProgress data = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
         return ResponseEntity.ok(EducationProgramResponse.from(data));
     }
@@ -69,7 +69,7 @@ public class EducationController {
     @Operation(summary = "Update Education Program", description = "Updates the education program configuration.")
     @PutMapping("/groups/{groupId}/education-program")
     public ResponseEntity<EducationProgramResponse> updateProgram(
-            @PathVariable UUID groupId,
+            @PathVariable("groupId") UUID groupId,
             @RequestBody @Valid UpdateEducationProgramRequest request) {
         EducationProgramWithProgress existing = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
         UpdateEducationProgramCommand command = new UpdateEducationProgramCommand(
@@ -86,7 +86,7 @@ public class EducationController {
     @Operation(summary = "Record Education Progress", description = "Records a completed education week for a member in a gathering.")
     @PostMapping("/gatherings/{gatheringId}/education-progress")
     public ResponseEntity<EducationProgressResponse> recordProgress(
-            @PathVariable UUID gatheringId,
+            @PathVariable("gatheringId") UUID gatheringId,
             @RequestBody @Valid RecordEducationProgressRequest request) {
         RecordEducationProgressCommand command = new RecordEducationProgressCommand(
                 GatheringId.from(gatheringId),
@@ -99,8 +99,8 @@ public class EducationController {
     @Operation(summary = "Remove Education Progress", description = "Removes a completed education week record (hard delete).")
     @DeleteMapping("/gatherings/{gatheringId}/education-progress/{progressId}")
     public ResponseEntity<Void> removeProgress(
-            @PathVariable UUID gatheringId,
-            @PathVariable UUID progressId) {
+            @PathVariable("gatheringId") UUID gatheringId,
+            @PathVariable("progressId") UUID progressId) {
         educationCommandUseCase.removeProgress(EducationProgressId.from(progressId));
         return ResponseEntity.noContent().build();
     }
@@ -108,7 +108,7 @@ public class EducationController {
     @Operation(summary = "Get Education Progress by Gathering", description = "Retrieves all education progress records for a specific gathering.")
     @GetMapping("/gatherings/{gatheringId}/education-progress")
     public ResponseEntity<List<EducationProgressResponse>> getProgressByGathering(
-            @PathVariable UUID gatheringId) {
+            @PathVariable("gatheringId") UUID gatheringId) {
         List<EducationProgress> progressList = educationQueryUseCase.getProgressByGathering(
                 GatheringId.from(gatheringId));
         return ResponseEntity.ok(EducationProgressResponse.from(progressList));
@@ -117,7 +117,7 @@ public class EducationController {
     @Operation(summary = "Graduate Member", description = "Graduates a member from the newcomer group to a target group. Increments graduated count and transfers the member.")
     @PostMapping("/groups/{groupId}/graduate")
     public ResponseEntity<Void> graduateMember(
-            @PathVariable UUID groupId,
+            @PathVariable("groupId") UUID groupId,
             @RequestBody @Valid GraduateMemberRequest request) {
         GraduateMemberCommand command = new GraduateMemberCommand(
                 GroupId.from(groupId),

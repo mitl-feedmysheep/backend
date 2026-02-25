@@ -12,6 +12,7 @@ public interface GroupPort {
     List<Group> findGroupsByMemberId(UUID memberId);
     List<Group> findGroupsByMemberIdAndChurchId(UUID memberId, UUID churchId);
     List<GroupMember> findGroupMembersByGroupId(UUID groupId);
+    List<GroupMember> findAllGroupMembersByGroupId(UUID groupId);
     GroupMember findGroupMemberByGroupIdAndMemberId(UUID groupId, UUID groupMemberId);
     GroupMember findGroupMemberByGroupMemberId(UUID groupMemberId);
     GroupMember updateGroupMemberRole(UUID groupMemberId, GroupMemberRole newRole);

@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
@@ -31,10 +33,11 @@ public class GatheringMemberJpaEntity extends BaseEntity {
     private GatheringJpaEntity gathering;
 
     /**
-     * 그룹 멤버
+     * 그룹 멤버 (soft-deleted group_member may be null due to @NotFound)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_member_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private GroupMemberJpaEntity groupMember;
 
     /**

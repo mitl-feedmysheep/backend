@@ -9,6 +9,7 @@ import mitl.IntoTheHeaven.domain.model.GatheringMember;
 import mitl.IntoTheHeaven.domain.model.Prayer;
 import java.util.UUID;
 import java.time.LocalDate;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 
 @Data
 @Builder
@@ -19,6 +20,7 @@ public class GatheringMemberResponse {
     private UUID memberId;
     private String name;
     private LocalDate birthday;
+    private GroupMemberRole role;
     private boolean worshipAttendance;
     private boolean gatheringAttendance;
     private String goal;
@@ -32,6 +34,7 @@ public class GatheringMemberResponse {
                 .memberId(gatheringMember.getGroupMember().getMember().getId().getValue())
                 .name(gatheringMember.getGroupMember().getMember().getName())
                 .birthday(gatheringMember.getGroupMember().getMember().getBirthday())
+                .role(gatheringMember.getGroupMember().getRole())
                 .worshipAttendance(gatheringMember.isWorshipAttendance())
                 .gatheringAttendance(gatheringMember.isGatheringAttendance())
                 .goal(gatheringMember.getGoal())

@@ -96,7 +96,7 @@ public class EducationCommandService implements EducationCommandUseCase {
 
         educationPort.incrementGraduatedCount(program.getId().getValue());
 
-        educationPort.softDeleteGroupMember(command.getGroupMemberId().getValue());
+        educationPort.graduateGroupMember(command.getGroupMemberId().getValue());
 
         educationPort.addGroupMember(command.getTargetGroupId().getValue(), memberId);
     }
