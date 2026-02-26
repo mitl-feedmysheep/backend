@@ -87,7 +87,12 @@ public class PrayerPersistenceAdapter implements PrayerPort {
                 .leftJoin(prayerJpaEntity.gatheringMember, gatheringMemberJpaEntity)
                 .leftJoin(gatheringMemberJpaEntity.gathering, gatheringJpaEntity)
                 .leftJoin(gatheringJpaEntity.group, groupJpaEntity)
-                .where(prayerJpaEntity.member.id.eq(memberId))
+                // Exclude prayers created during visits (visit_member_id is not null)
+                // so that only personal and gathering prayers are shown in "My Prayers" tab
+                .where(
+                        prayerJpaEntity.member.id.eq(memberId)
+                                .and(prayerJpaEntity.visitMember.isNull())
+                )
                 .orderBy(prayerJpaEntity.createdAt.desc())
                 .fetch();
 

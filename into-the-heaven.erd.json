@@ -2921,7 +2921,7 @@
         "id": "cPmPM_Hy7_lNE0O74-hVd",
         "tableId": "ym3QPcrDvBYAXT_T2Z6bX",
         "name": "role",
-        "comment": "권한 (MEMBER, LEADER)",
+        "comment": "권한 (MEMBER, LEADER, ADMIN, SUPER_ADMIN)",
         "dataType": "VARCHAR(20)",
         "default": "",
         "options": 8,
