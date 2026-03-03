@@ -16,7 +16,8 @@ public class Event extends AggregateRoot<Event, EventId> {
     private final EntityType entityType;
     private final String title;
     private final String description;
-    private final LocalDate date;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
     private final LocalTime startTime;
     private final LocalTime endTime;
     private final String location;

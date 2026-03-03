@@ -20,12 +20,12 @@ public class EventPersistenceAdapter implements EventPort {
 
     @Override
     public List<Event> findByEntityIdAndMonth(String entityId, EntityType entityType, int year, int month) {
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        LocalDate monthStart = LocalDate.of(year, month, 1);
+        LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
 
         return eventJpaRepository
-                .findAllByEntityIdAndEntityTypeAndDateBetweenOrderByDateAscStartTimeAsc(
-                        entityId, entityType, startDate, endDate)
+                .findAllByEntityIdAndEntityTypeAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscStartTimeAsc(
+                        entityId, entityType, monthEnd, monthStart)
                 .stream()
                 .map(eventPersistenceMapper::toDomain)
                 .toList();

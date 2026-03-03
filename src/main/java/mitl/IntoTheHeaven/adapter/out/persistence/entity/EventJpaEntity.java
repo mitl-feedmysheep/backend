@@ -34,8 +34,11 @@ public class EventJpaEntity extends BaseEntity {
     @Column(length = 500)
     private String description;
 
-    @Column(nullable = false)
-    private LocalDate date;
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
 
     /** Stored as String to bypass Hibernate timezone conversion on TIME columns */
     @Column(name = "start_time", columnDefinition = "TIME")

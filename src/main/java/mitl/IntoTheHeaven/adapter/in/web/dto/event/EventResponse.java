@@ -19,7 +19,8 @@ public class EventResponse {
     private final UUID id;
     private final String title;
     private final String description;
-    private final LocalDate date;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
     private final String startTime;
     private final String endTime;
     private final String location;
@@ -29,7 +30,8 @@ public class EventResponse {
                 .id(event.getId().getValue())
                 .title(event.getTitle())
                 .description(event.getDescription())
-                .date(event.getDate())
+                .startDate(event.getStartDate())
+                .endDate(event.getEndDate())
                 .startTime(formatTime(event.getStartTime()))
                 .endTime(formatTime(event.getEndTime()))
                 .location(event.getLocation())
