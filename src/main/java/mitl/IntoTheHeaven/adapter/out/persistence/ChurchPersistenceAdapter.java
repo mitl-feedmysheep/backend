@@ -15,6 +15,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberPersistence
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberRequestPersistenceMapper;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.RequestStatus;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
@@ -134,6 +135,22 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                 .createdAt(saved.getCreatedAt())
                                 .updatedAt(saved.getUpdatedAt())
                                 .build();
+        }
+
+        @Override
+        public List<GroupMemberRole> findGroupMemberRolesByMemberIdAndChurchId(UUID memberId, UUID churchId) {
+                int currentYear = LocalDate.now().getYear();
+
+                return queryFactory
+                                .select(groupMemberJpaEntity.role)
+                                .from(groupMemberJpaEntity)
+                                .join(groupMemberJpaEntity.group, groupJpaEntity)
+                                .where(
+                                                groupMemberJpaEntity.member.id.eq(memberId),
+                                                groupJpaEntity.church.id.eq(churchId),
+                                                groupJpaEntity.endDate.isNotNull(),
+                                                groupJpaEntity.endDate.year().eq(currentYear))
+                                .fetch();
         }
 
         @Override

@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum MessageType {
-    BIRTHDAY("BIRTHDAY"),
-    NORMAL("NORMAL");
+public enum NotificationType {
+    ADMIN_COMMENT("ADMIN_COMMENT");
 
     private final String value;
 }

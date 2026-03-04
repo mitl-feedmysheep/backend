@@ -10,6 +10,6 @@ import java.util.UUID;
 
 public interface EventJpaRepository extends JpaRepository<EventJpaEntity, UUID> {
 
-    List<EventJpaEntity> findAllByEntityIdAndEntityTypeAndDateBetweenOrderByDateAscStartTimeAsc(
-            String entityId, EntityType entityType, LocalDate startDate, LocalDate endDate);
+    List<EventJpaEntity> findAllByEntityIdAndEntityTypeAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscStartTimeAsc(
+            String entityId, EntityType entityType, LocalDate endDate, LocalDate startDate);
 }

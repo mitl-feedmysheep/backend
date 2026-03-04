@@ -7,6 +7,10 @@ import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberC
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
+import mitl.IntoTheHeaven.application.port.out.NotificationPort;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
+import mitl.IntoTheHeaven.domain.enums.NotificationType;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +29,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
     private final GatheringPort gatheringPort;
     private final MemberPort memberPort;
+    private final NotificationPort notificationPort;
 
     @Override
     public Gathering createGathering(CreateGatheringCommand command) {
@@ -154,6 +159,45 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 .build();
 
         Gathering saved = gatheringPort.save(updated);
+
+        // Send notification to LEADER(s) when adminComment is changed
+        boolean adminCommentChanged = command.getAdminComment() != null
+                && !command.getAdminComment().isBlank()
+                && !command.getAdminComment().equals(existingGathering.getAdminComment());
+
+        if (adminCommentChanged) {
+            UUID groupId = existingGathering.getGroup().getId().getValue();
+            String gatheringId = command.getGatheringId().getValue().toString();
+
+            List<GroupMember> groupMembers = memberPort.findGroupMembersByGroupId(groupId);
+
+            groupMembers.stream()
+                    .filter(gm -> gm.getRole() == GroupMemberRole.LEADER && gm.getStatus() == GroupMemberStatus.ACTIVE)
+                    .forEach(leader -> {
+                        UUID receiverId = leader.getMember().getId().getValue();
+                        boolean alreadyExists = notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                                receiverId,
+                                NotificationType.ADMIN_COMMENT.getValue(),
+                                "GATHERING",
+                                gatheringId);
+
+                        if (!alreadyExists) {
+                            String targetUrl = "/groups/" + groupId + "/gathering/" + gatheringId;
+                            Notification notification = Notification.builder()
+                                    .id(NotificationId.from(UUID.randomUUID()))
+                                    .receiverId(MemberId.from(receiverId))
+                                    .senderId(null)
+                                    .type(NotificationType.ADMIN_COMMENT)
+                                    .entityType("GATHERING")
+                                    .entityId(gatheringId)
+                                    .targetUrl(targetUrl)
+                                    .isRead(false)
+                                    .build();
+                            notificationPort.save(notification);
+                        }
+                    });
+        }
+
         return saved;
     }
 } 

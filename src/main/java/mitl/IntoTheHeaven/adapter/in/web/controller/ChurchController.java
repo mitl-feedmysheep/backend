@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminMemberSearchResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.MemberSearchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.ChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.BirthdayMemberResponse;
@@ -150,6 +151,22 @@ public class ChurchController {
                 List<ChurchMemberRequest> requests = churchQueryUseCase
                                 .getMyJoinRequests(MemberId.from(UUID.fromString(memberId)));
                 return ResponseEntity.ok(JoinRequestResponse.from(requests));
+        }
+
+        @Operation(summary = "Search Members (Registry)", description = "Search members in a church by name. Sensitive info (phone, address) only visible for leaders.")
+        @GetMapping("/{churchId}/members/search")
+        public ResponseEntity<List<MemberSearchResponse>> searchMembersInChurch(
+                        @PathVariable("churchId") UUID churchId,
+                        @RequestParam("searchText") String searchText,
+                        @AuthenticationPrincipal String memberId) {
+                MemberId requesterId = MemberId.from(UUID.fromString(memberId));
+                ChurchId cId = ChurchId.from(churchId);
+
+                boolean isLeader = churchQueryUseCase.hasElevatedSearchAccess(requesterId, cId);
+
+                List<MemberWithGroups> members = churchQueryUseCase.searchChurchMembers(cId, searchText);
+                List<MemberSearchResponse> response = MemberSearchResponse.from(members, isLeader);
+                return ResponseEntity.ok(response);
         }
 
         /* ADMIN */
