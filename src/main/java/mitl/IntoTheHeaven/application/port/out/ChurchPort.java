@@ -10,6 +10,8 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
 import mitl.IntoTheHeaven.domain.model.Member;
 
+import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +32,8 @@ public interface ChurchPort {
     List<ChurchMemberRequest> findJoinRequestsByMemberId(UUID memberId);
 
     ChurchMemberRequest saveJoinRequest(ChurchMemberRequest request);
+
+    List<GroupMemberRole> findGroupMemberRolesByMemberIdAndChurchId(UUID memberId, UUID churchId);
 
     /* ADMIN */
     List<ChurchMember> findChurchMembersByMemberId(MemberId memberId);

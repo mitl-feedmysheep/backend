@@ -19,6 +19,8 @@ public interface ChurchQueryUseCase {
 
     List<Member> getBirthdayMembers(ChurchId churchId, int month);
 
+    boolean hasElevatedSearchAccess(MemberId memberId, ChurchId churchId);
+
     /* ADMIN */
     List<Church> getAdminChurches(MemberId memberId);
 
