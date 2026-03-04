@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
+import mitl.IntoTheHeaven.domain.enums.BaptismStatus;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.Sex;
 
@@ -26,6 +27,11 @@ public class MemberSearchResponse {
     // 민감 필드 - 리더 이상에게만 제공, 그 외 null
     private final String phone;
     private final String address;
+
+    private final String occupation;
+    private final BaptismStatus baptismStatus;
+    private final String mbti;
+    private final String description;
 
     @Getter
     @Builder
@@ -58,6 +64,10 @@ public class MemberSearchResponse {
                 .groups(groups)
                 .phone(isLeader ? mwg.getPhone() : null)
                 .address(isLeader ? mwg.getAddress() : null)
+                .occupation(mwg.getOccupation())
+                .baptismStatus(mwg.getBaptismStatus())
+                .mbti(mwg.getMbti())
+                .description(mwg.getDescription())
                 .build();
     }
 

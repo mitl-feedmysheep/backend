@@ -1,0 +1,160 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+LOG_DIR="$PROJECT_ROOT/.logs"
+mkdir -p "$LOG_DIR"
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+BACKEND_PID=""
+ADMIN_PID=""
+WEBAPP_PID=""
+
+kill_tree() {
+    local pid=$1
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+        pkill -TERM -P "$pid" 2>/dev/null
+        kill -TERM "$pid" 2>/dev/null
+        wait "$pid" 2>/dev/null
+    fi
+}
+
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}Shutting down all services...${NC}"
+    kill_tree "$BACKEND_PID"
+    kill_tree "$ADMIN_PID"
+    kill_tree "$WEBAPP_PID"
+    sleep 1
+    pkill -TERM -P $$ 2>/dev/null
+    echo -e "${GREEN}All services stopped.${NC}"
+    exit 0
+}
+
+trap cleanup SIGINT SIGTERM
+
+wait_for_pattern() {
+    local pid=$1
+    local log_file=$2
+    local name=$3
+    local success_pattern=$4
+    local fail_pattern=$5
+
+    (
+        for i in $(seq 1 60); do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                echo -e "${RED}[$name] ✗ Process exited. Check .logs/${name}.log${NC}"
+                return
+            fi
+            if grep -q "$success_pattern" "$log_file" 2>/dev/null; then
+                local url
+                url=$(grep -o "http://localhost:[0-9]*" "$log_file" 2>/dev/null | head -1)
+                if [ -n "$url" ]; then
+                    echo -e "${GREEN}[$name] ✓ Started → $url${NC}"
+                else
+                    echo -e "${GREEN}[$name] ✓ Started${NC}"
+                fi
+                return
+            fi
+            if grep -q "$fail_pattern" "$log_file" 2>/dev/null; then
+                echo -e "${RED}[$name] ✗ Failed! Check .logs/${name}.log${NC}"
+                return
+            fi
+            sleep 1
+        done
+        echo -e "${RED}[$name] ✗ Timeout. Check .logs/${name}.log${NC}"
+    ) &
+}
+
+start_backend() {
+    echo -e "${CYAN}[backend]${NC} Starting..."
+    > "$LOG_DIR/backend.log"
+    (cd "$SCRIPT_DIR" && exec ./gradlew bootRun --args='--spring.profiles.active=local --server.port=8081' > "$LOG_DIR/backend.log" 2>&1) &
+    BACKEND_PID=$!
+    wait_for_pattern "$BACKEND_PID" "$LOG_DIR/backend.log" "backend" \
+        "Started .* in .* seconds" "APPLICATION FAILED TO START\|BUILD FAILED"
+}
+
+start_admin() {
+    echo -e "${CYAN}[admin]${NC}   Starting..."
+    > "$LOG_DIR/admin.log"
+    (cd "$PROJECT_ROOT/admin" && exec npm run dev > "$LOG_DIR/admin.log" 2>&1) &
+    ADMIN_PID=$!
+    wait_for_pattern "$ADMIN_PID" "$LOG_DIR/admin.log" "admin" \
+        "Ready in\|Local:" "error\|ERROR"
+}
+
+start_webapp() {
+    echo -e "${CYAN}[web-app]${NC} Starting..."
+    > "$LOG_DIR/web-app.log"
+    (cd "$PROJECT_ROOT/web-app" && exec npm run dev > "$LOG_DIR/web-app.log" 2>&1) &
+    WEBAPP_PID=$!
+    wait_for_pattern "$WEBAPP_PID" "$LOG_DIR/web-app.log" "web-app" \
+        "Local:" "error\|ERROR"
+}
+
+for port in 8081 3000 5173; do
+    pid=$(lsof -ti:$port 2>/dev/null)
+    if [ -n "$pid" ]; then
+        echo -e "${YELLOW}Killing existing process on port $port (PID: $pid)${NC}"
+        kill -9 $pid 2>/dev/null
+        sleep 0.5
+    fi
+done
+
+echo -e "${CYAN}===========================================${NC}"
+echo -e "${CYAN}  FeedMySheep - Starting All Services${NC}"
+echo -e "${CYAN}===========================================${NC}"
+echo -e "${CYAN}  backend  → http://localhost:8081${NC}"
+echo -e "${CYAN}  admin    → http://localhost:3000${NC}"
+echo -e "${CYAN}  web-app  → http://localhost:5173${NC}"
+echo -e "${CYAN}-------------------------------------------${NC}"
+echo -e "${CYAN}  Logs: .logs/{backend,admin,web-app}.log${NC}"
+echo -e "${CYAN}  r = restart backend  │  q = quit all${NC}"
+echo -e "${CYAN}  1 = tail backend  2 = tail admin${NC}"
+echo -e "${CYAN}  3 = tail web-app${NC}"
+echo -e "${CYAN}===========================================${NC}"
+echo ""
+
+start_backend
+start_admin
+start_webapp
+
+echo ""
+
+while true; do
+    read -rsn1 key
+    case "$key" in
+        r|R)
+            echo -e "${YELLOW}[backend] Restarting...${NC}"
+            kill_tree "$BACKEND_PID"
+            start_backend
+            ;;
+        1)
+            echo -e "${CYAN}--- backend log (press any key to stop) ---${NC}"
+            tail -f "$LOG_DIR/backend.log" &
+            TAIL_PID=$!; read -rsn1; kill "$TAIL_PID" 2>/dev/null
+            echo -e "${CYAN}--- end ---${NC}"
+            ;;
+        2)
+            echo -e "${CYAN}--- admin log (press any key to stop) ---${NC}"
+            tail -f "$LOG_DIR/admin.log" &
+            TAIL_PID=$!; read -rsn1; kill "$TAIL_PID" 2>/dev/null
+            echo -e "${CYAN}--- end ---${NC}"
+            ;;
+        3)
+            echo -e "${CYAN}--- web-app log (press any key to stop) ---${NC}"
+            tail -f "$LOG_DIR/web-app.log" &
+            TAIL_PID=$!; read -rsn1; kill "$TAIL_PID" 2>/dev/null
+            echo -e "${CYAN}--- end ---${NC}"
+            ;;
+        q|Q)
+            cleanup
+            ;;
+    esac
+done
