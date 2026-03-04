@@ -54,6 +54,9 @@ wait_for_pattern() {
             if grep -q "$success_pattern" "$log_file" 2>/dev/null; then
                 local url
                 url=$(grep -o "http://localhost:[0-9]*" "$log_file" 2>/dev/null | head -1)
+                if [ -z "$url" ] && [ -n "$6" ]; then
+                    url="$6"
+                fi
                 if [ -n "$url" ]; then
                     echo -e "${GREEN}[$name] ✓ Started → $url${NC}"
                 else
@@ -77,7 +80,8 @@ start_backend() {
     (cd "$SCRIPT_DIR" && exec ./gradlew bootRun --args='--spring.profiles.active=local --server.port=8081' > "$LOG_DIR/backend.log" 2>&1) &
     BACKEND_PID=$!
     wait_for_pattern "$BACKEND_PID" "$LOG_DIR/backend.log" "backend" \
-        "Started .* in .* seconds" "APPLICATION FAILED TO START\|BUILD FAILED"
+        "Started .* in .* seconds" "APPLICATION FAILED TO START\|BUILD FAILED" \
+        "http://localhost:8081"
 }
 
 start_admin() {
@@ -98,20 +102,24 @@ start_webapp() {
         "Local:" "error\|ERROR"
 }
 
-for port in 8081 3000 5173; do
+PORTS_IN_USE=""
+for port in 8081 3001 5173; do
     pid=$(lsof -ti:$port 2>/dev/null)
     if [ -n "$pid" ]; then
-        echo -e "${YELLOW}Killing existing process on port $port (PID: $pid)${NC}"
-        kill -9 $pid 2>/dev/null
-        sleep 0.5
+        echo -e "${RED}Port $port is already in use (PID: $pid)${NC}"
+        PORTS_IN_USE="$PORTS_IN_USE $port"
     fi
 done
+if [ -n "$PORTS_IN_USE" ]; then
+    echo -e "${RED}Please free the above ports before starting.${NC}"
+    exit 1
+fi
 
 echo -e "${CYAN}===========================================${NC}"
 echo -e "${CYAN}  FeedMySheep - Starting All Services${NC}"
 echo -e "${CYAN}===========================================${NC}"
 echo -e "${CYAN}  backend  → http://localhost:8081${NC}"
-echo -e "${CYAN}  admin    → http://localhost:3000${NC}"
+echo -e "${CYAN}  admin    → http://localhost:3001${NC}"
 echo -e "${CYAN}  web-app  → http://localhost:5173${NC}"
 echo -e "${CYAN}-------------------------------------------${NC}"
 echo -e "${CYAN}  Logs: .logs/{backend,admin,web-app}.log${NC}"

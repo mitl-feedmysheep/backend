@@ -64,9 +64,9 @@ public class MemberSearchResponse {
                 .groups(groups)
                 .phone(isLeader ? mwg.getPhone() : null)
                 .address(isLeader ? mwg.getAddress() : null)
-                .occupation(mwg.getOccupation())
-                .baptismStatus(mwg.getBaptismStatus())
-                .mbti(mwg.getMbti())
+                .occupation(isLeader ? mwg.getOccupation() : null)
+                .baptismStatus(isLeader ? mwg.getBaptismStatus() : null)
+                .mbti(isLeader ? mwg.getMbti() : null)
                 .description(mwg.getDescription())
                 .build();
     }
