@@ -73,7 +73,7 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler secrets download --no-file --format env > .env.doppler
+          doppler secrets download --no-file --format env-no-quotes > .env.doppler
           echo "APP_IMAGE=intotheheaven-api:${{ github.sha }}" >> .env.doppler
 
           docker run -d \
