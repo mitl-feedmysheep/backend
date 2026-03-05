@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,11 +27,13 @@ public class EducationQueryService implements EducationQueryUseCase {
     private final GroupPort groupPort;
 
     @Override
-    public EducationProgramWithProgress getProgramWithProgress(GroupId groupId) {
-        EducationProgram program = educationPort.findProgramByGroupId(groupId.getValue())
-                .orElseThrow(() -> new RuntimeException(
-                        "Education program not found for group: " + groupId.getValue()));
+    public Optional<EducationProgramWithProgress> getProgramWithProgress(GroupId groupId) {
+        Optional<EducationProgram> programOpt = educationPort.findProgramByGroupId(groupId.getValue());
+        if (programOpt.isEmpty()) {
+            return Optional.empty();
+        }
 
+        EducationProgram program = programOpt.get();
         List<GroupMember> groupMembers = groupPort.findAllGroupMembersByGroupId(groupId.getValue());
 
         List<UUID> groupMemberIds = groupMembers.stream()
@@ -41,10 +44,10 @@ public class EducationQueryService implements EducationQueryUseCase {
                 ? Collections.emptyList()
                 : educationPort.findProgressByGroupMemberIds(groupMemberIds);
 
-        return EducationProgramWithProgress.builder()
+        return Optional.of(EducationProgramWithProgress.builder()
                 .program(program)
                 .progressList(progressList)
-                .build();
+                .build());
     }
 
     @Override

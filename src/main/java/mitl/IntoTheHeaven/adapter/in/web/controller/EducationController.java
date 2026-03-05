@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Tag(name = "Education", description = "APIs for Education Program and Progress Management")
@@ -55,15 +56,16 @@ public class EducationController {
                 request.getTotalWeeks());
         educationCommandUseCase.createProgram(command);
 
-        EducationProgramWithProgress data = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
+        EducationProgramWithProgress data = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId))
+                .orElseThrow(() -> new RuntimeException("Education program not found after creation for group: " + groupId));
         return ResponseEntity.status(HttpStatus.CREATED).body(EducationProgramResponse.from(data));
     }
 
     @Operation(summary = "Get Education Program", description = "Retrieves the education program with all members' progress for a group.")
     @GetMapping("/groups/{groupId}/education-program")
     public ResponseEntity<EducationProgramResponse> getProgram(@PathVariable("groupId") UUID groupId) {
-        EducationProgramWithProgress data = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
-        return ResponseEntity.ok(EducationProgramResponse.from(data));
+        Optional<EducationProgramWithProgress> data = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
+        return ResponseEntity.ok(data.map(EducationProgramResponse::from).orElse(EducationProgramResponse.empty()));
     }
 
     @Operation(summary = "Update Education Program", description = "Updates the education program configuration.")
@@ -71,7 +73,8 @@ public class EducationController {
     public ResponseEntity<EducationProgramResponse> updateProgram(
             @PathVariable("groupId") UUID groupId,
             @RequestBody @Valid UpdateEducationProgramRequest request) {
-        EducationProgramWithProgress existing = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
+        EducationProgramWithProgress existing = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId))
+                .orElseThrow(() -> new RuntimeException("Education program not found for group: " + groupId));
         UpdateEducationProgramCommand command = new UpdateEducationProgramCommand(
                 existing.getProgram().getId(),
                 request.getName(),
@@ -79,7 +82,8 @@ public class EducationController {
                 request.getTotalWeeks());
         educationCommandUseCase.updateProgram(command);
 
-        EducationProgramWithProgress updated = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId));
+        EducationProgramWithProgress updated = educationQueryUseCase.getProgramWithProgress(GroupId.from(groupId))
+                .orElseThrow(() -> new RuntimeException("Education program not found after update for group: " + groupId));
         return ResponseEntity.ok(EducationProgramResponse.from(updated));
     }
 

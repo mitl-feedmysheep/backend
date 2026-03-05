@@ -6,10 +6,11 @@ import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GroupId;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EducationQueryUseCase {
 
-    EducationProgramWithProgress getProgramWithProgress(GroupId groupId);
+    Optional<EducationProgramWithProgress> getProgramWithProgress(GroupId groupId);
 
     List<EducationProgress> getProgressByGathering(GatheringId gatheringId);
 }

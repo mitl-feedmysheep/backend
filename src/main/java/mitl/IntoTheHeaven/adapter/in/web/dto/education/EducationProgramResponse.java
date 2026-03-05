@@ -31,6 +31,12 @@ public class EducationProgramResponse {
         private final int completedCount;
     }
 
+    public static EducationProgramResponse empty() {
+        return EducationProgramResponse.builder()
+                .memberProgress(List.of())
+                .build();
+    }
+
     public static EducationProgramResponse from(EducationProgramWithProgress data) {
         EducationProgram program = data.getProgram();
 
