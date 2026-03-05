@@ -139,6 +139,34 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
         gatheringPort.save(updatedGathering);
 
+        // Send notification when caller is not the card owner (i.e. leader/sub-leader modified it)
+        MemberId receiverId = targetGatheringMember.getGroupMember().getMember().getId();
+        if (!command.getCallerId().equals(receiverId)) {
+            String gatheringMemberId = targetGatheringMember.getId().getValue().toString();
+            boolean alreadyExists = notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                    receiverId.getValue(),
+                    NotificationType.GATHERING_USER_CARD_UPDATED.getValue(),
+                    "GATHERING_MEMBER",
+                    gatheringMemberId);
+
+            if (!alreadyExists) {
+                UUID groupId = targetGatheringMember.getGroupMember().getGroupId().getValue();
+                String gatheringIdStr = command.getGatheringId().getValue().toString();
+                String targetUrl = "/groups/" + groupId + "/gathering/" + gatheringIdStr;
+                Notification notification = Notification.builder()
+                        .id(NotificationId.from(UUID.randomUUID()))
+                        .receiverId(receiverId)
+                        .senderId(command.getCallerId())
+                        .type(NotificationType.GATHERING_USER_CARD_UPDATED)
+                        .entityType("GATHERING_MEMBER")
+                        .entityId(gatheringMemberId)
+                        .targetUrl(targetUrl)
+                        .isRead(false)
+                        .build();
+                notificationPort.save(notification);
+            }
+        }
+
         return updatedGatheringMember;
     }
 

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringMemberRequest;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GroupMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,14 +17,15 @@ public class UpdateGatheringMemberCommand {
 
     private final GatheringId gatheringId;
     private final GroupMemberId groupMemberId;
+    private final MemberId callerId;
     private final boolean worshipAttendance;
     private final boolean gatheringAttendance;
     private final String goal;
     private final String story;
     private final List<PrayerUpdateCommand> prayers;
 
-    public static UpdateGatheringMemberCommand from(GatheringId gatheringId, GroupMemberId groupMemberId, UpdateGatheringMemberRequest request) {
-        List<PrayerUpdateCommand> prayerCommands = request.getPrayers() != null 
+    public static UpdateGatheringMemberCommand from(GatheringId gatheringId, GroupMemberId groupMemberId, MemberId callerId, UpdateGatheringMemberRequest request) {
+        List<PrayerUpdateCommand> prayerCommands = request.getPrayers() != null
             ? request.getPrayers().stream()
                 .map(PrayerUpdateCommand::from)
                 .collect(Collectors.toList())
@@ -32,6 +34,7 @@ public class UpdateGatheringMemberCommand {
         return new UpdateGatheringMemberCommand(
             gatheringId,
             groupMemberId,
+            callerId,
             request.getWorshipAttendance(),
             request.getGatheringAttendance(),
             request.getGoal(),

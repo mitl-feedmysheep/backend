@@ -20,8 +20,10 @@ import mitl.IntoTheHeaven.domain.model.Gathering;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 import mitl.IntoTheHeaven.domain.model.GatheringMember;
 import mitl.IntoTheHeaven.domain.model.GroupMemberId;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -61,11 +63,14 @@ public class GatheringController {
     public ResponseEntity<UpdateGatheringMemberResponse> updateGatheringMember(
             @PathVariable("gatheringId") UUID gatheringId,
             @PathVariable("groupMemberId") UUID groupMemberId,
+            @AuthenticationPrincipal String memberId,
             @Valid @RequestBody UpdateGatheringMemberRequest request
     ) {
+        MemberId callerId = MemberId.from(UUID.fromString(memberId));
+
         UpdateGatheringMemberCommand command = UpdateGatheringMemberCommand.from(
-            GatheringId.from(gatheringId), 
-            GroupMemberId.from(groupMemberId), 
+            GatheringId.from(gatheringId),
+            GroupMemberId.from(groupMemberId),
             callerId,
             request
         );

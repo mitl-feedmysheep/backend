@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.application.service.command;
 
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
+import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
@@ -211,6 +212,147 @@ class GatheringCommandServiceNotificationTest {
         )).thenReturn(true);
 
         gatheringCommandService.updateGathering(command);
+
+        verify(notificationPort, never()).save(any());
+    }
+
+    // ─────────────── updateGatheringMember 알림 테스트 ───────────────
+
+    private Gathering buildGatheringWithMember(UUID groupMemberUuid, UUID memberUuid, GroupMemberRole role) {
+        Member member = Member.builder()
+                .id(MemberId.from(memberUuid))
+                .name("테스트멤버")
+                .build();
+        GroupMember groupMember = GroupMember.builder()
+                .id(GroupMemberId.from(groupMemberUuid))
+                .groupId(GroupId.from(groupUuid))
+                .member(member)
+                .role(role)
+                .status(GroupMemberStatus.ACTIVE)
+                .build();
+        GatheringMember gatheringMember = GatheringMember.builder()
+                .id(GatheringMemberId.from(UUID.randomUUID()))
+                .gatheringId(GatheringId.from(gatheringUuid))
+                .groupMember(groupMember)
+                .worshipAttendance(false)
+                .gatheringAttendance(false)
+                .prayers(List.of())
+                .build();
+        return existingGathering.toBuilder()
+                .gatheringMembers(List.of(gatheringMember))
+                .build();
+    }
+
+    @Test
+    @DisplayName("리더가 다른 멤버 카드 수정 → 알림 생성")
+    void updateGatheringMember_leaderUpdatesOther_notificationSent() {
+        UUID groupMemberUuid = UUID.randomUUID();
+        UUID cardOwnerUuid = UUID.randomUUID();
+        UUID callerUuid = leaderMemberUuid;
+
+        Gathering gathering = buildGatheringWithMember(groupMemberUuid, cardOwnerUuid, GroupMemberRole.MEMBER);
+        when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(gathering));
+        when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                any(), any(), any(), any())).thenReturn(false);
+        when(notificationPort.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateGatheringMemberCommand command = new UpdateGatheringMemberCommand(
+                GatheringId.from(gatheringUuid),
+                GroupMemberId.from(groupMemberUuid),
+                MemberId.from(callerUuid),
+                false, false, null, "", List.of()
+        );
+
+        gatheringCommandService.updateGatheringMember(command);
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationPort, times(1)).save(captor.capture());
+
+        Notification saved = captor.getValue();
+        assertThat(saved.getReceiverId().getValue()).isEqualTo(cardOwnerUuid);
+        assertThat(saved.getSenderId().getValue()).isEqualTo(callerUuid);
+        assertThat(saved.getType()).isEqualTo(NotificationType.GATHERING_USER_CARD_UPDATED);
+        assertThat(saved.getEntityType()).isEqualTo("GATHERING_MEMBER");
+        assertThat(saved.getTargetUrl()).contains("/groups/" + groupUuid + "/gathering/" + gatheringUuid);
+        assertThat(saved.isRead()).isFalse();
+    }
+
+    @Test
+    @DisplayName("서브리더가 다른 멤버 카드 수정 → 알림 생성")
+    void updateGatheringMember_subLeaderUpdatesOther_notificationSent() {
+        UUID groupMemberUuid = UUID.randomUUID();
+        UUID cardOwnerUuid = UUID.randomUUID();
+        UUID callerUuid = subLeaderMemberUuid;
+
+        Gathering gathering = buildGatheringWithMember(groupMemberUuid, cardOwnerUuid, GroupMemberRole.MEMBER);
+        when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(gathering));
+        when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                any(), any(), any(), any())).thenReturn(false);
+        when(notificationPort.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateGatheringMemberCommand command = new UpdateGatheringMemberCommand(
+                GatheringId.from(gatheringUuid),
+                GroupMemberId.from(groupMemberUuid),
+                MemberId.from(callerUuid),
+                false, false, null, "", List.of()
+        );
+
+        gatheringCommandService.updateGatheringMember(command);
+
+        verify(notificationPort, times(1)).save(any(Notification.class));
+    }
+
+    @Test
+    @DisplayName("자기 자신 카드 수정 → 알림 생성 안 됨")
+    void updateGatheringMember_selfUpdate_noNotification() {
+        UUID groupMemberUuid = UUID.randomUUID();
+        UUID cardOwnerUuid = memberMemberUuid;
+
+        Gathering gathering = buildGatheringWithMember(groupMemberUuid, cardOwnerUuid, GroupMemberRole.MEMBER);
+        when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(gathering));
+        when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateGatheringMemberCommand command = new UpdateGatheringMemberCommand(
+                GatheringId.from(gatheringUuid),
+                GroupMemberId.from(groupMemberUuid),
+                MemberId.from(cardOwnerUuid), // caller == owner
+                false, false, null, "", List.of()
+        );
+
+        gatheringCommandService.updateGatheringMember(command);
+
+        verify(notificationPort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("이미 읽지 않은 동일 알림 존재 → 중복 생성 안 됨")
+    void updateGatheringMember_duplicateUnreadNotification_skipped() {
+        UUID groupMemberUuid = UUID.randomUUID();
+        UUID cardOwnerUuid = UUID.randomUUID();
+        UUID callerUuid = leaderMemberUuid;
+
+        Gathering gathering = buildGatheringWithMember(groupMemberUuid, cardOwnerUuid, GroupMemberRole.MEMBER);
+        GatheringMemberId gatheringMemberId = gathering.getGatheringMembers().get(0).getId();
+
+        when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(gathering));
+        when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                eq(cardOwnerUuid),
+                eq(NotificationType.GATHERING_USER_CARD_UPDATED.getValue()),
+                eq("GATHERING_MEMBER"),
+                eq(gatheringMemberId.getValue().toString())
+        )).thenReturn(true);
+
+        UpdateGatheringMemberCommand command = new UpdateGatheringMemberCommand(
+                GatheringId.from(gatheringUuid),
+                GroupMemberId.from(groupMemberUuid),
+                MemberId.from(callerUuid),
+                false, false, null, "", List.of()
+        );
+
+        gatheringCommandService.updateGatheringMember(command);
 
         verify(notificationPort, never()).save(any());
     }
