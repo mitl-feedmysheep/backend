@@ -23,14 +23,6 @@ jobs:
           mkdir -p "$DOCKER_CONFIG"
           echo '{}' > "$DOCKER_CONFIG/config.json"
 
-      - name: Inject Docker auth
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          AUTH=$(printf "%s" "$DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN" | base64)
-          jq -n --arg auth "$AUTH" '{auths:{"https://index.docker.io/v1/":{"auth":$auth}}}' > "$DOCKER_CONFIG/config.json"
-
       - name: Ensure buildx plugin available
         run: |
           mkdir -p "$DOCKER_CONFIG/cli-plugins"
@@ -67,88 +59,41 @@ jobs:
             -t intotheheaven-api:latest \
             .
 
-      # DockerHub push 비활성화 (필요시 주석 해제)
-      # - name: Push to DockerHub
-      #   run: |
-      #     docker push ${{ secrets.DOCKER_IMAGE }}:${{ github.sha }}
-      #     docker push ${{ secrets.DOCKER_IMAGE }}:latest
-
-      - name: Create .env from secrets
+      - name: Install Doppler CLI
         run: |
-          cat > .env << 'EOF'
-          APP_IMAGE=intotheheaven-api:${{ github.sha }}
-          SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS=${{ secrets.JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS }}
-
-          # --- AWS SES ---
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SES_REGION=${{ secrets.AWS_SES_REGION }}
-
-          # --- Mail provider selection ---
-          MAIL_PROVIDER=${{ secrets.MAIL_PROVIDER }}
-
-          # --- Gmail SMTP (used when mail.provider=gmail) ---
-          SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}
-          SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}
-          SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
-          SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
-          SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH }}
-          SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE }}
-
-          # --- Mail From/Reply-To ---
-          MAIL_FROM=${{ secrets.MAIL_FROM }}
-          MAIL_REPLY_TO=${{ secrets.MAIL_REPLY_TO }}
-
-          # --- Cloudflare R2 Configuration ---
-          CLOUDFLARE_R2_ACCESS_KEY_ID=${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY=${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-          CLOUDFLARE_R2_BUCKET_NAME=${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}
-          CLOUDFLARE_R2_ENDPOINT=${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
-          CLOUDFLARE_R2_PUBLIC_DOMAIN=${{ secrets.CLOUDFLARE_R2_PUBLIC_DOMAIN }}
-          EOF
+          if ! command -v doppler &> /dev/null; then
+            brew install gnupg
+            curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | brew install doppler
+          fi
 
       - name: Stop existing container
         run: docker rm -f intotheheaven-api 2>/dev/null || true
 
-      - name: Start container with .env
+      - name: Start container with Doppler
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
+          doppler secrets download --no-file --format env > .env.doppler
+          echo "APP_IMAGE=intotheheaven-api:${{ github.sha }}" >> .env.doppler
+
           docker run -d \
             --name intotheheaven-api \
             --restart unless-stopped \
-            --env-file .env \
-            -e SPRING_APPLICATION_NAME=IntoTheHeaven \
+            --env-file .env.doppler \
             -e SPRING_PROFILES_ACTIVE=prod \
-            -e SERVER_PORT=8080 \
             -e SERVER_COMPRESSION_ENABLED=true \
-            -e SERVER_COMPRESSION_MIME_TYPES=application/json,application/javascript,text/html,text/plain \
-            -e SERVER_COMPRESSION_MIN_RESPONSE_SIZE=1KB \
-            -e SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver \
-            -e SPRING_JPA_SHOW_SQL=true \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect \
-            -e SPRING_SQL_INIT_MODE=never \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_USE_GET_GENERATED_KEYS=true \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_INSERTS=true \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES=true \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_BATCH_SIZE=100 \
-            -e SPRING_JPA_OPEN_IN_VIEW=false \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=UTC \
-            -e SPRING_JACKSON_TIME_ZONE=Asia/Seoul \
-            -e SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_BATCH_FETCH_SIZE=1000 \
             -p 8080:8080 \
             intotheheaven-api:${{ github.sha }}
+
+          rm -f .env.doppler
 
       - name: Health check
         run: |
           sleep 15
           if docker ps --filter "name=intotheheaven-api" --filter "status=running" --format '{{.Names}}' | grep -q intotheheaven-api; then
-            echo "✅ Health check passed!"
+            echo "Health check passed!"
           else
-            echo "❌ Container is not running"
+            echo "Container is not running"
             docker logs intotheheaven-api
             exit 1
           fi

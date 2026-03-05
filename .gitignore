@@ -41,4 +41,5 @@ src/main/generated
 # Local-only env and profiles (do not commit secrets)
 .env
 .env.*
+.env.doppler
 src/main/resources/application-local.properties
