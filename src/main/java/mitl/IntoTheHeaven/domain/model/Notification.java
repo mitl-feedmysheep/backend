@@ -14,6 +14,7 @@ public class Notification extends DomainEntity<Notification, NotificationId> {
     private final MemberId receiverId;
     private final MemberId senderId;
     private final NotificationType type;
+    private final String description;
     private final String entityType;
     private final String entityId;
     private final String targetUrl;

@@ -34,6 +34,7 @@ class NotificationPersistenceMapperTest {
                 .receiver(receiver)
                 .sender(sender)
                 .type("ADMIN_COMMENT")
+                .description("청년 1조 · 1월 15일")
                 .entityType("GATHERING")
                 .entityId(entityId)
                 .targetUrl("/groups/abc/gathering/def")
@@ -46,6 +47,7 @@ class NotificationPersistenceMapperTest {
         assertThat(domain.getReceiverId().getValue()).isEqualTo(receiverUuid);
         assertThat(domain.getSenderId().getValue()).isEqualTo(senderUuid);
         assertThat(domain.getType()).isEqualTo(NotificationType.ADMIN_COMMENT);
+        assertThat(domain.getDescription()).isEqualTo("청년 1조 · 1월 15일");
         assertThat(domain.getEntityType()).isEqualTo("GATHERING");
         assertThat(domain.getEntityId()).isEqualTo(entityId);
         assertThat(domain.getTargetUrl()).isEqualTo("/groups/abc/gathering/def");
@@ -89,6 +91,7 @@ class NotificationPersistenceMapperTest {
                 .receiverId(MemberId.from(receiverUuid))
                 .senderId(MemberId.from(senderUuid))
                 .type(NotificationType.ADMIN_COMMENT)
+                .description("청년 1조 · 1월 15일")
                 .entityType("GATHERING")
                 .entityId(entityId)
                 .targetUrl("/groups/abc/gathering/def")
@@ -102,6 +105,7 @@ class NotificationPersistenceMapperTest {
         assertThat(entity.getReceiver().getId()).isEqualTo(receiverUuid);
         assertThat(entity.getSender().getId()).isEqualTo(senderUuid);
         assertThat(entity.getType()).isEqualTo("ADMIN_COMMENT");
+        assertThat(entity.getDescription()).isEqualTo("청년 1조 · 1월 15일");
         assertThat(entity.getEntityType()).isEqualTo("GATHERING");
         assertThat(entity.getEntityId()).isEqualTo(entityId);
         assertThat(entity.getTargetUrl()).isEqualTo("/groups/abc/gathering/def");
@@ -125,6 +129,30 @@ class NotificationPersistenceMapperTest {
         NotificationJpaEntity entity = mapper.toEntity(domain);
 
         assertThat(entity.getSender()).isNull();
+    }
+
+    @Test
+    @DisplayName("description이 null인 경우 양방향 매핑 정상 동작")
+    void description_null_roundtrip() {
+        UUID id = UUID.randomUUID();
+        MemberJpaEntity receiver = MemberJpaEntity.builder().id(UUID.randomUUID()).build();
+
+        NotificationJpaEntity entity = NotificationJpaEntity.builder()
+                .id(id)
+                .receiver(receiver)
+                .sender(null)
+                .type("ADMIN_COMMENT")
+                .description(null)
+                .entityType("GATHERING")
+                .entityId("entity-123")
+                .isRead(false)
+                .build();
+
+        Notification domain = mapper.toDomain(entity);
+        assertThat(domain.getDescription()).isNull();
+
+        NotificationJpaEntity backToEntity = mapper.toEntity(domain);
+        assertThat(backToEntity.getDescription()).isNull();
     }
 
     @Test

@@ -14,6 +14,7 @@ public interface GatheringJpaRepository extends JpaRepository<GatheringJpaEntity
     List<GatheringJpaEntity> findAllByGroupId(UUID groupId);
 
     @EntityGraph(attributePaths = {
+            "group",
             "gatheringMembers",
             "gatheringMembers.groupMember",
             "gatheringMembers.groupMember.member",

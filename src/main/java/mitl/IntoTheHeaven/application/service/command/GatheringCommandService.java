@@ -153,11 +153,13 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                 UUID groupId = targetGatheringMember.getGroupMember().getGroupId().getValue();
                 String gatheringIdStr = command.getGatheringId().getValue().toString();
                 String targetUrl = "/groups/" + groupId + "/gathering/" + gatheringIdStr;
+                String desc = existingGathering.getGroup().getName() + " · " + formatDate(existingGathering.getDate());
                 Notification notification = Notification.builder()
                         .id(NotificationId.from(UUID.randomUUID()))
                         .receiverId(receiverId)
                         .senderId(command.getCallerId())
                         .type(NotificationType.GATHERING_USER_CARD_UPDATED)
+                        .description(desc)
                         .entityType("GATHERING_MEMBER")
                         .entityId(gatheringMemberId)
                         .targetUrl(targetUrl)
@@ -211,11 +213,13 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
                         if (!alreadyExists) {
                             String targetUrl = "/groups/" + groupId + "/gathering/" + gatheringId;
+                            String desc = existingGathering.getGroup().getName() + " · " + formatDate(existingGathering.getDate());
                             Notification notification = Notification.builder()
                                     .id(NotificationId.from(UUID.randomUUID()))
                                     .receiverId(MemberId.from(receiverId))
                                     .senderId(null)
                                     .type(NotificationType.ADMIN_COMMENT)
+                                    .description(desc)
                                     .entityType("GATHERING")
                                     .entityId(gatheringId)
                                     .targetUrl(targetUrl)
@@ -228,4 +232,8 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
         return saved;
     }
-} 
+
+    private String formatDate(java.time.LocalDate date) {
+        return date.getMonthValue() + "월 " + date.getDayOfMonth() + "일";
+    }
+}

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class NotificationResponse {
     private final UUID id;
     private final String type;
+    private final String description;
     private final String entityType;
     private final String entityId;
     private final String targetUrl;
@@ -21,10 +22,11 @@ public class NotificationResponse {
     private final LocalDateTime createdAt;
 
     @Builder
-    public NotificationResponse(UUID id, String type, String entityType, String entityId,
+    public NotificationResponse(UUID id, String type, String description, String entityType, String entityId,
                                  String targetUrl, boolean isRead, LocalDateTime createdAt) {
         this.id = id;
         this.type = type;
+        this.description = description;
         this.entityType = entityType;
         this.entityId = entityId;
         this.targetUrl = targetUrl;
@@ -36,6 +38,7 @@ public class NotificationResponse {
         return NotificationResponse.builder()
                 .id(notification.getId().getValue())
                 .type(notification.getType().getValue())
+                .description(notification.getDescription())
                 .entityType(notification.getEntityType())
                 .entityId(notification.getEntityId())
                 .targetUrl(notification.getTargetUrl())

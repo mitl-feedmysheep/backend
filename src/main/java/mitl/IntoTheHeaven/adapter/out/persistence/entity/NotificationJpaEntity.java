@@ -21,6 +21,9 @@ public class NotificationJpaEntity extends BaseEntity {
     @Column(name = "type", nullable = false, length = 30)
     private String type;
 
+    @Column(name = "description", length = 300)
+    private String description;
+
     @Column(name = "entity_type", nullable = false, length = 50)
     private String entityType;
 

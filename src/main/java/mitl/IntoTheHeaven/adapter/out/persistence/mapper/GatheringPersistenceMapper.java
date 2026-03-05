@@ -28,6 +28,10 @@ public class GatheringPersistenceMapper {
         public Gathering toDomain(GatheringJpaEntity entity) {
                 return Gathering.builder()
                                 .id(GatheringId.from(entity.getId()))
+                                .group(entity.getGroup() != null ? Group.builder()
+                                                .id(GroupId.from(entity.getGroup().getId()))
+                                                .name(entity.getGroup().getName())
+                                                .build() : null)
                                 .name(entity.getName())
                                 .description(entity.getDescription())
                                 .date(entity.getDate())
