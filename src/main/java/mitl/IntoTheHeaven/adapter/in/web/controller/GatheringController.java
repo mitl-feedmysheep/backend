@@ -66,6 +66,7 @@ public class GatheringController {
         UpdateGatheringMemberCommand command = UpdateGatheringMemberCommand.from(
             GatheringId.from(gatheringId), 
             GroupMemberId.from(groupMemberId), 
+            callerId,
             request
         );
         GatheringMember gatheringMember = gatheringCommandUseCase.updateGatheringMember(command);
