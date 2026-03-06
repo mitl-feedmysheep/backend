@@ -5,7 +5,6 @@ import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.in.query.ChurchQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
-import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
@@ -51,13 +50,7 @@ public class ChurchQueryService implements ChurchQueryUseCase {
         if (churchMember == null) {
             throw new IllegalArgumentException("해당 교회의 멤버가 아닙니다.");
         }
-        if (churchMember.getRole().hasPermissionOver(ChurchRole.LEADER)) {
-            return true;
-        }
-        List<GroupMemberRole> groupRoles = churchPort.findGroupMemberRolesByMemberIdAndChurchId(
-                memberId.getValue(), churchId.getValue());
-        return groupRoles.stream().anyMatch(
-                role -> role == GroupMemberRole.LEADER || role == GroupMemberRole.SUB_LEADER);
+        return churchMember.getRole().hasPermissionOver(ChurchRole.LEADER);
     }
 
     /* ADMIN */
