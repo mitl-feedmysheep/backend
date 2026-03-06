@@ -66,7 +66,8 @@ public class SecurityConfig {
                         "/health",
                         "/auth/**",
                         "/swagger-ui/**",
-                        "/v3/api-docs/**"
+                        "/v3/api-docs/**",
+                        "/actuator/**"
                 ).permitAll()
                 .anyRequest().authenticated()); // All other requests require authentication
 
