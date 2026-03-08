@@ -98,5 +98,7 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup dangling images
-        run: docker image prune -f
+      - name: Cleanup dangling images and old build cache
+        run: |
+          docker image prune -f
+          docker buildx prune -f --filter "until=168h"
