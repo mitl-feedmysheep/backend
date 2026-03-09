@@ -48,7 +48,8 @@
       "mw1n1cogIm1pLQS70ldOv",
       "fnuEOJ8H7VCCe_PpVe3fD",
       "YWBr7OmTid3wWs-16Wh-Z",
-      "ntf_table_notification_001"
+      "ntf_table_notification_001",
+      "sn_table_sermon_note_001"
     ],
     "relationshipIds": [
       "0ZCyf2_iOJc1HvE8KlKJD",
@@ -68,7 +69,8 @@
       "z7XorrzW4B6uOIR67rSXD",
       "kw-C3cq9FUJVUtbxJWdU0",
       "Klupi8R5SxahB457igDcT",
-      "ntf_rel_receiver_member_001"
+      "ntf_rel_receiver_member_001",
+      "sn_rel_member_001"
     ],
     "indexIds": [],
     "memoIds": []
@@ -842,6 +844,49 @@
         "meta": {
           "updateAt": 1772668800000,
           "createAt": 1772668800000
+        }
+      },
+      "sn_table_sermon_note_001": {
+        "id": "sn_table_sermon_note_001",
+        "name": "sermon_note",
+        "comment": "설교 노트",
+        "columnIds": [
+          "sn_col_id_001",
+          "sn_col_member_id_001",
+          "sn_col_title_001",
+          "sn_col_sermon_date_001",
+          "sn_col_preacher_001",
+          "sn_col_service_type_001",
+          "sn_col_scripture_001",
+          "sn_col_content_001",
+          "sn_col_created_at_001",
+          "sn_col_updated_at_001",
+          "sn_col_deleted_at_001"
+        ],
+        "seqColumnIds": [
+          "sn_col_id_001",
+          "sn_col_member_id_001",
+          "sn_col_title_001",
+          "sn_col_sermon_date_001",
+          "sn_col_preacher_001",
+          "sn_col_service_type_001",
+          "sn_col_scripture_001",
+          "sn_col_content_001",
+          "sn_col_created_at_001",
+          "sn_col_updated_at_001",
+          "sn_col_deleted_at_001"
+        ],
+        "ui": {
+          "x": 3700,
+          "y": 5200,
+          "zIndex": 1300,
+          "widthName": 80,
+          "widthComment": 60,
+          "color": "#4CAF50"
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
         }
       }
     },
@@ -5285,6 +5330,226 @@
           "updateAt": 1772668800000,
           "createAt": 1772668800000
         }
+      },
+      "sn_col_id_001": {
+        "id": "sn_col_id_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "id",
+        "comment": "설교 노트 아이디",
+        "dataType": "CHAR(36)",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 82,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_member_id_001": {
+        "id": "sn_col_member_id_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "member_id",
+        "comment": "작성자 멤버 아이디",
+        "dataType": "CHAR(36)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 66,
+          "widthComment": 90,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_title_001": {
+        "id": "sn_col_title_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "title",
+        "comment": "설교 제목",
+        "dataType": "VARCHAR(100)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 89,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_sermon_date_001": {
+        "id": "sn_col_sermon_date_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "sermon_date",
+        "comment": "설교 날짜",
+        "dataType": "DATE",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 78,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_preacher_001": {
+        "id": "sn_col_preacher_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "preacher",
+        "comment": "설교자",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_service_type_001": {
+        "id": "sn_col_service_type_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "service_type",
+        "comment": "예배 종류",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 82,
+          "widthComment": 60,
+          "widthDataType": 82,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_scripture_001": {
+        "id": "sn_col_scripture_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "scripture",
+        "comment": "본문 말씀",
+        "dataType": "VARCHAR(200)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_content_001": {
+        "id": "sn_col_content_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "content",
+        "comment": "나의 노트 내용",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 75,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_created_at_001": {
+        "id": "sn_col_created_at_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "created_at",
+        "comment": "생성일시",
+        "dataType": "DATETIME(6)",
+        "default": "CURRENT_TIMESTAMP(6)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 63,
+          "widthComment": 60,
+          "widthDataType": 77,
+          "widthDefault": 150
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_updated_at_001": {
+        "id": "sn_col_updated_at_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "updated_at",
+        "comment": "수정일시",
+        "dataType": "DATETIME(6)",
+        "default": "CURRENT_TIMESTAMP(6)",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 67,
+          "widthComment": 60,
+          "widthDataType": 77,
+          "widthDefault": 150
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
+      },
+      "sn_col_deleted_at_001": {
+        "id": "sn_col_deleted_at_001",
+        "tableId": "sn_table_sermon_note_001",
+        "name": "deleted_at",
+        "comment": "삭제일시",
+        "dataType": "DATETIME(6)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 62,
+          "widthComment": 60,
+          "widthDataType": 77,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
+        }
       }
     },
     "relationshipEntities": {
@@ -5790,6 +6055,34 @@
         "meta": {
           "updateAt": 1772668800000,
           "createAt": 1772668800000
+        }
+      },
+      "sn_rel_member_001": {
+        "id": "sn_rel_member_001",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "abLDWjEoj5epresetx3Q9",
+          "columnIds": [
+            "nYYNgSrqd4I9Rg2GBN1aA"
+          ],
+          "x": 3265.4178,
+          "y": 4457.3566,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "sn_table_sermon_note_001",
+          "columnIds": [
+            "sn_col_member_id_001"
+          ],
+          "x": 3700,
+          "y": 5260,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1773100000000,
+          "createAt": 1773100000000
         }
       }
     },
