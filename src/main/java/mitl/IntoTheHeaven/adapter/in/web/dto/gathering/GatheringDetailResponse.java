@@ -3,8 +3,8 @@ package mitl.IntoTheHeaven.adapter.in.web.dto.gathering;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,8 +20,8 @@ public class GatheringDetailResponse {
     private String name;
     private String description;
     private LocalDate date;
-    private LocalDateTime startedAt;
-    private LocalDateTime endedAt;
+    private Instant startedAt;
+    private Instant endedAt;
     private String place;
     private String leaderComment;
     private String adminComment;

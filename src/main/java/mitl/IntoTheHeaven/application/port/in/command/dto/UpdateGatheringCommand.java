@@ -5,8 +5,8 @@ import lombok.Data;
 import mitl.IntoTheHeaven.adapter.in.web.dto.gathering.UpdateGatheringRequest;
 import mitl.IntoTheHeaven.domain.model.GatheringId;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -16,8 +16,8 @@ public class UpdateGatheringCommand {
     private String name;
     private String description;
     private LocalDate date;
-    private LocalDateTime startedAt;
-    private LocalDateTime endedAt;
+    private Instant startedAt;
+    private Instant endedAt;
     private String place;
     private String leaderComment;
     private String adminComment;
@@ -28,8 +28,8 @@ public class UpdateGatheringCommand {
                 request.getName(),
                 request.getDescription(),
                 request.getDate(),
-                request.getStartedAt() != null ? request.getStartedAt().toLocalDateTime() : null,
-                request.getEndedAt() != null ? request.getEndedAt().toLocalDateTime() : null,
+                request.getStartedAt() != null ? request.getStartedAt().toInstant() : null,
+                request.getEndedAt() != null ? request.getEndedAt().toInstant() : null,
                 request.getPlace(),
                 request.getLeaderComment(),
                 request.getAdminComment()

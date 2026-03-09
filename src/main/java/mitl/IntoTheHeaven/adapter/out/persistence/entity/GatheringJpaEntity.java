@@ -11,8 +11,8 @@ import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,16 +46,16 @@ public class GatheringJpaEntity extends BaseEntity {
     private LocalDate date;
 
     /**
-     * 시작 시간
+     * 시작 시간 (UTC)
      */
     @Column(name = "started_at")
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
     /**
-     * 종료 시간
+     * 종료 시간 (UTC)
      */
     @Column(name = "ended_at")
-    private LocalDateTime endedAt;
+    private Instant endedAt;
 
     /**
      * 장소

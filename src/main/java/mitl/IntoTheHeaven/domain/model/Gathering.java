@@ -6,8 +6,8 @@ import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.MediaType;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +20,8 @@ public class Gathering extends AggregateRoot<Gathering, GatheringId> {
     private final String name;
     private final String description;
     private final LocalDate date;
-    private final LocalDateTime startedAt;
-    private final LocalDateTime endedAt;
+    private final Instant startedAt;
+    private final Instant endedAt;
     private final String place;
     private final String leaderComment;
     private final String adminComment;
