@@ -10,6 +10,11 @@
         </encoder>
     </appender>
 
+    <!-- Hibernate 내부 로그 억제 -->
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql" level="WARN"/>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
