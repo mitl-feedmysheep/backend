@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangeEmailRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.member.CompleteProvisionRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.MeResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.UpdateMyProfileRequest;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
@@ -68,6 +69,19 @@ public class MemberController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Complete Provision", description = "Completes provisioning for a pre-created account. Changes email, password, and clears the provisioned flag.")
+    @PostMapping("/provision/complete")
+    public ResponseEntity<Void> completeProvision(@AuthenticationPrincipal String memberId,
+            @RequestBody @Valid CompleteProvisionRequest request) {
+        try {
+            memberCommandUseCase.completeProvision(MemberId.from(UUID.fromString(memberId)),
+                    request.getNewEmail(), request.getNewPassword());
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @Operation(summary = "Update My Profile", description = "Updates name, sex, birthday, and phone of the authenticated user. Fails if request.id differs from token subject.")

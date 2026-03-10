@@ -15,4 +15,6 @@ public interface MemberCommandUseCase {
     Member updateMyProfile(UpdateMyProfileCommand command);
 
     void resetPasswordByEmail(String email, String newPassword);
+
+    void completeProvision(MemberId memberId, String newEmail, String newPassword);
 } 

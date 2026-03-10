@@ -62,13 +62,30 @@ public class MemberCommandService implements MemberCommandUseCase {
                 Member member = memberPort.findById(memberId.getValue())
                                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-                Member.MemberBuilder<?, ?> builder = member.toBuilder().email(newEmail);
-                if (Boolean.TRUE.equals(member.getIsProvisioned())) {
-                        builder.isProvisioned(false);
+                Member updated = member.toBuilder()
+                                .email(newEmail)
+                                .build();
+
+                memberPort.save(updated);
+                return true;
+        }
+
+        @Override
+        public void completeProvision(MemberId memberId, String newEmail, String newPassword) {
+                Member member = memberPort.findById(memberId.getValue())
+                                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+                if (!Boolean.TRUE.equals(member.getIsProvisioned())) {
+                        throw new RuntimeException("Member is not provisioned");
                 }
 
-                memberPort.save(builder.build());
-                return true;
+                Member updated = member.toBuilder()
+                                .email(newEmail)
+                                .password(passwordEncoder.encode(newPassword))
+                                .isProvisioned(false)
+                                .build();
+
+                memberPort.save(updated);
         }
 
         @Override

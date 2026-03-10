@@ -220,35 +220,6 @@ class MemberCommandServiceTest {
                     .hasMessage("Member not found");
         }
 
-        @Test
-        @DisplayName("provisioned 회원이면 이메일 변경 시 isProvisioned를 false로 변경한다")
-        void shouldClearProvisionedFlagWhenProvisioned() {
-            Member provisioned = existingMember.toBuilder().isProvisioned(true).build();
-            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(provisioned));
-            when(memberPort.save(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            Boolean result = memberCommandService.changeEmail(memberId, "new@test.com");
-
-            assertThat(result).isTrue();
-            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
-            verify(memberPort).save(captor.capture());
-            Member saved = captor.getValue();
-            assertThat(saved.getEmail()).isEqualTo("new@test.com");
-            assertThat(saved.getIsProvisioned()).isFalse();
-        }
-
-        @Test
-        @DisplayName("일반 회원이면 이메일 변경 시 isProvisioned가 false 그대로 유지된다")
-        void shouldKeepProvisionedFalseForNormalMember() {
-            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(existingMember));
-            when(memberPort.save(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            memberCommandService.changeEmail(memberId, "new@test.com");
-
-            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
-            verify(memberPort).save(captor.capture());
-            assertThat(captor.getValue().getIsProvisioned()).isFalse();
-        }
     }
 
     @Nested
@@ -376,6 +347,51 @@ class MemberCommandServiceTest {
             when(memberPort.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> memberCommandService.resetPasswordByEmail("unknown@test.com", "pw"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("Member not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("completeProvision - 프로비저닝 완료")
+    class CompleteProvisionTests {
+
+        @Test
+        @DisplayName("이메일, 비밀번호를 변경하고 isProvisioned를 false로 설정한다")
+        void shouldChangeEmailPasswordAndClearProvisionedFlag() {
+            Member provisioned = existingMember.toBuilder().isProvisioned(true).build();
+            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(provisioned));
+            when(passwordEncoder.encode("newPw")).thenReturn("newEncodedPw");
+            when(memberPort.save(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            memberCommandService.completeProvision(memberId, "new@test.com", "newPw");
+
+            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
+            verify(memberPort).save(captor.capture());
+            Member saved = captor.getValue();
+            assertThat(saved.getEmail()).isEqualTo("new@test.com");
+            assertThat(saved.getPassword()).isEqualTo("newEncodedPw");
+            assertThat(saved.getIsProvisioned()).isFalse();
+        }
+
+        @Test
+        @DisplayName("provisioned가 아닌 회원이면 RuntimeException이 발생한다")
+        void shouldThrowWhenNotProvisioned() {
+            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(existingMember));
+
+            assertThatThrownBy(() -> memberCommandService.completeProvision(memberId, "new@test.com", "newPw"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("Member is not provisioned");
+
+            verify(memberPort, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("회원이 존재하지 않으면 RuntimeException이 발생한다")
+        void shouldThrowWhenMemberNotFound() {
+            when(memberPort.findById(memberUuid)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> memberCommandService.completeProvision(memberId, "new@test.com", "newPw"))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("Member not found");
         }
