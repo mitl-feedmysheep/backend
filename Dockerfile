@@ -15,7 +15,9 @@ RUN --mount=type=cache,target=/root/.gradle \
 COPY src/ src/
 
 # Build with cache mount (Gradle 빌드 캐시 재사용)
+# QueryDSL Q클래스 재생성 충돌 방지
 RUN --mount=type=cache,target=/root/.gradle \
+    rm -rf src/main/generated && \
     ./gradlew bootJar --no-daemon --quiet
 
 # --- Runtime stage ---
