@@ -20,12 +20,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final RequestLoggingFilter requestLoggingFilter;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -72,6 +75,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()); // All other requests require authentication
 
         http
+            .addFilterBefore(requestLoggingFilter, AuthorizationFilter.class)
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
             // 예외 처리 설정 추가
         .exceptionHandling(exceptions -> exceptions

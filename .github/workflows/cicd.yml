@@ -46,6 +46,15 @@ jobs:
           docker buildx create --name buildkit --use --driver docker-container 2>/dev/null || docker buildx use buildkit
           docker buildx inspect --bootstrap
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
       - name: Remove old images
         run: |
           docker images intotheheaven-api --format '{{.Tag}}' | grep -v latest | xargs -I {} docker rmi intotheheaven-api:{} 2>/dev/null || true

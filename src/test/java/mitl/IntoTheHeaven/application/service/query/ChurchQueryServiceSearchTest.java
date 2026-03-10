@@ -2,7 +2,6 @@ package mitl.IntoTheHeaven.application.service.query;
 
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
-import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberId;
@@ -14,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +43,7 @@ class ChurchQueryServiceSearchTest {
     }
 
     @Test
-    @DisplayName("church_member.role이 LEADER 이상이면 elevated access true")
+    @DisplayName("church_member.role이 LEADER이면 elevated access true")
     void hasElevatedSearchAccess_churchLeader() {
         when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
                 .thenReturn(buildChurchMember(ChurchRole.LEADER));
@@ -72,45 +70,10 @@ class ChurchQueryServiceSearchTest {
     }
 
     @Test
-    @DisplayName("church_member.role이 MEMBER지만 group에서 LEADER면 elevated access true")
-    void hasElevatedSearchAccess_groupLeader() {
-        when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
-                .thenReturn(buildChurchMember(ChurchRole.MEMBER));
-        when(churchPort.findGroupMemberRolesByMemberIdAndChurchId(memberUuid, churchUuid))
-                .thenReturn(List.of(GroupMemberRole.LEADER));
-
-        assertThat(churchQueryService.hasElevatedSearchAccess(memberId, churchId)).isTrue();
-    }
-
-    @Test
-    @DisplayName("church_member.role이 MEMBER지만 group에서 SUB_LEADER면 elevated access true")
-    void hasElevatedSearchAccess_groupSubLeader() {
-        when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
-                .thenReturn(buildChurchMember(ChurchRole.MEMBER));
-        when(churchPort.findGroupMemberRolesByMemberIdAndChurchId(memberUuid, churchUuid))
-                .thenReturn(List.of(GroupMemberRole.SUB_LEADER));
-
-        assertThat(churchQueryService.hasElevatedSearchAccess(memberId, churchId)).isTrue();
-    }
-
-    @Test
-    @DisplayName("church_member.role이 MEMBER이고 group에서도 MEMBER면 elevated access false")
+    @DisplayName("church_member.role이 MEMBER이면 elevated access false")
     void hasElevatedSearchAccess_regularMember() {
         when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
                 .thenReturn(buildChurchMember(ChurchRole.MEMBER));
-        when(churchPort.findGroupMemberRolesByMemberIdAndChurchId(memberUuid, churchUuid))
-                .thenReturn(List.of(GroupMemberRole.MEMBER));
-
-        assertThat(churchQueryService.hasElevatedSearchAccess(memberId, churchId)).isFalse();
-    }
-
-    @Test
-    @DisplayName("church_member.role이 MEMBER이고 group이 없으면 elevated access false")
-    void hasElevatedSearchAccess_noGroups() {
-        when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
-                .thenReturn(buildChurchMember(ChurchRole.MEMBER));
-        when(churchPort.findGroupMemberRolesByMemberIdAndChurchId(memberUuid, churchUuid))
-                .thenReturn(List.of());
 
         assertThat(churchQueryService.hasElevatedSearchAccess(memberId, churchId)).isFalse();
     }
