@@ -219,6 +219,36 @@ class MemberCommandServiceTest {
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("Member not found");
         }
+
+        @Test
+        @DisplayName("provisioned 회원이면 이메일 변경 시 isProvisioned를 false로 변경한다")
+        void shouldClearProvisionedFlagWhenProvisioned() {
+            Member provisioned = existingMember.toBuilder().isProvisioned(true).build();
+            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(provisioned));
+            when(memberPort.save(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Boolean result = memberCommandService.changeEmail(memberId, "new@test.com");
+
+            assertThat(result).isTrue();
+            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
+            verify(memberPort).save(captor.capture());
+            Member saved = captor.getValue();
+            assertThat(saved.getEmail()).isEqualTo("new@test.com");
+            assertThat(saved.getIsProvisioned()).isFalse();
+        }
+
+        @Test
+        @DisplayName("일반 회원이면 이메일 변경 시 isProvisioned가 false 그대로 유지된다")
+        void shouldKeepProvisionedFalseForNormalMember() {
+            when(memberPort.findById(memberUuid)).thenReturn(Optional.of(existingMember));
+            when(memberPort.save(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            memberCommandService.changeEmail(memberId, "new@test.com");
+
+            ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
+            verify(memberPort).save(captor.capture());
+            assertThat(captor.getValue().getIsProvisioned()).isFalse();
+        }
     }
 
     @Nested

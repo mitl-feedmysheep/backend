@@ -62,11 +62,12 @@ public class MemberCommandService implements MemberCommandUseCase {
                 Member member = memberPort.findById(memberId.getValue())
                                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
-                Member updated = member.toBuilder()
-                                .email(newEmail)
-                                .build();
+                Member.MemberBuilder<?, ?> builder = member.toBuilder().email(newEmail);
+                if (Boolean.TRUE.equals(member.getIsProvisioned())) {
+                        builder.isProvisioned(false);
+                }
 
-                memberPort.save(updated);
+                memberPort.save(builder.build());
                 return true;
         }
 
@@ -100,4 +101,5 @@ public class MemberCommandService implements MemberCommandUseCase {
 
                 memberPort.save(updated);
         }
+
 }
