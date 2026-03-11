@@ -50,4 +50,7 @@ public class EventJpaEntity extends BaseEntity {
 
     @Column(length = 200)
     private String location;
+
+    @Column(name = "color", length = 20)
+    private String color;
 }

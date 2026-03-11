@@ -24,6 +24,7 @@ public class EventResponse {
     private final String startTime;
     private final String endTime;
     private final String location;
+    private final String color;
 
     public static EventResponse from(Event event) {
         return EventResponse.builder()
@@ -35,6 +36,7 @@ public class EventResponse {
                 .startTime(formatTime(event.getStartTime()))
                 .endTime(formatTime(event.getEndTime()))
                 .location(event.getLocation())
+                .color(event.getColor() != null ? event.getColor().name() : null)
                 .build();
     }
 

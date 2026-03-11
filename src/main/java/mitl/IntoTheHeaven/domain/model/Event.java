@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.domain.enums.EntityType;
+import mitl.IntoTheHeaven.domain.enums.EventColor;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
 @Getter
@@ -21,6 +22,7 @@ public class Event extends AggregateRoot<Event, EventId> {
     private final LocalTime startTime;
     private final LocalTime endTime;
     private final String location;
+    private final EventColor color;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime deletedAt;

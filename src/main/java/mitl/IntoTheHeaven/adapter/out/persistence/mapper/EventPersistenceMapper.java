@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.EventJpaEntity;
+import mitl.IntoTheHeaven.domain.enums.EventColor;
 import mitl.IntoTheHeaven.domain.model.Event;
 import mitl.IntoTheHeaven.domain.model.EventId;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class EventPersistenceMapper {
                 .startTime(parseTime(entity.getStartTime()))
                 .endTime(parseTime(entity.getEndTime()))
                 .location(entity.getLocation())
+                .color(parseColor(entity.getColor()))
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .deletedAt(entity.getDeletedAt())
@@ -49,6 +51,7 @@ public class EventPersistenceMapper {
                 .startTime(formatTime(domain.getStartTime()))
                 .endTime(formatTime(domain.getEndTime()))
                 .location(domain.getLocation())
+                .color(domain.getColor() != null ? domain.getColor().name() : null)
                 .build();
     }
 
@@ -61,5 +64,12 @@ public class EventPersistenceMapper {
 
     private String formatTime(LocalTime time) {
         return time != null ? time.format(TIME_FORMATTER) : null;
+    }
+
+    private EventColor parseColor(String color) {
+        if (color == null || color.isBlank()) {
+            return null;
+        }
+        return EventColor.valueOf(color);
     }
 }
