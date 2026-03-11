@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.port.out;
 
 import mitl.IntoTheHeaven.domain.model.Gathering;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,8 +14,10 @@ public interface GatheringPort {
     Optional<Gathering> findDetailById(UUID gatheringId);
 
     Gathering save(Gathering gathering, UUID groupId);
-    
+
     Gathering save(Gathering gathering);
-    
+
     List<GatheringMemberData> findGatheringMemberDataByGatheringIds(List<UUID> gatheringIds);
+
+    List<HomeSummaryData> findRecentGatheringMemberData(UUID memberId, LocalDate since, LocalDate until);
 } 

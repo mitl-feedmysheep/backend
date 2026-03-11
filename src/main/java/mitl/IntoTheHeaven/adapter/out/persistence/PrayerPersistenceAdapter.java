@@ -71,6 +71,14 @@ public class PrayerPersistenceAdapter implements PrayerPort {
     }
 
     @Override
+    public List<Prayer> findByGatheringMemberIds(List<UUID> gatheringMemberIds) {
+        if (gatheringMemberIds.isEmpty()) return List.of();
+        return prayerJpaRepository.findAllByGatheringMemberIdIn(gatheringMemberIds).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Prayer> findAllByMemberId(UUID memberId) {
         List<Tuple> results = queryFactory
                 .select(

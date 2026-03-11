@@ -12,4 +12,6 @@ import java.util.UUID;
 public interface PrayerJpaRepository extends JpaRepository<PrayerJpaEntity, UUID> {
 
     List<PrayerJpaEntity> findAllByMemberIdIn(List<UUID> memberIds);
+
+    List<PrayerJpaEntity> findAllByGatheringMemberIdIn(List<UUID> gatheringMemberIds);
 }

@@ -8,7 +8,9 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.auth.ChangePasswordRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.CompleteProvisionRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.MeResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.member.UpdateMyProfileRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeSummaryResponse;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.HomeQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.MemberQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.dto.AdminMeResponse;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
@@ -38,12 +40,20 @@ public class MemberController {
 
     private final MemberQueryUseCase memberQueryUseCase;
     private final MemberCommandUseCase memberCommandUseCase;
+    private final HomeQueryUseCase homeQueryUseCase;
 
     @Operation(summary = "Get My Info", description = "Retrieves the information of the currently logged-in user.")
     @GetMapping("/me")
     public ResponseEntity<MeResponse> getMe(@AuthenticationPrincipal String memberId) {
         Member member = memberQueryUseCase.getMemberById(MemberId.from(UUID.fromString(memberId)));
         MeResponse response = MeResponse.from(member);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get Home Summary", description = "Retrieves weekly summary (goals and prayers) from recent gatherings.")
+    @GetMapping("/me/home-summary")
+    public ResponseEntity<HomeSummaryResponse> getHomeSummary(@AuthenticationPrincipal String memberId) {
+        HomeSummaryResponse response = homeQueryUseCase.getHomeSummary(MemberId.from(UUID.fromString(memberId)));
         return ResponseEntity.ok(response);
     }
 

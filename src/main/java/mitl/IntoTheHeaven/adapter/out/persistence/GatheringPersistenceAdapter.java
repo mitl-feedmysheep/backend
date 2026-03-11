@@ -8,9 +8,11 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.GatheringJpaReposit
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GatheringMemberJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.GatheringMemberData;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
+import mitl.IntoTheHeaven.application.port.out.HomeSummaryData;
 import mitl.IntoTheHeaven.domain.model.Gathering;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,6 +54,11 @@ public class GatheringPersistenceAdapter implements GatheringPort {
         GatheringJpaEntity entity = gatheringPersistenceMapper.toEntity(gathering, existingEntity.getGroup());
         GatheringJpaEntity savedEntity = gatheringJpaRepository.save(entity);
         return gatheringPersistenceMapper.toDomain(savedEntity);
+    }
+
+    @Override
+    public List<HomeSummaryData> findRecentGatheringMemberData(UUID memberId, LocalDate since, LocalDate until) {
+        return gatheringJpaRepository.findRecentGatheringMemberData(memberId, since, until);
     }
 
     @Override

@@ -16,4 +16,6 @@ public interface PrayerPort {
     Prayer save(Prayer prayer);
 
     List<Prayer> findAllByMemberId(UUID memberId);
+
+    List<Prayer> findByGatheringMemberIds(List<UUID> gatheringMemberIds);
 }
