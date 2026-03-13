@@ -34,6 +34,13 @@ public class ChurchMemberRequestJpaEntity extends BaseEntity {
     private ChurchJpaEntity church;
 
     /**
+     * 희망 부서 (nullable — 부서 모를 때)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private DepartmentJpaEntity department;
+
+    /**
      * Request status (PENDING, ACCEPTED, DECLINED)
      */
     @Enumerated(EnumType.STRING)

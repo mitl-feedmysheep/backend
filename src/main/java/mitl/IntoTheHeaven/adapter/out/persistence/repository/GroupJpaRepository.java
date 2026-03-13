@@ -16,4 +16,6 @@ public interface GroupJpaRepository extends JpaRepository<GroupJpaEntity, UUID> 
     @EntityGraph(attributePaths = {"groupMembers", "groupMembers.member"})
     List<GroupJpaEntity> findAllByChurchIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             UUID churchId, LocalDate yearEnd, LocalDate yearStart);
+
+    List<GroupJpaEntity> findAllByDepartmentId(UUID departmentId);
 }

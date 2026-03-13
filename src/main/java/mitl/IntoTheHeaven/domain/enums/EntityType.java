@@ -9,4 +9,5 @@ public enum EntityType {
     MEMBER,      // MEMBER
     CHURCH,      // CHURCH
     VISIT,       // VISIT
+    DEPARTMENT,  // DEPARTMENT
 }

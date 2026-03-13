@@ -19,6 +19,7 @@ public class Group extends AggregateRoot<Group, GroupId> {
     private final String name;
     private final String description;
     private final ChurchId churchId;
+    private final DepartmentId departmentId;
     private final GroupType type;
     private final LocalDate startDate;
     private final LocalDate endDate;

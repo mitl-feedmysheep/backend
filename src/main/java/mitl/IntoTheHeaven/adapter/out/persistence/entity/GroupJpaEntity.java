@@ -49,6 +49,13 @@ public class GroupJpaEntity extends BaseEntity {
     private ChurchJpaEntity church;
 
     /**
+     * 부서
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private DepartmentJpaEntity department;
+
+    /**
      * 시작 날짜
      */
     @Column(name = "start_date", nullable = false)

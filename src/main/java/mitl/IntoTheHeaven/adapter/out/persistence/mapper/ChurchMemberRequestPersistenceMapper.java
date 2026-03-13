@@ -4,6 +4,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberRequestJpaE
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberRequest;
 import mitl.IntoTheHeaven.domain.model.ChurchMemberRequestId;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ public class ChurchMemberRequestPersistenceMapper {
                 .id(ChurchMemberRequestId.from(entity.getId()))
                 .memberId(MemberId.from(entity.getMember().getId()))
                 .churchId(ChurchId.from(entity.getChurch().getId()))
+                .departmentId(entity.getDepartment() != null ? DepartmentId.from(entity.getDepartment().getId()) : null)
                 .status(entity.getStatus())
                 .churchName(entity.getChurch().getName())
                 .createdAt(entity.getCreatedAt())

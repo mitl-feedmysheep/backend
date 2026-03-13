@@ -7,6 +7,8 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.EventJpaEntity;
 import mitl.IntoTheHeaven.domain.enums.EventColor;
 import mitl.IntoTheHeaven.domain.model.Event;
 import mitl.IntoTheHeaven.domain.model.EventId;
+
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
