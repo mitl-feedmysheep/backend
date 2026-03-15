@@ -4,8 +4,8 @@
   "settings": {
     "width": 20000,
     "height": 20000,
-    "scrollTop": -4519.5758,
-    "scrollLeft": -4215.8814,
+    "scrollTop": -4552.0757,
+    "scrollLeft": -4223.3814,
     "zoomLevel": 0.73,
     "show": 431,
     "database": 4,
@@ -880,7 +880,7 @@
           "x": 3700,
           "y": 5200,
           "zIndex": 1300,
-          "widthName": 80,
+          "widthName": 77,
           "widthComment": 60,
           "color": "#4CAF50"
         },
@@ -5342,7 +5342,7 @@
         "ui": {
           "keys": 1,
           "widthName": 60,
-          "widthComment": 82,
+          "widthComment": 81,
           "widthDataType": 60,
           "widthDefault": 60
         },
@@ -5361,8 +5361,8 @@
         "options": 8,
         "ui": {
           "keys": 2,
-          "widthName": 66,
-          "widthComment": 90,
+          "widthName": 65,
+          "widthComment": 92,
           "widthDataType": 60,
           "widthDefault": 60
         },
@@ -5401,7 +5401,7 @@
         "options": 8,
         "ui": {
           "keys": 0,
-          "widthName": 78,
+          "widthName": 76,
           "widthComment": 60,
           "widthDataType": 60,
           "widthDefault": 60
@@ -5423,7 +5423,7 @@
           "keys": 0,
           "widthName": 60,
           "widthComment": 60,
-          "widthDataType": 82,
+          "widthDataType": 83,
           "widthDefault": 60
         },
         "meta": {
@@ -5441,9 +5441,9 @@
         "options": 0,
         "ui": {
           "keys": 0,
-          "widthName": 82,
+          "widthName": 75,
           "widthComment": 60,
-          "widthDataType": 82,
+          "widthDataType": 83,
           "widthDefault": 60
         },
         "meta": {
@@ -5482,7 +5482,7 @@
         "ui": {
           "keys": 0,
           "widthName": 60,
-          "widthComment": 75,
+          "widthComment": 71,
           "widthDataType": 60,
           "widthDefault": 60
         },
@@ -5787,7 +5787,7 @@
           "columnIds": [
             "nYYNgSrqd4I9Rg2GBN1aA"
           ],
-          "x": 3394.6678,
+          "x": 3265.4178,
           "y": 4751.3566,
           "direction": 8
         },
@@ -6067,9 +6067,9 @@
           "columnIds": [
             "nYYNgSrqd4I9Rg2GBN1aA"
           ],
-          "x": 3265.4178,
-          "y": 4457.3566,
-          "direction": 4
+          "x": 3523.9178,
+          "y": 4751.3566,
+          "direction": 8
         },
         "end": {
           "tableId": "sn_table_sermon_note_001",
@@ -6077,8 +6077,8 @@
             "sn_col_member_id_001"
           ],
           "x": 3700,
-          "y": 5260,
-          "direction": 4
+          "y": 5360,
+          "direction": 1
         },
         "meta": {
           "updateAt": 1773100000000,

@@ -43,3 +43,4 @@ src/main/generated
 .env.*
 .env.doppler
 src/main/resources/application-local.properties
+src/main/resources/application-test.properties
