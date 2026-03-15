@@ -4,6 +4,9 @@ import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.DepartmentRole;
 import mitl.IntoTheHeaven.domain.model.Department;
 import mitl.IntoTheHeaven.domain.model.DepartmentMember;
+import mitl.IntoTheHeaven.domain.model.Member;
+
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,4 +43,8 @@ public interface DepartmentPort {
     long countActiveMembersByDepartmentId(UUID departmentId);
 
     long countGroupsByDepartmentId(UUID departmentId);
+
+    List<Member> findBirthdayMembersByDepartmentIdAndMonth(UUID departmentId, int month);
+
+    List<MemberWithGroups> findMembersByDepartmentIdAndSearch(UUID departmentId, String searchText);
 }

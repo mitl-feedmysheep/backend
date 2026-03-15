@@ -7,7 +7,9 @@ import mitl.IntoTheHeaven.domain.enums.DepartmentRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Department;
 import mitl.IntoTheHeaven.domain.model.DepartmentId;
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.domain.model.DepartmentMember;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,5 +55,27 @@ public class DepartmentQueryService implements DepartmentQueryUseCase {
                         departmentId.getValue(), memberId.getValue())
                 .map(DepartmentMember::getRole)
                 .orElse(null);
+    }
+
+    @Override
+    public List<Member> getBirthdayMembers(DepartmentId departmentId, int month) {
+        return departmentPort.findBirthdayMembersByDepartmentIdAndMonth(departmentId.getValue(), month);
+    }
+
+    @Override
+    public boolean hasElevatedSearchAccess(MemberId memberId, DepartmentId departmentId) {
+        DepartmentRole role = getCurrentRole(memberId, departmentId);
+        if (role == null) {
+            throw new IllegalArgumentException("해당 부서의 멤버가 아닙니다.");
+        }
+        return role == DepartmentRole.LEADER || role == DepartmentRole.ADMIN;
+    }
+
+    @Override
+    public List<MemberWithGroups> searchDepartmentMembers(DepartmentId departmentId, String searchText) {
+        if (searchText == null || searchText.trim().isEmpty()) {
+            return List.of();
+        }
+        return departmentPort.findMembersByDepartmentIdAndSearch(departmentId.getValue(), searchText.trim());
     }
 }

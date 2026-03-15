@@ -1,24 +1,39 @@
 package mitl.IntoTheHeaven.adapter.out.persistence;
 
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.DepartmentPersistenceMapper;
+import mitl.IntoTheHeaven.adapter.out.persistence.mapper.MemberPersistenceMapper;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.GroupJpaRepository;
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.DepartmentRole;
 import mitl.IntoTheHeaven.domain.model.Department;
 import mitl.IntoTheHeaven.domain.model.DepartmentMember;
+import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
+import mitl.IntoTheHeaven.domain.model.Member;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QDepartmentMemberJpaEntity.departmentMemberJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QGroupMemberJpaEntity.groupMemberJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QGroupJpaEntity.groupJpaEntity;
+import static mitl.IntoTheHeaven.adapter.out.persistence.entity.QMemberJpaEntity.memberJpaEntity;
 
 @Component
 @RequiredArgsConstructor
@@ -28,6 +43,8 @@ public class DepartmentPersistenceAdapter implements DepartmentPort {
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
     private final GroupJpaRepository groupJpaRepository;
     private final DepartmentPersistenceMapper departmentPersistenceMapper;
+    private final MemberPersistenceMapper memberPersistenceMapper;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Department save(Department department) {
@@ -156,5 +173,83 @@ public class DepartmentPersistenceAdapter implements DepartmentPort {
     @Override
     public long countGroupsByDepartmentId(UUID departmentId) {
         return groupJpaRepository.findAllByDepartmentId(departmentId).size();
+    }
+
+    @Override
+    public List<Member> findBirthdayMembersByDepartmentIdAndMonth(UUID departmentId, int month) {
+        List<MemberJpaEntity> members = queryFactory
+                .select(memberJpaEntity)
+                .from(departmentMemberJpaEntity)
+                .join(departmentMemberJpaEntity.member, memberJpaEntity)
+                .where(
+                        departmentMemberJpaEntity.department.id.eq(departmentId),
+                        departmentMemberJpaEntity.status.eq(DepartmentMemberStatus.ACTIVE),
+                        memberJpaEntity.birthday.isNotNull(),
+                        Expressions.numberTemplate(Integer.class,
+                                "MONTH({0})", memberJpaEntity.birthday).eq(month))
+                .orderBy(Expressions.numberTemplate(Integer.class,
+                        "DAY({0})", memberJpaEntity.birthday).asc())
+                .fetch();
+
+        return members.stream()
+                .map(memberPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<MemberWithGroups> findMembersByDepartmentIdAndSearch(UUID departmentId, String searchText) {
+        int currentYear = LocalDate.now().getYear();
+
+        List<DepartmentMemberJpaEntity> deptMemberEntities = queryFactory
+                .selectFrom(departmentMemberJpaEntity)
+                .join(departmentMemberJpaEntity.member, memberJpaEntity).fetchJoin()
+                .leftJoin(memberJpaEntity.groupMembers, groupMemberJpaEntity).fetchJoin()
+                .leftJoin(groupMemberJpaEntity.group, groupJpaEntity).fetchJoin()
+                .where(
+                        departmentMemberJpaEntity.department.id.eq(departmentId),
+                        departmentMemberJpaEntity.status.eq(DepartmentMemberStatus.ACTIVE),
+                        groupMemberJpaEntity.isNull()
+                                .or(groupJpaEntity.department.id.eq(departmentId)),
+                        memberJpaEntity.name.contains(searchText)
+                                .or(memberJpaEntity.phone.contains(searchText)))
+                .orderBy(memberJpaEntity.birthday.asc())
+                .distinct()
+                .fetch();
+
+        return deptMemberEntities.stream()
+                .map(deptMemberEntity -> {
+                    MemberJpaEntity memberEntity = deptMemberEntity.getMember();
+
+                    List<MemberWithGroups.GroupInfo> groups = memberEntity.getGroupMembers()
+                            .stream()
+                            .filter(gm -> gm.getGroup() != null
+                                    && gm.getGroup().getDepartment() != null
+                                    && gm.getGroup().getDepartment().getId().equals(departmentId)
+                                    && gm.getGroup().getEndDate() != null
+                                    && gm.getGroup().getEndDate().getYear() == currentYear)
+                            .map(gm -> MemberWithGroups.GroupInfo.builder()
+                                    .groupId(gm.getGroup().getId())
+                                    .groupName(gm.getGroup().getName())
+                                    .role(gm.getRole())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    return MemberWithGroups.builder()
+                            .id(MemberId.from(memberEntity.getId()))
+                            .churchMemberId(deptMemberEntity.getId())
+                            .name(memberEntity.getName())
+                            .email(memberEntity.getEmail())
+                            .sex(memberEntity.getSex())
+                            .birthday(memberEntity.getBirthday())
+                            .phone(memberEntity.getPhone())
+                            .address(memberEntity.getAddress())
+                            .description(memberEntity.getDescription())
+                            .occupation(memberEntity.getOccupation())
+                            .baptismStatus(memberEntity.getBaptismStatus())
+                            .mbti(memberEntity.getMbti())
+                            .groups(groups)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

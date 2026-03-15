@@ -17,4 +17,6 @@ public interface GroupPort {
     GroupMember findGroupMemberByGroupMemberId(UUID groupMemberId);
     GroupMember updateGroupMemberRole(UUID groupMemberId, GroupMemberRole newRole);
     List<GroupWithLeader> findGroupsWithLeaderByChurchId(UUID churchId);
+    List<Group> findGroupsByMemberIdAndDepartmentId(UUID memberId, UUID departmentId);
+    List<GroupWithLeader> findGroupsWithLeaderByDepartmentId(UUID departmentId);
 }

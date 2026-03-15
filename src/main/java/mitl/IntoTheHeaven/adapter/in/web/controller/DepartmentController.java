@@ -4,19 +4,28 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.BirthdayMemberResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.MemberSearchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.AddDepartmentMemberRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.ChangeDepartmentMemberRoleRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.CreateDepartmentRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.DepartmentMemberResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.DepartmentResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.department.UpdateDepartmentRequest;
+import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupWithLeaderResponse;
+import mitl.IntoTheHeaven.application.dto.GroupWithLeader;
+import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.in.command.DepartmentCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.DepartmentQueryUseCase;
+import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.domain.enums.DepartmentRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Department;
 import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.DepartmentMember;
+import mitl.IntoTheHeaven.domain.model.Group;
+import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.global.aop.RequireChurchRole;
 import mitl.IntoTheHeaven.global.aop.RequireDepartmentRole;
@@ -38,6 +47,7 @@ public class DepartmentController {
 
     private final DepartmentQueryUseCase departmentQueryUseCase;
     private final DepartmentCommandUseCase departmentCommandUseCase;
+    private final GroupQueryUseCase groupQueryUseCase;
 
     @Operation(summary = "Get departments by church", description = "부서 목록 조회 (가입 시에도 사용)")
     @GetMapping("/churches/{churchId}/departments")
@@ -120,6 +130,65 @@ public class DepartmentController {
         DepartmentMember dm = departmentCommandUseCase.changeMemberRole(
                 DepartmentId.from(departmentId), MemberId.from(memberId), request.getRole());
         return ResponseEntity.ok(DepartmentMemberResponse.from(dm));
+    }
+
+    @Operation(summary = "Get my groups in department", description = "부서 내 내가 속한 소그룹 목록")
+    @GetMapping("/departments/{departmentId}/groups")
+    public ResponseEntity<List<GroupResponse>> getGroupsInDepartment(
+            @PathVariable("departmentId") UUID departmentId,
+            @AuthenticationPrincipal String memberId) {
+        List<Group> groups = groupQueryUseCase.getGroupsByMemberIdAndDepartmentId(
+                MemberId.from(UUID.fromString(memberId)),
+                DepartmentId.from(departmentId));
+        List<GroupResponse> response = groups.stream()
+                .map(g -> GroupResponse.from(g,
+                        groupQueryUseCase.getGroupMembersByGroupId(g.getId().getValue())
+                                .size()))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get groups with leaders in department", description = "부서 내 전체 소그룹 + 리더 정보")
+    @GetMapping("/departments/{departmentId}/groups-with-leaders")
+    public ResponseEntity<List<GroupWithLeaderResponse>> getGroupsWithLeadersInDepartment(
+            @PathVariable("departmentId") UUID departmentId) {
+        List<GroupWithLeader> groups = groupQueryUseCase.getGroupsWithLeaderByDepartmentId(
+                DepartmentId.from(departmentId));
+        return ResponseEntity.ok(GroupWithLeaderResponse.from(groups));
+    }
+
+    @Operation(summary = "Search members in department", description = "부서 내 멤버 검색 (교적부)")
+    @GetMapping("/departments/{departmentId}/members/search")
+    public ResponseEntity<List<MemberSearchResponse>> searchMembersInDepartment(
+            @PathVariable("departmentId") UUID departmentId,
+            @RequestParam("searchText") String searchText,
+            @AuthenticationPrincipal String memberId) {
+        MemberId requesterId = MemberId.from(UUID.fromString(memberId));
+        DepartmentId deptId = DepartmentId.from(departmentId);
+
+        boolean isLeader = departmentQueryUseCase.hasElevatedSearchAccess(requesterId, deptId);
+
+        List<MemberWithGroups> members = departmentQueryUseCase.searchDepartmentMembers(deptId, searchText);
+        List<MemberSearchResponse> response = MemberSearchResponse.from(members, isLeader);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get birthday members in department", description = "부서 내 해당 월 생일자 조회")
+    @GetMapping("/departments/{departmentId}/birthday-members")
+    public ResponseEntity<List<BirthdayMemberResponse>> getBirthdayMembers(
+            @PathVariable("departmentId") UUID departmentId,
+            @RequestParam("month") int month) {
+        List<Member> members = departmentQueryUseCase.getBirthdayMembers(
+                DepartmentId.from(departmentId), month);
+        List<BirthdayMemberResponse> response = members.stream()
+                .map(m -> BirthdayMemberResponse.builder()
+                        .memberId(m.getId().getValue())
+                        .name(m.getName())
+                        .birthday(m.getBirthday())
+                        .sex(m.getSex())
+                        .build())
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Get my departments in a church", description = "내가 속한 부서 목록")
