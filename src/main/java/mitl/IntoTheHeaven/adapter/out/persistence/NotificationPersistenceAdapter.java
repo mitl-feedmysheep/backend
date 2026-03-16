@@ -35,8 +35,21 @@ public class NotificationPersistenceAdapter implements NotificationPort {
     }
 
     @Override
+    public List<Notification> findByReceiverIdAndDepartmentId(UUID receiverId, UUID departmentId) {
+        return notificationJpaRepository.findAllByReceiverIdAndDepartmentIdOrderByCreatedAtDesc(receiverId, departmentId)
+                .stream()
+                .map(notificationPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public long countUnreadByReceiverId(UUID receiverId) {
         return notificationJpaRepository.countByReceiverIdAndIsReadFalse(receiverId);
+    }
+
+    @Override
+    public long countUnreadByReceiverIdAndDepartmentId(UUID receiverId, UUID departmentId) {
+        return notificationJpaRepository.countByReceiverIdAndDepartmentIdAndIsReadFalse(receiverId, departmentId);
     }
 
     @Override

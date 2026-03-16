@@ -2,10 +2,12 @@ package mitl.IntoTheHeaven.application.service.query;
 
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,64 +30,118 @@ class NotificationQueryServiceTest {
     @InjectMocks
     private NotificationQueryService notificationQueryService;
 
-    @Test
-    @DisplayName("내 알림 목록 조회")
-    void getMyNotifications() {
-        UUID memberUuid = UUID.randomUUID();
-        MemberId memberId = MemberId.from(memberUuid);
+    @Nested
+    @DisplayName("getMyNotifications")
+    class GetMyNotifications {
 
-        Notification n1 = Notification.builder()
-                .id(NotificationId.from(UUID.randomUUID()))
-                .receiverId(memberId)
-                .type(NotificationType.ADMIN_COMMENT)
-                .entityType("GATHERING")
-                .entityId(UUID.randomUUID().toString())
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        @Test
+        @DisplayName("departmentId가 null이면 전체 알림 조회")
+        void withoutDepartmentId() {
+            UUID memberUuid = UUID.randomUUID();
+            MemberId memberId = MemberId.from(memberUuid);
 
-        Notification n2 = Notification.builder()
-                .id(NotificationId.from(UUID.randomUUID()))
-                .receiverId(memberId)
-                .type(NotificationType.ADMIN_COMMENT)
-                .entityType("GATHERING")
-                .entityId(UUID.randomUUID().toString())
-                .isRead(true)
-                .createdAt(LocalDateTime.now().minusHours(1))
-                .build();
+            Notification n1 = Notification.builder()
+                    .id(NotificationId.from(UUID.randomUUID()))
+                    .receiverId(memberId)
+                    .type(NotificationType.ADMIN_COMMENT)
+                    .entityType("GATHERING")
+                    .entityId(UUID.randomUUID().toString())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
 
-        when(notificationPort.findByReceiverId(memberUuid)).thenReturn(List.of(n1, n2));
+            Notification n2 = Notification.builder()
+                    .id(NotificationId.from(UUID.randomUUID()))
+                    .receiverId(memberId)
+                    .type(NotificationType.ADMIN_COMMENT)
+                    .entityType("GATHERING")
+                    .entityId(UUID.randomUUID().toString())
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now().minusHours(1))
+                    .build();
 
-        List<Notification> result = notificationQueryService.getMyNotifications(memberId);
+            when(notificationPort.findByReceiverId(memberUuid)).thenReturn(List.of(n1, n2));
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).isRead()).isFalse();
-        assertThat(result.get(1).isRead()).isTrue();
+            List<Notification> result = notificationQueryService.getMyNotifications(memberId, null);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).isRead()).isFalse();
+            assertThat(result.get(1).isRead()).isTrue();
+        }
+
+        @Test
+        @DisplayName("departmentId가 있으면 해당 부서 알림만 조회")
+        void withDepartmentId() {
+            UUID memberUuid = UUID.randomUUID();
+            UUID departmentUuid = UUID.randomUUID();
+            MemberId memberId = MemberId.from(memberUuid);
+            DepartmentId departmentId = DepartmentId.from(departmentUuid);
+
+            Notification n1 = Notification.builder()
+                    .id(NotificationId.from(UUID.randomUUID()))
+                    .receiverId(memberId)
+                    .departmentId(departmentId)
+                    .type(NotificationType.ADMIN_COMMENT)
+                    .entityType("GATHERING")
+                    .entityId(UUID.randomUUID().toString())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            when(notificationPort.findByReceiverIdAndDepartmentId(memberUuid, departmentUuid))
+                    .thenReturn(List.of(n1));
+
+            List<Notification> result = notificationQueryService.getMyNotifications(memberId, departmentId);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getDepartmentId()).isEqualTo(departmentId);
+        }
+
+        @Test
+        @DisplayName("알림이 없으면 빈 목록 반환")
+        void empty() {
+            UUID memberUuid = UUID.randomUUID();
+            MemberId memberId = MemberId.from(memberUuid);
+
+            when(notificationPort.findByReceiverId(memberUuid)).thenReturn(List.of());
+
+            List<Notification> result = notificationQueryService.getMyNotifications(memberId, null);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    @Test
-    @DisplayName("미읽음 알림 개수 조회")
-    void getUnreadCount() {
-        UUID memberUuid = UUID.randomUUID();
-        MemberId memberId = MemberId.from(memberUuid);
+    @Nested
+    @DisplayName("getUnreadCount")
+    class GetUnreadCount {
 
-        when(notificationPort.countUnreadByReceiverId(memberUuid)).thenReturn(3L);
+        @Test
+        @DisplayName("departmentId가 null이면 전체 미읽음 개수")
+        void withoutDepartmentId() {
+            UUID memberUuid = UUID.randomUUID();
+            MemberId memberId = MemberId.from(memberUuid);
 
-        long count = notificationQueryService.getUnreadCount(memberId);
+            when(notificationPort.countUnreadByReceiverId(memberUuid)).thenReturn(3L);
 
-        assertThat(count).isEqualTo(3);
-    }
+            long count = notificationQueryService.getUnreadCount(memberId, null);
 
-    @Test
-    @DisplayName("알림이 없으면 빈 목록 반환")
-    void getMyNotifications_empty() {
-        UUID memberUuid = UUID.randomUUID();
-        MemberId memberId = MemberId.from(memberUuid);
+            assertThat(count).isEqualTo(3);
+        }
 
-        when(notificationPort.findByReceiverId(memberUuid)).thenReturn(List.of());
+        @Test
+        @DisplayName("departmentId가 있으면 해당 부서 미읽음 개수")
+        void withDepartmentId() {
+            UUID memberUuid = UUID.randomUUID();
+            UUID departmentUuid = UUID.randomUUID();
+            MemberId memberId = MemberId.from(memberUuid);
+            DepartmentId departmentId = DepartmentId.from(departmentUuid);
 
-        List<Notification> result = notificationQueryService.getMyNotifications(memberId);
+            when(notificationPort.countUnreadByReceiverIdAndDepartmentId(memberUuid, departmentUuid))
+                    .thenReturn(1L);
 
-        assertThat(result).isEmpty();
+            long count = notificationQueryService.getUnreadCount(memberId, departmentId);
+
+            assertThat(count).isEqualTo(1);
+        }
     }
 }

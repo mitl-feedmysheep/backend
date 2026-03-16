@@ -4738,9 +4738,9 @@
         "comment": "마스터 패스워드 ID",
         "dataType": "CHAR(36)",
         "default": "",
-        "options": 8,
+        "options": 10,
         "ui": {
-          "keys": 0,
+          "keys": 1,
           "widthName": 60,
           "widthComment": 93,
           "widthDataType": 60,

@@ -19,6 +19,7 @@ public interface GatheringJpaRepository extends JpaRepository<GatheringJpaEntity
 
     @EntityGraph(attributePaths = {
             "group",
+            "group.department",
             "gatheringMembers",
             "gatheringMembers.groupMember",
             "gatheringMembers.groupMember.member",

@@ -44,6 +44,10 @@ public class NotificationJpaEntity extends BaseEntity {
     @JoinColumn(name = "sender_id")
     private MemberJpaEntity sender;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private DepartmentJpaEntity department;
+
     public void markAsRead() {
         this.isRead = true;
     }

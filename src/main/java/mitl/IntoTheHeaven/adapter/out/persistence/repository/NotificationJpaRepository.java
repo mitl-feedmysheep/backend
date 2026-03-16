@@ -12,7 +12,11 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationJpa
 
     List<NotificationJpaEntity> findAllByReceiverIdOrderByCreatedAtDesc(UUID receiverId);
 
+    List<NotificationJpaEntity> findAllByReceiverIdAndDepartmentIdOrderByCreatedAtDesc(UUID receiverId, UUID departmentId);
+
     long countByReceiverIdAndIsReadFalse(UUID receiverId);
+
+    long countByReceiverIdAndDepartmentIdAndIsReadFalse(UUID receiverId, UUID departmentId);
 
     boolean existsByReceiverIdAndTypeAndEntityTypeAndEntityIdAndIsReadFalse(
             UUID receiverId, String type, String entityType, String entityId);

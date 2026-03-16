@@ -1,8 +1,10 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.NotificationJpaEntity;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
@@ -24,15 +26,18 @@ class NotificationPersistenceMapperTest {
         UUID id = UUID.randomUUID();
         UUID receiverUuid = UUID.randomUUID();
         UUID senderUuid = UUID.randomUUID();
+        UUID departmentUuid = UUID.randomUUID();
         String entityId = UUID.randomUUID().toString();
 
         MemberJpaEntity receiver = MemberJpaEntity.builder().id(receiverUuid).build();
         MemberJpaEntity sender = MemberJpaEntity.builder().id(senderUuid).build();
+        DepartmentJpaEntity department = DepartmentJpaEntity.builder().id(departmentUuid).build();
 
         NotificationJpaEntity entity = NotificationJpaEntity.builder()
                 .id(id)
                 .receiver(receiver)
                 .sender(sender)
+                .department(department)
                 .type("ADMIN_COMMENT")
                 .description("청년 1조 · 1월 15일")
                 .entityType("GATHERING")
@@ -46,6 +51,7 @@ class NotificationPersistenceMapperTest {
         assertThat(domain.getId().getValue()).isEqualTo(id);
         assertThat(domain.getReceiverId().getValue()).isEqualTo(receiverUuid);
         assertThat(domain.getSenderId().getValue()).isEqualTo(senderUuid);
+        assertThat(domain.getDepartmentId().getValue()).isEqualTo(departmentUuid);
         assertThat(domain.getType()).isEqualTo(NotificationType.ADMIN_COMMENT);
         assertThat(domain.getDescription()).isEqualTo("청년 1조 · 1월 15일");
         assertThat(domain.getEntityType()).isEqualTo("GATHERING");
@@ -66,6 +72,7 @@ class NotificationPersistenceMapperTest {
                 .id(id)
                 .receiver(receiver)
                 .sender(null)
+                .department(null)
                 .type("ADMIN_COMMENT")
                 .entityType("GATHERING")
                 .entityId("entity-123")
@@ -75,6 +82,7 @@ class NotificationPersistenceMapperTest {
         Notification domain = mapper.toDomain(entity);
 
         assertThat(domain.getSenderId()).isNull();
+        assertThat(domain.getDepartmentId()).isNull();
         assertThat(domain.isRead()).isTrue();
     }
 
@@ -84,12 +92,14 @@ class NotificationPersistenceMapperTest {
         UUID id = UUID.randomUUID();
         UUID receiverUuid = UUID.randomUUID();
         UUID senderUuid = UUID.randomUUID();
+        UUID departmentUuid = UUID.randomUUID();
         String entityId = UUID.randomUUID().toString();
 
         Notification domain = Notification.builder()
                 .id(NotificationId.from(id))
                 .receiverId(MemberId.from(receiverUuid))
                 .senderId(MemberId.from(senderUuid))
+                .departmentId(DepartmentId.from(departmentUuid))
                 .type(NotificationType.ADMIN_COMMENT)
                 .description("청년 1조 · 1월 15일")
                 .entityType("GATHERING")
@@ -104,6 +114,7 @@ class NotificationPersistenceMapperTest {
         assertThat(entity.getId()).isEqualTo(id);
         assertThat(entity.getReceiver().getId()).isEqualTo(receiverUuid);
         assertThat(entity.getSender().getId()).isEqualTo(senderUuid);
+        assertThat(entity.getDepartment().getId()).isEqualTo(departmentUuid);
         assertThat(entity.getType()).isEqualTo("ADMIN_COMMENT");
         assertThat(entity.getDescription()).isEqualTo("청년 1조 · 1월 15일");
         assertThat(entity.getEntityType()).isEqualTo("GATHERING");
@@ -113,12 +124,13 @@ class NotificationPersistenceMapperTest {
     }
 
     @Test
-    @DisplayName("Domain -> JPA Entity 변환 (sender가 null인 경우)")
-    void toEntity_nullSender() {
+    @DisplayName("Domain -> JPA Entity 변환 (sender, department가 null인 경우)")
+    void toEntity_nullSenderAndDepartment() {
         Notification domain = Notification.builder()
                 .id(NotificationId.from(UUID.randomUUID()))
                 .receiverId(MemberId.from(UUID.randomUUID()))
                 .senderId(null)
+                .departmentId(null)
                 .type(NotificationType.ADMIN_COMMENT)
                 .entityType("GATHERING")
                 .entityId("entity-123")
@@ -129,6 +141,7 @@ class NotificationPersistenceMapperTest {
         NotificationJpaEntity entity = mapper.toEntity(domain);
 
         assertThat(entity.getSender()).isNull();
+        assertThat(entity.getDepartment()).isNull();
     }
 
     @Test
@@ -141,6 +154,7 @@ class NotificationPersistenceMapperTest {
                 .id(id)
                 .receiver(receiver)
                 .sender(null)
+                .department(null)
                 .type("ADMIN_COMMENT")
                 .description(null)
                 .entityType("GATHERING")

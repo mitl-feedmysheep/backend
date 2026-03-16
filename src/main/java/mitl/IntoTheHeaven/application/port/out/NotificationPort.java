@@ -12,7 +12,11 @@ public interface NotificationPort {
 
     List<Notification> findByReceiverId(UUID receiverId);
 
+    List<Notification> findByReceiverIdAndDepartmentId(UUID receiverId, UUID departmentId);
+
     long countUnreadByReceiverId(UUID receiverId);
+
+    long countUnreadByReceiverIdAndDepartmentId(UUID receiverId, UUID departmentId);
 
     Optional<Notification> findById(UUID notificationId);
 
