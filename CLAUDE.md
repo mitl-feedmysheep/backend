@@ -8,9 +8,11 @@ Java 17 / Spring Boot 3.3.5 / Gradle / MySQL
 |------|------|
 | Member | 앱 사용자 (회원) |
 | Church | 교회 |
-| ChurchMember | 교회-회원 관계 (역할: MEMBER/LEADER/ADMIN/SUPER_ADMIN) |
+| ChurchMember | 교회-회원 관계 (역할: MEMBER/ADMIN/SUPER_ADMIN) |
 | ChurchMemberRequest | 교회 가입 요청 (PENDING/ACCEPTED/DECLINED) |
-| Group | 소그룹 (셀, 목장 등) |
+| Department | 부서 (청년부, 신혼부부부 등). 교회 내 데이터 격리 단위 |
+| DepartmentMember | 부서-회원 관계 (역할: MEMBER/LEADER/ADMIN, 상태: ACTIVE/GRADUATED) |
+| Group | 소그룹 (셀, 목장 등). 반드시 하나의 Department에 소속 |
 | GroupMember | 소그룹 소속 멤버 |
 | Gathering | 소그룹 모임 (출석, 기도제목 공유) |
 | GatheringMember | 모임 참석 기록 |
