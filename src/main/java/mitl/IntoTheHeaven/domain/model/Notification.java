@@ -13,6 +13,7 @@ public class Notification extends DomainEntity<Notification, NotificationId> {
 
     private final MemberId receiverId;
     private final MemberId senderId;
+    private final DepartmentId departmentId;
     private final NotificationType type;
     private final String description;
     private final String entityType;

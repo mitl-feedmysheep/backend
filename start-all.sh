@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Usage:
+#   ./start-all.sh        # 로컬 (local-mysql :3306)
+#   ./start-all.sh test   # 테스트 (test-mysql :3307)
+
+ENV=${1:-local}
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/.logs"
@@ -77,7 +83,7 @@ wait_for_pattern() {
 start_backend() {
     echo -e "${CYAN}[backend]${NC} Starting..."
     > "$LOG_DIR/backend.log"
-    (cd "$SCRIPT_DIR" && exec ./gradlew bootRun --args='--spring.profiles.active=local --server.port=8081' > "$LOG_DIR/backend.log" 2>&1) &
+    (cd "$SCRIPT_DIR" && exec ./gradlew bootRun --args="--spring.profiles.active=$ENV --server.port=8081" > "$LOG_DIR/backend.log" 2>&1) &
     BACKEND_PID=$!
     wait_for_pattern "$BACKEND_PID" "$LOG_DIR/backend.log" "backend" \
         "Started .* in .* seconds" "APPLICATION FAILED TO START\|BUILD FAILED" \
@@ -87,7 +93,11 @@ start_backend() {
 start_admin() {
     echo -e "${CYAN}[admin]${NC}   Starting..."
     > "$LOG_DIR/admin.log"
-    (cd "$PROJECT_ROOT/admin" && exec npm run dev > "$LOG_DIR/admin.log" 2>&1) &
+    if [ "$ENV" = "test" ]; then
+        (cd "$PROJECT_ROOT/admin" && exec npm run dev:test > "$LOG_DIR/admin.log" 2>&1) &
+    else
+        (cd "$PROJECT_ROOT/admin" && exec npm run dev > "$LOG_DIR/admin.log" 2>&1) &
+    fi
     ADMIN_PID=$!
     wait_for_pattern "$ADMIN_PID" "$LOG_DIR/admin.log" "admin" \
         "Ready in\|Local:" "error\|ERROR"
@@ -116,7 +126,11 @@ if [ -n "$PORTS_IN_USE" ]; then
 fi
 
 echo -e "${CYAN}===========================================${NC}"
+if [ "$ENV" = "test" ]; then
+echo -e "${YELLOW}  FeedMySheep - TEST MODE (DB :3307)${NC}"
+else
 echo -e "${CYAN}  FeedMySheep - Starting All Services${NC}"
+fi
 echo -e "${CYAN}===========================================${NC}"
 echo -e "${CYAN}  backend  → http://localhost:8081${NC}"
 echo -e "${CYAN}  admin    → http://localhost:3001${NC}"

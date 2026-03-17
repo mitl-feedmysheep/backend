@@ -64,7 +64,7 @@ class ChurchCommandServiceTest {
             when(churchPort.saveJoinRequest(any(ChurchMemberRequest.class)))
                     .thenAnswer(inv -> inv.getArgument(0));
 
-            ChurchMemberRequest result = churchCommandService.createJoinRequest(memberId, churchId);
+            ChurchMemberRequest result = churchCommandService.createJoinRequest(memberId, churchId, null);
 
             ArgumentCaptor<ChurchMemberRequest> captor = ArgumentCaptor.forClass(ChurchMemberRequest.class);
             verify(churchPort).saveJoinRequest(captor.capture());
@@ -82,7 +82,7 @@ class ChurchCommandServiceTest {
         void shouldThrowWhenChurchNotFound() {
             when(churchPort.findById(churchUuid)).thenReturn(null);
 
-            assertThatThrownBy(() -> churchCommandService.createJoinRequest(memberId, churchId))
+            assertThatThrownBy(() -> churchCommandService.createJoinRequest(memberId, churchId, null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Church not found");
 
@@ -103,7 +103,7 @@ class ChurchCommandServiceTest {
             when(churchPort.findById(churchUuid)).thenReturn(church);
             when(churchPort.findPendingJoinRequest(memberUuid, churchUuid)).thenReturn(Optional.of(existing));
 
-            assertThatThrownBy(() -> churchCommandService.createJoinRequest(memberId, churchId))
+            assertThatThrownBy(() -> churchCommandService.createJoinRequest(memberId, churchId, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("A pending join request already exists for this church");
 

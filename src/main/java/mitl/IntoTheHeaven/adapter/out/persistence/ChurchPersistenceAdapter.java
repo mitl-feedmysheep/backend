@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchMemberRequestJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ChurchJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ChurchJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ChurchMemberJpaRepository;
@@ -122,6 +123,9 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                 .id(request.getId().getValue())
                                 .member(MemberJpaEntity.builder().id(request.getMemberId().getValue()).build())
                                 .church(ChurchJpaEntity.builder().id(request.getChurchId().getValue()).build())
+                                .department(request.getDepartmentId() != null
+                                                ? DepartmentJpaEntity.builder().id(request.getDepartmentId().getValue()).build()
+                                                : null)
                                 .status(request.getStatus())
                                 .build();
                 ChurchMemberRequestJpaEntity saved = churchMemberRequestJpaRepository.save(entity);
@@ -130,6 +134,7 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                 .id(request.getId())
                                 .memberId(request.getMemberId())
                                 .churchId(request.getChurchId())
+                                .departmentId(request.getDepartmentId())
                                 .status(saved.getStatus())
                                 .churchName(request.getChurchName())
                                 .createdAt(saved.getCreatedAt())

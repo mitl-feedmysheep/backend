@@ -7,6 +7,7 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.message.UnreadCountResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.notification.NotificationResponse;
 import mitl.IntoTheHeaven.application.port.in.command.NotificationCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.NotificationQueryUseCase;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import org.springframework.http.ResponseEntity;
@@ -25,21 +26,25 @@ public class NotificationController {
     private final NotificationCommandUseCase notificationCommandUseCase;
     private final NotificationQueryUseCase notificationQueryUseCase;
 
-    @Operation(summary = "Get My Notifications", description = "Retrieves all notifications for the current user.")
+    @Operation(summary = "Get My Notifications", description = "Retrieves all notifications for the current user. Optionally filter by department.")
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getMyNotifications(
-            @AuthenticationPrincipal String memberId) {
+            @AuthenticationPrincipal String memberId,
+            @RequestParam(required = false) UUID departmentId) {
+        DepartmentId deptId = departmentId != null ? DepartmentId.from(departmentId) : null;
         List<Notification> notifications = notificationQueryUseCase.getMyNotifications(
-                MemberId.from(UUID.fromString(memberId)));
+                MemberId.from(UUID.fromString(memberId)), deptId);
         return ResponseEntity.ok(NotificationResponse.from(notifications));
     }
 
-    @Operation(summary = "Get Unread Count", description = "Returns the number of unread notifications for the current user.")
+    @Operation(summary = "Get Unread Count", description = "Returns the number of unread notifications for the current user. Optionally filter by department.")
     @GetMapping("/unread-count")
     public ResponseEntity<UnreadCountResponse> getUnreadCount(
-            @AuthenticationPrincipal String memberId) {
+            @AuthenticationPrincipal String memberId,
+            @RequestParam(required = false) UUID departmentId) {
+        DepartmentId deptId = departmentId != null ? DepartmentId.from(departmentId) : null;
         long count = notificationQueryUseCase.getUnreadCount(
-                MemberId.from(UUID.fromString(memberId)));
+                MemberId.from(UUID.fromString(memberId)), deptId);
         return ResponseEntity.ok(new UnreadCountResponse(count));
     }
 

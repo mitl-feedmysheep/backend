@@ -126,4 +126,49 @@ public class GroupPersistenceAdapter implements GroupPort {
                                 .sorted(Comparator.comparing(GroupWithLeader::getGroupName))
                                 .toList();
         }
+
+        @Override
+        public List<Group> findGroupsByMemberIdAndDepartmentId(UUID memberId, UUID departmentId) {
+                return memberJpaRepository.findWithGroupsAndChurchesById(memberId)
+                                .map(member -> member.getGroupMembers().stream()
+                                                .filter(gm -> gm.getStatus() == GroupMemberStatus.ACTIVE)
+                                                .filter(gm -> gm.getGroup().getDepartment() != null
+                                                                && gm.getGroup().getDepartment().getId()
+                                                                                .equals(departmentId))
+                                                .map(groupMember -> groupPersistenceMapper
+                                                                .toDomain(groupMember.getGroup()))
+                                                .sorted(Comparator.comparing(Group::getEndDate,
+                                                                Comparator.nullsLast(Comparator.reverseOrder())))
+                                                .toList())
+                                .orElse(Collections.emptyList());
+        }
+
+        @Override
+        public List<GroupWithLeader> findGroupsWithLeaderByDepartmentId(UUID departmentId) {
+                int currentYear = LocalDate.now().getYear();
+                LocalDate yearStart = LocalDate.of(currentYear, 1, 1);
+                LocalDate yearEnd = LocalDate.of(currentYear, 12, 31);
+
+                List<GroupJpaEntity> groups = groupJpaRepository
+                                .findAllByDepartmentIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                                                departmentId, yearEnd, yearStart);
+
+                return groups.stream()
+                                .map(group -> {
+                                        String leaderName = group.getGroupMembers().stream()
+                                                        .filter(gm -> gm.getStatus() == GroupMemberStatus.ACTIVE)
+                                                        .filter(gm -> gm.getRole() == GroupMemberRole.LEADER)
+                                                        .findFirst()
+                                                        .map(gm -> gm.getMember().getName())
+                                                        .orElse(null);
+
+                                        return GroupWithLeader.builder()
+                                                        .groupId(group.getId())
+                                                        .groupName(group.getName())
+                                                        .leaderName(leaderName)
+                                                        .build();
+                                })
+                                .sorted(Comparator.comparing(GroupWithLeader::getGroupName))
+                                .toList();
+        }
 }

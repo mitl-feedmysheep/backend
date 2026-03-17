@@ -5,6 +5,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.GatheringMemberJpaEntit
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.GroupMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PrayerJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentJpaEntity;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,9 @@ public class GatheringPersistenceMapper {
                                 .group(entity.getGroup() != null ? Group.builder()
                                                 .id(GroupId.from(entity.getGroup().getId()))
                                                 .name(entity.getGroup().getName())
+                                                .departmentId(entity.getGroup().getDepartment() != null
+                                                                ? DepartmentId.from(entity.getGroup().getDepartment().getId())
+                                                                : null)
                                                 .build() : null)
                                 .name(entity.getName())
                                 .description(entity.getDescription())

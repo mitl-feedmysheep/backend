@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.port.in.query;
 
 import mitl.IntoTheHeaven.application.dto.GroupWithLeader;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -20,4 +21,8 @@ public interface GroupQueryUseCase {
     GroupMember getGroupMemberByGroupIdAndMemberId(GroupId groupId, MemberId memberId);
 
     List<GroupWithLeader> getGroupsWithLeaderByChurchId(ChurchId churchId);
+
+    List<Group> getGroupsByMemberIdAndDepartmentId(MemberId memberId, DepartmentId departmentId);
+
+    List<GroupWithLeader> getGroupsWithLeaderByDepartmentId(DepartmentId departmentId);
 }

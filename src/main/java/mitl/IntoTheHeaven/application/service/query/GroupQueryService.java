@@ -6,6 +6,7 @@ import mitl.IntoTheHeaven.application.port.in.query.GroupQueryUseCase;
 import mitl.IntoTheHeaven.application.port.out.GroupPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.Group;
 import mitl.IntoTheHeaven.domain.model.GroupMember;
 import mitl.IntoTheHeaven.domain.model.GroupId;
@@ -60,5 +61,15 @@ public class GroupQueryService implements GroupQueryUseCase {
     @Override
     public List<GroupWithLeader> getGroupsWithLeaderByChurchId(ChurchId churchId) {
         return groupPort.findGroupsWithLeaderByChurchId(churchId.getValue());
+    }
+
+    @Override
+    public List<Group> getGroupsByMemberIdAndDepartmentId(MemberId memberId, DepartmentId departmentId) {
+        return groupPort.findGroupsByMemberIdAndDepartmentId(memberId.getValue(), departmentId.getValue());
+    }
+
+    @Override
+    public List<GroupWithLeader> getGroupsWithLeaderByDepartmentId(DepartmentId departmentId) {
+        return groupPort.findGroupsWithLeaderByDepartmentId(departmentId.getValue());
     }
 }

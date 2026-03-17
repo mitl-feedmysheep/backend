@@ -17,19 +17,21 @@ public class NotificationResponse {
     private final String entityType;
     private final String entityId;
     private final String targetUrl;
+    private final UUID departmentId;
     @JsonProperty("isRead")
     private final boolean isRead;
     private final LocalDateTime createdAt;
 
     @Builder
     public NotificationResponse(UUID id, String type, String description, String entityType, String entityId,
-                                 String targetUrl, boolean isRead, LocalDateTime createdAt) {
+                                 String targetUrl, UUID departmentId, boolean isRead, LocalDateTime createdAt) {
         this.id = id;
         this.type = type;
         this.description = description;
         this.entityType = entityType;
         this.entityId = entityId;
         this.targetUrl = targetUrl;
+        this.departmentId = departmentId;
         this.isRead = isRead;
         this.createdAt = createdAt;
     }
@@ -42,6 +44,7 @@ public class NotificationResponse {
                 .entityType(notification.getEntityType())
                 .entityId(notification.getEntityId())
                 .targetUrl(notification.getTargetUrl())
+                .departmentId(notification.getDepartmentId() != null ? notification.getDepartmentId().getValue() : null)
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

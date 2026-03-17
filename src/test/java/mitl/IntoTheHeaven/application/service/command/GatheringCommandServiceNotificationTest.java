@@ -44,6 +44,7 @@ class GatheringCommandServiceNotificationTest {
 
     private UUID gatheringUuid;
     private UUID groupUuid;
+    private UUID departmentUuid;
     private UUID leaderMemberUuid;
     private UUID subLeaderMemberUuid;
     private UUID memberMemberUuid;
@@ -53,13 +54,18 @@ class GatheringCommandServiceNotificationTest {
     void setUp() {
         gatheringUuid = UUID.randomUUID();
         groupUuid = UUID.randomUUID();
+        departmentUuid = UUID.randomUUID();
         leaderMemberUuid = UUID.randomUUID();
         subLeaderMemberUuid = UUID.randomUUID();
         memberMemberUuid = UUID.randomUUID();
 
         existingGathering = Gathering.builder()
                 .id(GatheringId.from(gatheringUuid))
-                .group(Group.builder().id(GroupId.from(groupUuid)).name("청년 1조").build())
+                .group(Group.builder()
+                        .id(GroupId.from(groupUuid))
+                        .name("청년 1조")
+                        .departmentId(DepartmentId.from(departmentUuid))
+                        .build())
                 .name("소모임")
                 .date(LocalDate.of(2024, 1, 15))
                 .adminComment(null)
@@ -133,6 +139,7 @@ class GatheringCommandServiceNotificationTest {
         assertThat(saved.getEntityType()).isEqualTo("GATHERING");
         assertThat(saved.getEntityId()).isEqualTo(gatheringUuid.toString());
         assertThat(saved.getTargetUrl()).contains("/groups/" + groupUuid + "/gathering/" + gatheringUuid);
+        assertThat(saved.getDepartmentId().getValue()).isEqualTo(departmentUuid);
         assertThat(saved.isRead()).isFalse();
         assertThat(saved.getDescription()).isEqualTo("청년 1조 · 1월 15일");
     }
@@ -276,6 +283,7 @@ class GatheringCommandServiceNotificationTest {
         assertThat(saved.getType()).isEqualTo(NotificationType.GATHERING_USER_CARD_UPDATED);
         assertThat(saved.getEntityType()).isEqualTo("GATHERING_MEMBER");
         assertThat(saved.getTargetUrl()).contains("/groups/" + groupUuid + "/gathering/" + gatheringUuid);
+        assertThat(saved.getDepartmentId().getValue()).isEqualTo(departmentUuid);
         assertThat(saved.isRead()).isFalse();
         assertThat(saved.getDescription()).isEqualTo("청년 1조 · 1월 15일");
     }

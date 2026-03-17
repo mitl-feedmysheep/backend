@@ -9,6 +9,7 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.church.MemberSearchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.ChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.AdminChurchResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.BirthdayMemberResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.church.CreateJoinRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.church.JoinRequestResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.group.GroupWithLeaderResponse;
@@ -32,6 +33,7 @@ import mitl.IntoTheHeaven.application.port.in.query.PrayerQueryUseCase;
 import mitl.IntoTheHeaven.domain.model.Church;
 import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Group;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import org.springframework.http.ResponseEntity;
@@ -137,10 +139,15 @@ public class ChurchController {
         @PostMapping("/{churchId}/join-request")
         public ResponseEntity<JoinRequestResponse> createJoinRequest(
                         @PathVariable("churchId") UUID churchId,
-                        @AuthenticationPrincipal String memberId) {
+                        @AuthenticationPrincipal String memberId,
+                        @RequestBody(required = false) CreateJoinRequest body) {
+                DepartmentId departmentId = (body != null && body.getDepartmentId() != null)
+                                ? DepartmentId.from(body.getDepartmentId())
+                                : null;
                 ChurchMemberRequest request = churchCommandUseCase.createJoinRequest(
                                 MemberId.from(UUID.fromString(memberId)),
-                                ChurchId.from(churchId));
+                                ChurchId.from(churchId),
+                                departmentId);
                 return ResponseEntity.ok(JoinRequestResponse.from(request));
         }
 

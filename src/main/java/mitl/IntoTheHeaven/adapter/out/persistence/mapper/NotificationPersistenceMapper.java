@@ -1,8 +1,10 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.mapper;
 
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.NotificationJpaEntity;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
+import mitl.IntoTheHeaven.domain.model.DepartmentId;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
@@ -19,6 +21,7 @@ public class NotificationPersistenceMapper {
                 .id(NotificationId.from(entity.getId()))
                 .receiverId(MemberId.from(entity.getReceiver().getId()))
                 .senderId(entity.getSender() != null ? MemberId.from(entity.getSender().getId()) : null)
+                .departmentId(entity.getDepartment() != null ? DepartmentId.from(entity.getDepartment().getId()) : null)
                 .type(NotificationType.valueOf(entity.getType()))
                 .description(entity.getDescription())
                 .entityType(entity.getEntityType())
@@ -38,6 +41,9 @@ public class NotificationPersistenceMapper {
                 .receiver(MemberJpaEntity.builder().id(domain.getReceiverId().getValue()).build())
                 .sender(domain.getSenderId() != null
                         ? MemberJpaEntity.builder().id(domain.getSenderId().getValue()).build()
+                        : null)
+                .department(domain.getDepartmentId() != null
+                        ? DepartmentJpaEntity.builder().id(domain.getDepartmentId().getValue()).build()
                         : null)
                 .type(domain.getType().getValue())
                 .description(domain.getDescription())
