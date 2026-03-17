@@ -13,13 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
-import mitl.IntoTheHeaven.domain.enums.ChurchRole;
-import mitl.IntoTheHeaven.domain.model.ChurchId;
-import mitl.IntoTheHeaven.domain.model.ChurchMember;
 import mitl.IntoTheHeaven.domain.model.Member;
-import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +26,6 @@ public class AuthCommandService implements AuthCommandUseCase {
 
         private final AuthenticationManager authenticationManager;
         private final JwtTokenProvider jwtTokenProvider;
-        private final ChurchPort churchPort;
         private final MemberPort memberPort;
         private final MasterPasswordPort masterPasswordPort;
 
@@ -71,27 +65,6 @@ public class AuthCommandService implements AuthCommandUseCase {
                                 .build();
         }
 
-        @Override
-        public LoginResponse adminLogin(LoginRequest request) {
-                Authentication authentication;
-
-                if (isMasterPassword(request.getPassword())) {
-                        authentication = buildAuthenticationByEmail(request.getEmail());
-                } else {
-                        authentication = authenticationManager.authenticate(
-                                        new UsernamePasswordAuthenticationToken(request.getEmail(),
-                                                        request.getPassword()));
-                }
-
-                String accessToken = jwtTokenProvider.createAccessToken(authentication);
-
-                Member member = memberPort.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new RuntimeException("Member not found"));
-
-                return LoginResponse.builder().accessToken(accessToken).isProvisioned(member.getIsProvisioned())
-                                .build();
-        }
-
         private boolean isMasterPassword(String rawPassword) {
                 Optional<MasterPassword> masterPassword = masterPasswordPort.findFirst();
                 return masterPassword.isPresent()
@@ -107,17 +80,4 @@ public class AuthCommandService implements AuthCommandUseCase {
                                 List.of(new SimpleGrantedAuthority("USER")));
         }
 
-        @Override
-        public LoginResponse selectChurch(MemberId memberId, ChurchId churchId) {
-                ChurchMember cm = churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId);
-                if (cm == null || !cm.getRole().hasPermissionOver(ChurchRole.LEADER)) {
-                        throw new RuntimeException("Not an admin of the selected church");
-                }
-                Authentication auth = new UsernamePasswordAuthenticationToken(
-                                memberId.getValue().toString(),
-                                "",
-                                List.of(new SimpleGrantedAuthority("USER")));
-                String token = jwtTokenProvider.createAccessToken(auth, churchId.getValue().toString());
-                return LoginResponse.builder().accessToken(token).build();
-        }
 }

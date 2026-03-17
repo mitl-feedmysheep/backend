@@ -1,13 +1,7 @@
 package mitl.IntoTheHeaven.application.service.query;
 
-import mitl.IntoTheHeaven.application.port.in.query.dto.AdminMeResponse;
-import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
-import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.enums.Sex;
-import mitl.IntoTheHeaven.domain.model.ChurchId;
-import mitl.IntoTheHeaven.domain.model.ChurchMember;
-import mitl.IntoTheHeaven.domain.model.ChurchMemberId;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import org.junit.jupiter.api.DisplayName;
@@ -33,9 +27,6 @@ class MemberQueryServiceTest {
 
     @Mock
     private MemberPort memberPort;
-
-    @Mock
-    private ChurchPort churchPort;
 
     @InjectMocks
     private MemberQueryService memberQueryService;
@@ -104,54 +95,6 @@ class MemberQueryServiceTest {
 
             assertThat(result).hasSize(2);
             verify(memberPort).findMembersByGroupId(groupId);
-        }
-    }
-
-    @Nested
-    @DisplayName("getAdminMyInfo")
-    class GetAdminMyInfo {
-
-        @Test
-        @DisplayName("관리자 정보 조회 - ADMIN 역할")
-        void shouldReturnAdminMeResponseWithRole() {
-            MemberId memberId = MemberId.from(UUID.randomUUID());
-            ChurchId churchId = ChurchId.from(UUID.randomUUID());
-
-            ChurchMember churchMember = ChurchMember.builder()
-                    .id(ChurchMemberId.from(UUID.randomUUID()))
-                    .memberId(memberId)
-                    .churchId(churchId)
-                    .role(ChurchRole.ADMIN)
-                    .build();
-
-            when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
-                    .thenReturn(churchMember);
-
-            AdminMeResponse result = memberQueryService.getAdminMyInfo(memberId, churchId);
-
-            assertThat(result).isNotNull();
-            assertThat(result.getRole()).isEqualTo(ChurchRole.ADMIN);
-        }
-
-        @Test
-        @DisplayName("관리자 정보 조회 - MEMBER 역할")
-        void shouldReturnMemberRoleForRegularMember() {
-            MemberId memberId = MemberId.from(UUID.randomUUID());
-            ChurchId churchId = ChurchId.from(UUID.randomUUID());
-
-            ChurchMember churchMember = ChurchMember.builder()
-                    .id(ChurchMemberId.from(UUID.randomUUID()))
-                    .memberId(memberId)
-                    .churchId(churchId)
-                    .role(ChurchRole.MEMBER)
-                    .build();
-
-            when(churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId))
-                    .thenReturn(churchMember);
-
-            AdminMeResponse result = memberQueryService.getAdminMyInfo(memberId, churchId);
-
-            assertThat(result.getRole()).isEqualTo(ChurchRole.MEMBER);
         }
     }
 

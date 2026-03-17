@@ -53,24 +53,12 @@ public class ChurchQueryService implements ChurchQueryUseCase {
         return churchMember.getRole().hasPermissionOver(ChurchRole.LEADER);
     }
 
-    /* ADMIN */
     @Override
     public ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId) {
         return churchPort.findChurchMemberByMemberIdAndChurchId(memberId, churchId)
                 .getRole();
     }
 
-    @Override
-    public List<Church> getAdminChurches(MemberId memberId) {
-        return churchPort.findChurchMembersByMemberId(memberId)
-                .stream()
-                .filter(churchMember -> churchMember.getRole().hasPermissionOver(ChurchRole.LEADER))
-                .map(ChurchMember::getChurchId)
-                .map(id -> churchPort.findById(id.getValue()))
-                .toList();
-    }
-
-    /* ADMIN */
     @Override
     public List<MemberWithGroups> searchChurchMembers(ChurchId churchId, String searchText) {
         if (searchText == null || searchText.trim().isEmpty()) {

@@ -12,18 +12,13 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeSummaryResponse;
 import mitl.IntoTheHeaven.application.port.in.command.MemberCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.HomeQueryUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.MemberQueryUseCase;
-import mitl.IntoTheHeaven.application.port.in.query.dto.AdminMeResponse;
-import mitl.IntoTheHeaven.domain.model.ChurchId;
 import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
-import mitl.IntoTheHeaven.global.security.JwtAuthenticationToken;
 
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -105,20 +100,6 @@ public class MemberController {
 
         Member updated = memberCommandUseCase.updateMyProfile(request.toCommand());
         return ResponseEntity.ok(MeResponse.from(updated));
-    }
-
-    @Operation(summary = "Get My Admin Info in Church", description = "Retrieves my information including role in the current church context. Intended for admin context usage.")
-    @GetMapping("/admin/me")
-    public ResponseEntity<AdminMeResponse> getAdminMe(
-            @AuthenticationPrincipal String memberId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) auth;
-        String churchId = jwtAuth.getChurchId();
-
-        AdminMeResponse response = memberQueryUseCase.getAdminMyInfo(
-                MemberId.from(UUID.fromString(memberId)),
-                ChurchId.from(UUID.fromString(churchId)));
-        return ResponseEntity.ok(response);
     }
 
 }

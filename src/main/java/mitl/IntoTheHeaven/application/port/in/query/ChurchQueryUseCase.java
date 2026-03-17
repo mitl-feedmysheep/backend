@@ -21,9 +21,6 @@ public interface ChurchQueryUseCase {
 
     boolean hasElevatedSearchAccess(MemberId memberId, ChurchId churchId);
 
-    /* ADMIN */
-    List<Church> getAdminChurches(MemberId memberId);
-
     ChurchRole getCurrentRole(MemberId memberId, ChurchId churchId);
 
     List<MemberWithGroups> searchChurchMembers(ChurchId churchId, String searchText);

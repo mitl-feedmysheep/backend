@@ -45,20 +45,6 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    /* Admin Login */
-    public String createAccessToken(Authentication authentication, String churchId) {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
-
-        return Jwts.builder()
-            .subject(authentication.getName())
-            .issuedAt(now)
-            .expiration(validity)
-            .claim("churchId", churchId)
-            .signWith(key)
-            .compact();
-    }
-
     public Authentication getAuthentication(String token) {
         Claims claims = getClaimsFromToken(token);
         String memberId = claims.getSubject();

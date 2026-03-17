@@ -120,11 +120,4 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Member with the given email and name does not exist");
     }
 
-    /* ADMIN */
-    @Operation(summary = "Admin Login", description = "Logs in an admin with email and password.")
-    @PostMapping("/admin/login")
-    public ResponseEntity<LoginResponse> adminLogin(@RequestBody @Valid LoginRequest loginRequest) {
-        LoginResponse response = authCommandUseCase.adminLogin(loginRequest);
-        return ResponseEntity.ok(response);
-    }
 }
