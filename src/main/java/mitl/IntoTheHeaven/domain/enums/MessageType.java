@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum MessageType {
     BIRTHDAY("BIRTHDAY"),
-    NORMAL("NORMAL");
+    NORMAL("NORMAL"),
+    ADMIN_REQUEST("ADMIN_REQUEST");
 
     private final String value;
 }
