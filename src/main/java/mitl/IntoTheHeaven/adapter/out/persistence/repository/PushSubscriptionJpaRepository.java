@@ -18,6 +18,8 @@ public interface PushSubscriptionJpaRepository extends JpaRepository<PushSubscri
 
     boolean existsByEndpoint(String endpoint);
 
+    List<PushSubscriptionJpaEntity> findByMemberIdIn(List<UUID> memberIds);
+
     @Modifying
     @Query(value = "UPDATE push_subscription SET deleted_at = NOW() WHERE endpoint = :endpoint AND deleted_at IS NULL", nativeQuery = true)
     void softDeleteByEndpoint(@Param("endpoint") String endpoint);

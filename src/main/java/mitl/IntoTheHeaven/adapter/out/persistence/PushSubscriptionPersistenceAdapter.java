@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -45,6 +46,15 @@ public class PushSubscriptionPersistenceAdapter implements PushSubscriptionPort 
     @Override
     public List<PushSubscription> findAll() {
         return repository.findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<PushSubscription> findByMemberIds(List<MemberId> memberIds) {
+        List<UUID> uuids = memberIds.stream().map(MemberId::getValue).toList();
+        return repository.findByMemberIdIn(uuids)
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
