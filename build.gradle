@@ -66,6 +66,10 @@ dependencies {
     // Image Processing (Thumbnailator)
     implementation 'net.coobird:thumbnailator:0.4.20'
 
+    // Web Push (VAPID)
+    implementation 'nl.martijndwars:web-push:5.1.1'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+
     // Actuator (monitoring)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
