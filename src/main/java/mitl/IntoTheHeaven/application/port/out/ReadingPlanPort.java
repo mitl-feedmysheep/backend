@@ -2,7 +2,6 @@ package mitl.IntoTheHeaven.application.port.out;
 
 import mitl.IntoTheHeaven.domain.model.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,9 +18,11 @@ public interface ReadingPlanPort {
 
     Optional<ReadingPlanDay> findDayById(UUID id);
 
-    Optional<ReadingPlanDay> findDayByPlanIdAndDate(UUID planId, LocalDate date);
+    Optional<ReadingPlanDay> findDayByPlanIdAndDayNumber(UUID planId, int dayNumber);
 
     List<ReadingPlanDay> findDaysByPlanId(UUID planId);
+
+    int countDaysByPlanId(UUID planId);
 
     DepartmentReadingPlan saveMapping(DepartmentReadingPlan mapping);
 

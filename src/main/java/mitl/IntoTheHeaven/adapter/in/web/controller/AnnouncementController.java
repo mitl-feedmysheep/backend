@@ -58,7 +58,8 @@ public class AnnouncementController {
                 request.getEntityId(),
                 request.getTitle(),
                 request.getBody(),
-                request.getSendAt()
+                request.getSendAt(),
+                request.isPushEnabled()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(AnnouncementResponse.from(announcement));
     }

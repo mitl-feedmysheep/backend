@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface AnnouncementCommandUseCase {
 
-    Announcement create(String entityType, String entityId, String title, String body, LocalDateTime sendAt);
+    Announcement create(String entityType, String entityId, String title, String body, LocalDateTime sendAt, boolean pushEnabled);
 
     void delete(UUID id);
 }

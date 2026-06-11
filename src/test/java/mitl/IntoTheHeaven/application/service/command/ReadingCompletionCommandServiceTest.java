@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,7 +68,7 @@ class ReadingCompletionCommandServiceTest {
         return ReadingPlanDay.builder()
                 .id(dayId)
                 .readingPlanId(ReadingPlanId.from(UUID.randomUUID()))
-                .readingDate(LocalDate.now())
+                
                 .dayNumber(1)
                 .readingRange("창세기 1장")
                 .build();

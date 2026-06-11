@@ -17,11 +17,6 @@ public class ReadingPlanDay extends DomainEntity<ReadingPlanDay, ReadingPlanDayI
     private final ReadingPlanId readingPlanId;
 
     /**
-     * 해당 날짜
-     */
-    private final LocalDate readingDate;
-
-    /**
      * 플랜 내 순서 (1-based)
      */
     private final int dayNumber;
@@ -31,10 +26,9 @@ public class ReadingPlanDay extends DomainEntity<ReadingPlanDay, ReadingPlanDayI
      */
     private final String readingRange;
 
-    /**
-     * 유튜브 링크
-     */
-    private final String youtubeUrl;
+    private final String audioUrl;
+
+    private final String videoUrl;
 
     /**
      * 요약 텍스트

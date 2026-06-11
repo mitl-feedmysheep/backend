@@ -25,4 +25,6 @@ public class CreateAnnouncementRequest {
 
     @NotNull
     private LocalDateTime sendAt;
+
+    private boolean pushEnabled = true;
 }

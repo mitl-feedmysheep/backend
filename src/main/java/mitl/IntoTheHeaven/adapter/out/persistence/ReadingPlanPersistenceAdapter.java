@@ -30,9 +30,9 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     public ReadingPlan save(ReadingPlan plan) {
         ReadingPlanJpaEntity entity = ReadingPlanJpaEntity.builder()
                 .id(plan.getId().getValue())
+                .churchId(plan.getChurchId())
                 .title(plan.getTitle())
-                .startDate(plan.getStartDate())
-                .totalDays(plan.getTotalDays())
+                .readingDays(plan.getReadingDays())
                 .deletedAt(plan.getDeletedAt())
                 .build();
         return toPlanDomain(readingPlanJpaRepository.save(entity));
@@ -49,10 +49,10 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
         ReadingPlanDayJpaEntity entity = ReadingPlanDayJpaEntity.builder()
                 .id(day.getId().getValue())
                 .readingPlan(planRef)
-                .readingDate(day.getReadingDate())
                 .dayNumber(day.getDayNumber())
                 .readingRange(day.getReadingRange())
-                .youtubeUrl(day.getYoutubeUrl())
+                .audioUrl(day.getAudioUrl())
+                .videoUrl(day.getVideoUrl())
                 .description(day.getDescription())
                 .deletedAt(day.getDeletedAt())
                 .build();
@@ -67,10 +67,10 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
                     return (ReadingPlanDayJpaEntity) ReadingPlanDayJpaEntity.builder()
                             .id(day.getId().getValue())
                             .readingPlan(planRef)
-                            .readingDate(day.getReadingDate())
                             .dayNumber(day.getDayNumber())
                             .readingRange(day.getReadingRange())
-                            .youtubeUrl(day.getYoutubeUrl())
+                            .audioUrl(day.getAudioUrl())
+                            .videoUrl(day.getVideoUrl())
                             .description(day.getDescription())
                             .build();
                 })
@@ -86,8 +86,8 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     }
 
     @Override
-    public Optional<ReadingPlanDay> findDayByPlanIdAndDate(UUID planId, LocalDate date) {
-        return readingPlanDayJpaRepository.findByReadingPlanIdAndReadingDate(planId, date)
+    public Optional<ReadingPlanDay> findDayByPlanIdAndDayNumber(UUID planId, int dayNumber) {
+        return readingPlanDayJpaRepository.findByReadingPlanIdAndDayNumber(planId, dayNumber)
                 .map(this::toDayDomain);
     }
 
@@ -95,6 +95,11 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     public List<ReadingPlanDay> findDaysByPlanId(UUID planId) {
         return readingPlanDayJpaRepository.findByReadingPlanIdOrderByDayNumberAsc(planId)
                 .stream().map(this::toDayDomain).toList();
+    }
+
+    @Override
+    public int countDaysByPlanId(UUID planId) {
+        return (int) readingPlanDayJpaRepository.countByReadingPlanId(planId);
     }
 
     @Override
@@ -184,7 +189,8 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
 
     @Override
     public List<UUID> findCompletedMemberIdsByDeptPlanIdAndDate(UUID deptPlanId, LocalDate date) {
-        return readingCompletionHistoryJpaRepository.findMemberIdsByDeptPlanIdAndDate(deptPlanId, date);
+        return readingCompletionHistoryJpaRepository.findMemberIdsByDeptPlanIdAndDate(
+                deptPlanId, date.atStartOfDay(), date.plusDays(1).atStartOfDay());
     }
 
     // ── domain mappers ───────────────────────────────────────────────────────
@@ -192,9 +198,9 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     private ReadingPlan toPlanDomain(ReadingPlanJpaEntity e) {
         return ReadingPlan.builder()
                 .id(ReadingPlanId.from(e.getId()))
+                .churchId(e.getChurchId())
                 .title(e.getTitle())
-                .startDate(e.getStartDate())
-                .totalDays(e.getTotalDays())
+                .readingDays(e.getReadingDays())
                 .createdAt(e.getCreatedAt())
                 .deletedAt(e.getDeletedAt())
                 .build();
@@ -204,10 +210,10 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
         return ReadingPlanDay.builder()
                 .id(ReadingPlanDayId.from(e.getId()))
                 .readingPlanId(ReadingPlanId.from(e.getReadingPlan().getId()))
-                .readingDate(e.getReadingDate())
                 .dayNumber(e.getDayNumber())
                 .readingRange(e.getReadingRange())
-                .youtubeUrl(e.getYoutubeUrl())
+                .audioUrl(e.getAudioUrl())
+                .videoUrl(e.getVideoUrl())
                 .description(e.getDescription())
                 .createdAt(e.getCreatedAt())
                 .deletedAt(e.getDeletedAt())

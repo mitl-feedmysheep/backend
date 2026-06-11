@@ -18,6 +18,7 @@ public class AnnouncementPersistenceMapper {
                 .body(entity.getBody())
                 .sendAt(entity.getSendAt())
                 .isSent(entity.isSent())
+                .pushEnabled(entity.isPushEnabled())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -33,6 +34,7 @@ public class AnnouncementPersistenceMapper {
                 .body(domain.getBody())
                 .sendAt(domain.getSendAt())
                 .isSent(domain.isSent())
+                .pushEnabled(domain.isPushEnabled())
                 .build();
     }
 }

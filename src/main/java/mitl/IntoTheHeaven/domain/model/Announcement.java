@@ -16,6 +16,7 @@ public class Announcement extends DomainEntity<Announcement, AnnouncementId> {
     private final String body;
     private final LocalDateTime sendAt;
     private final boolean isSent;
+    private final boolean pushEnabled;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 }

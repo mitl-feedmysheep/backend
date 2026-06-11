@@ -49,7 +49,7 @@ public class ReadingPlanController {
         try {
             completed = readingPlanQueryUseCase.getMyProgress(
                     DepartmentId.from(departmentId), MemberId.from(UUID.fromString(memberId)))
-                    .completedDates().contains(day.getReadingDate());
+                    .completedDates().contains(java.time.LocalDate.now());
         } catch (Exception ignored) {}
 
         return ResponseEntity.ok(TodayReadingResponse.from(day, completed));
@@ -115,7 +115,7 @@ public class ReadingPlanController {
     @Operation(summary = "플랜 생성 (관리자)")
     @PostMapping("/reading-plans")
     public ResponseEntity<Void> createPlan(@RequestBody @Valid CreateReadingPlanRequest request) {
-        readingPlanCommandUseCase.createPlan(request.title(), request.startDate(), request.totalDays());
+        readingPlanCommandUseCase.createPlan(request.churchId(), request.title(), request.readingDays());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -126,8 +126,8 @@ public class ReadingPlanController {
             @RequestBody @Valid List<CreateReadingPlanDayRequest> requests) {
         List<ReadingPlanCommandUseCase.DayInput> inputs = requests.stream()
                 .map(r -> new ReadingPlanCommandUseCase.DayInput(
-                        r.readingDate(), r.dayNumber(), r.readingRange(),
-                        r.youtubeUrl(), r.description()))
+                        r.dayNumber(), r.readingRange(),
+                        r.audioUrl(), r.videoUrl(), r.description()))
                 .toList();
         readingPlanCommandUseCase.createDaysBatch(planId, inputs);
         return ResponseEntity.status(HttpStatus.CREATED).build();

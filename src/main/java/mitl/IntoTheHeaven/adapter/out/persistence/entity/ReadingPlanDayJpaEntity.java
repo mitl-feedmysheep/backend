@@ -7,13 +7,12 @@ import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "reading_plan_day",
-        indexes = @Index(name = "idx_reading_plan_day_plan_date", columnList = "reading_plan_id, reading_date"))
+        indexes = @Index(name = "idx_reading_plan_day_plan_num", columnList = "reading_plan_id, day_number"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -29,12 +28,6 @@ public class ReadingPlanDayJpaEntity extends BaseEntity {
     private ReadingPlanJpaEntity readingPlan;
 
     /**
-     * 해당 날짜
-     */
-    @Column(name = "reading_date", nullable = false)
-    private LocalDate readingDate;
-
-    /**
      * 플랜 내 순서 (1-based)
      */
     @Column(name = "day_number", nullable = false)
@@ -46,11 +39,11 @@ public class ReadingPlanDayJpaEntity extends BaseEntity {
     @Column(name = "reading_range", nullable = false, length = 200)
     private String readingRange;
 
-    /**
-     * 유튜브 링크
-     */
-    @Column(name = "youtube_url", length = 500)
-    private String youtubeUrl;
+    @Column(name = "audio_url", length = 500)
+    private String audioUrl;
+
+    @Column(name = "video_url", length = 500)
+    private String videoUrl;
 
     /**
      * 요약 텍스트

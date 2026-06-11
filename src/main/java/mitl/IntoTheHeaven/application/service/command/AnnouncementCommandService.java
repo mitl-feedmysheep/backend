@@ -19,7 +19,7 @@ public class AnnouncementCommandService implements AnnouncementCommandUseCase {
     private final AnnouncementPort announcementPort;
 
     @Override
-    public Announcement create(String entityType, String entityId, String title, String body, LocalDateTime sendAt) {
+    public Announcement create(String entityType, String entityId, String title, String body, LocalDateTime sendAt, boolean pushEnabled) {
         Announcement announcement = Announcement.builder()
                 .id(AnnouncementId.from(UUID.randomUUID()))
                 .entityType(entityType)
@@ -28,6 +28,7 @@ public class AnnouncementCommandService implements AnnouncementCommandUseCase {
                 .body(body)
                 .sendAt(sendAt)
                 .isSent(false)
+                .pushEnabled(pushEnabled)
                 .build();
         return announcementPort.save(announcement);
     }

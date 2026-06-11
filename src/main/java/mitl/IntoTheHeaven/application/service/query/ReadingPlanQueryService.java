@@ -36,8 +36,13 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     public ReadingPlanDay getTodayReading(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
-                .flatMap(mapping -> readingPlanPort.findDayByPlanIdAndDate(
-                        mapping.getReadingPlan().getId(), LocalDate.now()))
+                .flatMap(mapping -> {
+                    int readingDays = mapping.getReadingPlan().getReadingDays();
+                    int dayNumber = computeDayNumber(mapping.getStartDate(), LocalDate.now(), readingDays);
+                    if (dayNumber == 0) return Optional.empty();
+                    return readingPlanPort.findDayByPlanIdAndDayNumber(
+                            mapping.getReadingPlan().getId(), dayNumber);
+                })
                 .orElse(null);
     }
 
@@ -58,7 +63,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         }
 
         UUID deptPlanId = mappingOpt.get().getId();
-        int totalDays = mappingOpt.get().getReadingPlan().getTotalDays();
+        int totalDays = readingPlanPort.countDaysByPlanId(mappingOpt.get().getReadingPlan().getId());
 
         var completions = readingCompletionHistoryJpaRepository
                 .findByDepartmentReadingPlanIdAndMemberId(deptPlanId, memberId.getValue());
@@ -81,7 +86,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         if (mappingOpt.isEmpty()) return List.of();
 
         UUID deptPlanId = mappingOpt.get().getId();
-        int totalDays = mappingOpt.get().getReadingPlan().getTotalDays();
+        int totalDays = readingPlanPort.countDaysByPlanId(mappingOpt.get().getReadingPlan().getId());
 
         return departmentMemberJpaRepository
                 .findByDepartmentIdAndStatus(departmentId.getValue(), DepartmentMemberStatus.ACTIVE)
@@ -95,6 +100,25 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
                             (int) completed, totalDays, percent);
                 })
                 .toList();
+    }
+
+    /**
+     * dept_reading_plan.start_date 기준으로 today가 몇 일차인지 계산.
+     * readingDaysMask: 비트마스크 (bit0=월, bit1=화, ..., bit6=일).
+     * today가 읽기 요일이 아니거나 start_date 이전이면 0 반환.
+     */
+    public static int computeDayNumber(LocalDate startDate, LocalDate today, int readingDaysMask) {
+        if (today.isBefore(startDate)) return 0;
+        int todayBit = 1 << (today.getDayOfWeek().getValue() - 1);
+        if ((readingDaysMask & todayBit) == 0) return 0;
+        int count = 0;
+        LocalDate d = startDate;
+        while (!d.isAfter(today)) {
+            int dayBit = 1 << (d.getDayOfWeek().getValue() - 1);
+            if ((readingDaysMask & dayBit) != 0) count++;
+            d = d.plusDays(1);
+        }
+        return count;
     }
 
     private int calculateStreak(List<LocalDate> sortedDates) {

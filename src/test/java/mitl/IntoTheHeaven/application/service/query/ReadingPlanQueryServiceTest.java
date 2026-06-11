@@ -65,15 +65,19 @@ class ReadingPlanQueryServiceTest {
         memberId = MemberId.from(UUID.randomUUID());
     }
 
-    /** lenient() 사용: 특정 테스트에서 plan.getId()나 getTotalDays()가 불필요해도 예외 방지 */
-    private DepartmentReadingPlanJpaEntity mockMappingEntity(int totalDays) {
+    private DepartmentReadingPlanJpaEntity mockMappingEntity(LocalDate startDate) {
+        return mockMappingEntity(startDate, 63);
+    }
+
+    private DepartmentReadingPlanJpaEntity mockMappingEntity(LocalDate startDate, int readingDaysMask) {
         ReadingPlanJpaEntity plan = mock(ReadingPlanJpaEntity.class);
         lenient().when(plan.getId()).thenReturn(planUuid);
-        lenient().when(plan.getTotalDays()).thenReturn(totalDays);
+        lenient().when(plan.getReadingDays()).thenReturn(readingDaysMask);
 
         DepartmentReadingPlanJpaEntity mapping = mock(DepartmentReadingPlanJpaEntity.class);
         lenient().when(mapping.getId()).thenReturn(deptPlanUuid);
         lenient().when(mapping.getReadingPlan()).thenReturn(plan);
+        lenient().when(mapping.getStartDate()).thenReturn(startDate);
         return mapping;
     }
 
@@ -94,13 +98,85 @@ class ReadingPlanQueryServiceTest {
     }
 
     @Nested
+    @DisplayName("computeDayNumber - 요일 비트마스크 기반 일수 계산")
+    class ComputeDayNumberTests {
+
+        private static final int MON_SAT = 63;  // bit0~5
+        private static final int MON_FRI = 31;  // bit0~4
+        private static final int MON_SUN = 127; // bit0~6
+
+        @Test
+        @DisplayName("시작일과 같은 날(월요일)이면 day 1이다")
+        void shouldReturnOneOnStartDateMonday() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, monday, MON_SAT)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("읽기 요일이 아닌 날이면 0을 반환한다 (월~토 플랜의 일요일)")
+        void shouldReturnZeroOnNonReadingDay() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate sunday = LocalDate.of(2026, 6, 7);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, sunday, MON_SAT)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("월~금 플랜에서 토요일이면 0을 반환한다")
+        void shouldReturnZeroOnSaturdayForMonFriPlan() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate saturday = LocalDate.of(2026, 6, 6);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, saturday, MON_FRI)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("시작일 이전이면 0을 반환한다")
+        void shouldReturnZeroBeforeStartDate() {
+            LocalDate monday = LocalDate.of(2026, 6, 8);
+            LocalDate before = LocalDate.of(2026, 6, 1);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, before, MON_SAT)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("월~토 플랜에서 토요일은 day 6이다")
+        void shouldCountSaturdayInMonSatPlan() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate saturday = LocalDate.of(2026, 6, 6);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, saturday, MON_SAT)).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("월~토 플랜에서 다음 주 월요일은 day 7이다")
+        void shouldCountNextWeekMonday() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate nextMonday = LocalDate.of(2026, 6, 8);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, nextMonday, MON_SAT)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("월~일 플랜에서 일요일도 카운팅된다")
+        void shouldCountSundayInMonSunPlan() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate sunday = LocalDate.of(2026, 6, 7);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, sunday, MON_SUN)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("월~금 플랜에서 다음 주 월요일은 day 6이다")
+        void shouldSkipWeekendInMonFriPlan() {
+            LocalDate monday = LocalDate.of(2026, 6, 1);
+            LocalDate nextMonday = LocalDate.of(2026, 6, 8);
+            assertThat(ReadingPlanQueryService.computeDayNumber(monday, nextMonday, MON_FRI)).isEqualTo(6);
+        }
+    }
+
+    @Nested
     @DisplayName("isReadingEnabled - 활성화 여부")
     class IsReadingEnabledTests {
 
         @Test
         @DisplayName("활성 플랜이 있으면 true를 반환한다")
         void shouldReturnTrueWhenActivePlanExists() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
 
@@ -131,37 +207,13 @@ class ReadingPlanQueryServiceTest {
         }
 
         @Test
-        @DisplayName("오늘 날짜에 해당하는 분량을 반환한다")
-        void shouldReturnTodaysDayContent() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
-            ReadingPlanDay day = ReadingPlanDay.builder()
-                    .id(ReadingPlanDayId.from(UUID.randomUUID()))
-                    .readingPlanId(ReadingPlanId.from(planUuid))
-                    .readingDate(LocalDate.now())
-                    .dayNumber(1)
-                    .readingRange("창세기 1-3장")
-                    .youtubeUrl("https://youtube.com/abc")
-                    .build();
-
-            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
-                    .thenReturn(Optional.of(mapping));
-            when(readingPlanPort.findDayByPlanIdAndDate(planUuid, LocalDate.now()))
-                    .thenReturn(Optional.of(day));
-
-            ReadingPlanDay result = service.getTodayReading(departmentId);
-
-            assertThat(result).isNotNull();
-            assertThat(result.getReadingRange()).isEqualTo("창세기 1-3장");
-            assertThat(result.getYoutubeUrl()).isEqualTo("https://youtube.com/abc");
-        }
-
-        @Test
-        @DisplayName("플랜에 오늘 날짜 분량이 없으면 null을 반환한다")
+        @DisplayName("플랜에 오늘 day_number에 해당하는 분량이 없으면 null을 반환한다")
         void shouldReturnNullWhenNoDayForToday() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
+            LocalDate monday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(monday);
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
-            when(readingPlanPort.findDayByPlanIdAndDate(planUuid, LocalDate.now()))
+            when(readingPlanPort.findDayByPlanIdAndDayNumber(eq(planUuid), any(Integer.class)))
                     .thenReturn(Optional.empty());
 
             assertThat(service.getTodayReading(departmentId)).isNull();
@@ -184,19 +236,17 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("활성 플랜의 전체 일자 목록을 반환한다")
         void shouldReturnAllDaysForActivePlan() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(2);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
             List<ReadingPlanDay> days = List.of(
                     ReadingPlanDay.builder()
                             .id(ReadingPlanDayId.from(UUID.randomUUID()))
                             .readingPlanId(ReadingPlanId.from(planUuid))
-                            .readingDate(LocalDate.of(2026, 1, 1))
                             .dayNumber(1)
                             .readingRange("창세기 1장")
                             .build(),
                     ReadingPlanDay.builder()
                             .id(ReadingPlanDayId.from(UUID.randomUUID()))
                             .readingPlanId(ReadingPlanId.from(planUuid))
-                            .readingDate(LocalDate.of(2026, 1, 2))
                             .dayNumber(2)
                             .readingRange("창세기 2장")
                             .build()
@@ -235,14 +285,14 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("완독 수와 진도율을 올바르게 계산한다")
         void shouldCalculateProgressCorrectly() {
-            // 30일 플랜 중 3일 완독 → 10%
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
             ReadingCompletionHistoryJpaEntity c1 = mockCompletion(LocalDateTime.now().minusDays(2));
             ReadingCompletionHistoryJpaEntity c2 = mockCompletion(LocalDateTime.now().minusDays(1));
             ReadingCompletionHistoryJpaEntity c3 = mockCompletion(LocalDateTime.now());
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
                     .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
                     .thenReturn(List.of(c1, c2, c3));
@@ -259,13 +309,14 @@ class ReadingPlanQueryServiceTest {
         @DisplayName("연속 완독 스트릭을 올바르게 계산한다")
         void shouldCalculateStreakCorrectly() {
             LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
             ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.atStartOfDay());
             ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(1).atStartOfDay());
             ReadingCompletionHistoryJpaEntity c3 = mockCompletion(today.minusDays(2).atStartOfDay());
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
                     .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
                     .thenReturn(List.of(c1, c2, c3));
@@ -279,12 +330,13 @@ class ReadingPlanQueryServiceTest {
         @DisplayName("오늘 완독 기록이 없으면 streak이 0이다")
         void shouldReturnZeroStreakWhenTodayNotCompleted() {
             LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(30);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
             ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.minusDays(1).atStartOfDay());
             ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(2).atStartOfDay());
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
                     .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
                     .thenReturn(List.of(c1, c2));
@@ -298,13 +350,14 @@ class ReadingPlanQueryServiceTest {
         @DisplayName("완독 날짜 목록이 오름차순으로 정렬된다")
         void shouldReturnCompletedDatesSorted() {
             LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(10);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
             ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.atStartOfDay());
             ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(3).atStartOfDay());
             ReadingCompletionHistoryJpaEntity c3 = mockCompletion(today.minusDays(1).atStartOfDay());
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(10);
             when(readingCompletionHistoryJpaRepository
                     .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
                     .thenReturn(List.of(c1, c2, c3));
@@ -335,12 +388,13 @@ class ReadingPlanQueryServiceTest {
             UUID memberAId = UUID.randomUUID();
             UUID memberBId = UUID.randomUUID();
 
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(10);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
             DepartmentMemberJpaEntity dmA = mockDepartmentMember(memberAId, "김철수");
             DepartmentMemberJpaEntity dmB = mockDepartmentMember(memberBId, "이영희");
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(10);
             when(departmentMemberJpaRepository.findByDepartmentIdAndStatus(deptUuid, DepartmentMemberStatus.ACTIVE))
                     .thenReturn(List.of(dmA, dmB));
             when(readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberAId))
@@ -366,9 +420,10 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("부서 멤버가 없으면 빈 리스트를 반환한다")
         void shouldReturnEmptyWhenNoDepartmentMembers() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(10);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(10);
             when(departmentMemberJpaRepository.findByDepartmentIdAndStatus(deptUuid, DepartmentMemberStatus.ACTIVE))
                     .thenReturn(List.of());
 

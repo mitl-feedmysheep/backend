@@ -10,6 +10,7 @@ import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
+import mitl.IntoTheHeaven.application.service.query.ReadingPlanQueryService;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
@@ -52,14 +53,18 @@ public class DailyReadingPushScheduler {
             UUID departmentId = mapping.getDepartment().getId();
             UUID deptPlanId = mapping.getId();
 
-            // 오늘 분량 없으면 스킵
-            var dayOpt = readingPlanDayJpaRepository.findByReadingPlanIdAndReadingDate(planId, today);
+            // 오늘 분량 없으면 스킵 (읽기 요일 외 포함)
+            int readingDays = mapping.getReadingPlan().getReadingDays();
+            int dayNumber = ReadingPlanQueryService.computeDayNumber(mapping.getStartDate(), today, readingDays);
+            if (dayNumber == 0) return;
+            var dayOpt = readingPlanDayJpaRepository.findByReadingPlanIdAndDayNumber(planId, dayNumber);
             if (dayOpt.isEmpty()) return;
             var day = dayOpt.get();
 
             // 오늘 이미 완독한 멤버 ID 집합
             Set<UUID> completedMemberIds = Set.copyOf(
-                    readingCompletionJpaRepository.findMemberIdsByDeptPlanIdAndDate(deptPlanId, today));
+                    readingCompletionJpaRepository.findMemberIdsByDeptPlanIdAndDate(
+                            deptPlanId, today.atStartOfDay(), today.plusDays(1).atStartOfDay()));
 
             // ACTIVE 멤버 중 미완독자
             List<MemberId> targetMemberIds = departmentMemberJpaRepository

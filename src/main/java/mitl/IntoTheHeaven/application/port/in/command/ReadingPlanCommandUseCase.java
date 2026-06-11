@@ -6,12 +6,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+
 public interface ReadingPlanCommandUseCase {
 
-    ReadingPlan createPlan(String title, LocalDate startDate, int totalDays);
+    ReadingPlan createPlan(UUID churchId, String title, int readingDays);
 
-    ReadingPlanDay createDay(UUID planId, LocalDate readingDate, int dayNumber,
-                             String readingRange, String youtubeUrl, String description);
+    ReadingPlanDay createDay(UUID planId, int dayNumber, String readingRange,
+                             String audioUrl, String videoUrl, String description);
 
     void createDaysBatch(UUID planId, List<DayInput> days);
 
@@ -19,6 +20,5 @@ public interface ReadingPlanCommandUseCase {
 
     void deactivatePlanForDepartment(DepartmentId departmentId);
 
-    record DayInput(LocalDate readingDate, int dayNumber, String readingRange,
-                    String youtubeUrl, String description) {}
+    record DayInput(int dayNumber, String readingRange, String audioUrl, String videoUrl, String description) {}
 }

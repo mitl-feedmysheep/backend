@@ -19,26 +19,26 @@ public class ReadingPlanCommandService implements ReadingPlanCommandUseCase {
     private final ReadingPlanPort readingPlanPort;
 
     @Override
-    public ReadingPlan createPlan(String title, LocalDate startDate, int totalDays) {
+    public ReadingPlan createPlan(UUID churchId, String title, int readingDays) {
         ReadingPlan plan = ReadingPlan.builder()
                 .id(ReadingPlanId.from(UUID.randomUUID()))
+                .churchId(churchId)
                 .title(title)
-                .startDate(startDate)
-                .totalDays(totalDays)
+                .readingDays(readingDays)
                 .build();
         return readingPlanPort.save(plan);
     }
 
     @Override
-    public ReadingPlanDay createDay(UUID planId, LocalDate readingDate, int dayNumber,
-                                   String readingRange, String youtubeUrl, String description) {
+    public ReadingPlanDay createDay(UUID planId, int dayNumber, String readingRange,
+                                    String audioUrl, String videoUrl, String description) {
         ReadingPlanDay day = ReadingPlanDay.builder()
                 .id(ReadingPlanDayId.from(UUID.randomUUID()))
                 .readingPlanId(ReadingPlanId.from(planId))
-                .readingDate(readingDate)
                 .dayNumber(dayNumber)
                 .readingRange(readingRange)
-                .youtubeUrl(youtubeUrl)
+                .audioUrl(audioUrl)
+                .videoUrl(videoUrl)
                 .description(description)
                 .build();
         return readingPlanPort.saveDay(day);
@@ -50,10 +50,10 @@ public class ReadingPlanCommandService implements ReadingPlanCommandUseCase {
                 .map(d -> (ReadingPlanDay) ReadingPlanDay.builder()
                         .id(ReadingPlanDayId.from(UUID.randomUUID()))
                         .readingPlanId(ReadingPlanId.from(planId))
-                        .readingDate(d.readingDate())
                         .dayNumber(d.dayNumber())
                         .readingRange(d.readingRange())
-                        .youtubeUrl(d.youtubeUrl())
+                        .audioUrl(d.audioUrl())
+                        .videoUrl(d.videoUrl())
                         .description(d.description())
                         .build())
                 .toList();
@@ -63,7 +63,6 @@ public class ReadingPlanCommandService implements ReadingPlanCommandUseCase {
     @Override
     public void activatePlanForDepartment(DepartmentId departmentId, UUID planId,
                                           LocalDate startDate, LocalDate endDate) {
-        // 기존 운영 중인 매핑 soft delete
         readingPlanPort.findActiveMappingByDepartmentId(departmentId.getValue())
                 .ifPresent(existing -> readingPlanPort.saveMapping(existing.delete()));
 

@@ -7,9 +7,9 @@ import mitl.IntoTheHeaven.global.common.BaseEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reading_plan")
@@ -20,6 +20,9 @@ import java.util.List;
 @SQLRestriction("deleted_at is null")
 public class ReadingPlanJpaEntity extends BaseEntity {
 
+    @Column(name = "church_id", nullable = false, columnDefinition = "CHAR(36)")
+    private UUID churchId;
+
     /**
      * 플랜 제목
      */
@@ -27,16 +30,10 @@ public class ReadingPlanJpaEntity extends BaseEntity {
     private String title;
 
     /**
-     * 플랜 시작일
+     * 읽기 요일 비트마스크 (bit0=월, bit1=화, ..., bit6=일, 기본값 63=월~토)
      */
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
-
-    /**
-     * 전체 일수 (진도율 분모)
-     */
-    @Column(name = "total_days", nullable = false)
-    private int totalDays;
+    @Column(name = "reading_days", nullable = false)
+    private int readingDays;
 
     /**
      * 하루 분량 목록

@@ -41,7 +41,9 @@ public class AnnouncementPushScheduler {
 
         for (Announcement announcement : pending) {
             try {
-                sendAnnouncement(announcement);
+                if (announcement.isPushEnabled()) {
+                    sendAnnouncement(announcement);
+                }
                 announcementPort.markAsSent(announcement.getId().getValue());
             } catch (Exception e) {
                 log.error("Failed to send announcement {}: {}", announcement.getId().getValue(), e.getMessage());

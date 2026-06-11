@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import mitl.IntoTheHeaven.global.domain.AggregateRoot;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,20 +14,17 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 public class ReadingPlan extends AggregateRoot<ReadingPlan, ReadingPlanId> {
 
+    private final UUID churchId;
+
     /**
      * 플랜 제목 (예: 2026 창세기 통독)
      */
     private final String title;
 
     /**
-     * 플랜 시작일
+     * 읽기 요일 비트마스크 (bit0=월, bit1=화, ..., bit6=일, 기본값 63=월~토)
      */
-    private final LocalDate startDate;
-
-    /**
-     * 전체 일수 — 진도율 분모
-     */
-    private final int totalDays;
+    private final int readingDays;
 
     private final LocalDateTime createdAt;
     private final LocalDateTime deletedAt;

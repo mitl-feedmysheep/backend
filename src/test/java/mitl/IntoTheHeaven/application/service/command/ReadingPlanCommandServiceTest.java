@@ -33,12 +33,14 @@ class ReadingPlanCommandServiceTest {
 
     private UUID deptUuid;
     private UUID planUuid;
+    private UUID churchUuid;
     private DepartmentId departmentId;
 
     @BeforeEach
     void setUp() {
         deptUuid = UUID.randomUUID();
         planUuid = UUID.randomUUID();
+        churchUuid = UUID.randomUUID();
         departmentId = DepartmentId.from(deptUuid);
     }
 
@@ -51,16 +53,16 @@ class ReadingPlanCommandServiceTest {
         void shouldCreateAndSavePlanWithCorrectFields() {
             when(readingPlanPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            service.createPlan("2026 창세기 통독", LocalDate.of(2026, 1, 1), 30);
+            service.createPlan(churchUuid, "2026 창세기 통독", 63);
 
             ArgumentCaptor<ReadingPlan> captor = ArgumentCaptor.forClass(ReadingPlan.class);
             verify(readingPlanPort).save(captor.capture());
             ReadingPlan saved = captor.getValue();
 
             assertThat(saved.getId()).isNotNull();
+            assertThat(saved.getChurchId()).isEqualTo(churchUuid);
             assertThat(saved.getTitle()).isEqualTo("2026 창세기 통독");
-            assertThat(saved.getStartDate()).isEqualTo(LocalDate.of(2026, 1, 1));
-            assertThat(saved.getTotalDays()).isEqualTo(30);
+            assertThat(saved.getReadingDays()).isEqualTo(63);
         }
 
         @Test
@@ -68,8 +70,8 @@ class ReadingPlanCommandServiceTest {
         void shouldAssignUniqueIdPerCall() {
             when(readingPlanPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            service.createPlan("플랜A", LocalDate.now(), 10);
-            service.createPlan("플랜B", LocalDate.now(), 20);
+            service.createPlan(churchUuid, "플랜A", 63);
+            service.createPlan(churchUuid, "플랜B", 31);
 
             ArgumentCaptor<ReadingPlan> captor = ArgumentCaptor.forClass(ReadingPlan.class);
             verify(readingPlanPort, times(2)).save(captor.capture());
@@ -89,8 +91,8 @@ class ReadingPlanCommandServiceTest {
             when(readingPlanPort.saveDays(any())).thenAnswer(inv -> inv.getArgument(0));
 
             List<ReadingPlanCommandUseCase.DayInput> inputs = List.of(
-                    new ReadingPlanCommandUseCase.DayInput(LocalDate.of(2026, 1, 1), 1, "창세기 1-3장", null, null),
-                    new ReadingPlanCommandUseCase.DayInput(LocalDate.of(2026, 1, 2), 2, "창세기 4-6장", "https://yt.link", "요약")
+                    new ReadingPlanCommandUseCase.DayInput(1, "창세기 1-3장", null, null, null),
+                    new ReadingPlanCommandUseCase.DayInput(2, "창세기 4-6장", "https://audio.link", "https://video.link", "요약")
             );
 
             service.createDaysBatch(planUuid, inputs);
@@ -106,7 +108,7 @@ class ReadingPlanCommandServiceTest {
             when(readingPlanPort.saveDays(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.createDaysBatch(planUuid, List.of(
-                    new ReadingPlanCommandUseCase.DayInput(LocalDate.of(2026, 1, 1), 1, "창세기 1장", "https://yt.link", "설명")
+                    new ReadingPlanCommandUseCase.DayInput(1, "창세기 1장", "https://audio.link", "https://video.link", "설명")
             ));
 
             ArgumentCaptor<List<ReadingPlanDay>> captor = ArgumentCaptor.forClass(List.class);
@@ -116,7 +118,8 @@ class ReadingPlanCommandServiceTest {
             assertThat(day.getReadingPlanId().getValue()).isEqualTo(planUuid);
             assertThat(day.getReadingRange()).isEqualTo("창세기 1장");
             assertThat(day.getDayNumber()).isEqualTo(1);
-            assertThat(day.getYoutubeUrl()).isEqualTo("https://yt.link");
+            assertThat(day.getAudioUrl()).isEqualTo("https://audio.link");
+            assertThat(day.getVideoUrl()).isEqualTo("https://video.link");
             assertThat(day.getDescription()).isEqualTo("설명");
         }
     }
@@ -132,7 +135,7 @@ class ReadingPlanCommandServiceTest {
             when(readingPlanPort.saveMapping(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.activatePlanForDepartment(departmentId, planUuid,
-                    LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 30));
+                    LocalDate.of(2026, 1, 5), LocalDate.of(2026, 3, 28));
 
             ArgumentCaptor<DepartmentReadingPlan> captor = ArgumentCaptor.forClass(DepartmentReadingPlan.class);
             verify(readingPlanPort, times(1)).saveMapping(captor.capture());
@@ -140,8 +143,8 @@ class ReadingPlanCommandServiceTest {
             DepartmentReadingPlan created = captor.getValue();
             assertThat(created.getDepartmentId()).isEqualTo(departmentId);
             assertThat(created.getReadingPlanId().getValue()).isEqualTo(planUuid);
-            assertThat(created.getStartDate()).isEqualTo(LocalDate.of(2026, 1, 1));
-            assertThat(created.getEndDate()).isEqualTo(LocalDate.of(2026, 1, 30));
+            assertThat(created.getStartDate()).isEqualTo(LocalDate.of(2026, 1, 5));
+            assertThat(created.getEndDate()).isEqualTo(LocalDate.of(2026, 3, 28));
             assertThat(created.getDeletedAt()).isNull();
         }
 
@@ -152,15 +155,15 @@ class ReadingPlanCommandServiceTest {
                     .id(DepartmentReadingPlanId.from(UUID.randomUUID()))
                     .departmentId(departmentId)
                     .readingPlanId(ReadingPlanId.from(UUID.randomUUID()))
-                    .startDate(LocalDate.of(2025, 1, 1))
-                    .endDate(LocalDate.of(2025, 1, 31))
+                    .startDate(LocalDate.of(2025, 1, 6))
+                    .endDate(LocalDate.of(2025, 3, 29))
                     .build();
 
             when(readingPlanPort.findActiveMappingByDepartmentId(deptUuid)).thenReturn(Optional.of(existing));
             when(readingPlanPort.saveMapping(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.activatePlanForDepartment(departmentId, planUuid,
-                    LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 30));
+                    LocalDate.of(2026, 1, 5), LocalDate.of(2026, 3, 28));
 
             ArgumentCaptor<DepartmentReadingPlan> captor = ArgumentCaptor.forClass(DepartmentReadingPlan.class);
             verify(readingPlanPort, times(2)).saveMapping(captor.capture());
@@ -186,8 +189,8 @@ class ReadingPlanCommandServiceTest {
                     .id(DepartmentReadingPlanId.from(UUID.randomUUID()))
                     .departmentId(departmentId)
                     .readingPlanId(ReadingPlanId.from(UUID.randomUUID()))
-                    .startDate(LocalDate.of(2026, 1, 1))
-                    .endDate(LocalDate.of(2026, 1, 31))
+                    .startDate(LocalDate.of(2026, 1, 6))
+                    .endDate(LocalDate.of(2026, 3, 29))
                     .build();
 
             when(readingPlanPort.findActiveMappingByDepartmentId(deptUuid)).thenReturn(Optional.of(existing));
