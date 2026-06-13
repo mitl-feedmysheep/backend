@@ -6,8 +6,10 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpa
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingCompletionHistoryJpaRepository;
 import mitl.IntoTheHeaven.application.port.in.query.ReadingPlanQueryUseCase;
+import mitl.IntoTheHeaven.application.port.out.MediaPort;
 import mitl.IntoTheHeaven.application.port.out.ReadingPlanPort;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
+import mitl.IntoTheHeaven.domain.enums.EntityType;
 import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ import java.util.*;
 public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
 
     private final ReadingPlanPort readingPlanPort;
+    private final MediaPort mediaPort;
     private final DepartmentReadingPlanJpaRepository departmentReadingPlanJpaRepository;
     private final ReadingCompletionHistoryJpaRepository readingCompletionHistoryJpaRepository;
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
@@ -50,6 +53,10 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
                     if (dayNumber == 0) return Optional.empty();
                     return readingPlanPort.findDayByPlanIdAndDayNumber(
                             mapping.getReadingPlan().getId(), dayNumber);
+                })
+                .map(day -> {
+                    List<Media> medias = mediaPort.findByEntity(EntityType.READING_DAY, day.getId().getValue());
+                    return day.toBuilder().medias(medias).build();
                 })
                 .orElse(null);
     }
