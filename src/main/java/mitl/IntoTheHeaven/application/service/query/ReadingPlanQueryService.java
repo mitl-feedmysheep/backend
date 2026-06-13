@@ -26,6 +26,14 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
 
     @Override
+    public String getActivePlanTitle(DepartmentId departmentId) {
+        return departmentReadingPlanJpaRepository
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .map(mapping -> mapping.getReadingPlan().getTitle())
+                .orElse(null);
+    }
+
+    @Override
     public boolean isReadingEnabled(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())

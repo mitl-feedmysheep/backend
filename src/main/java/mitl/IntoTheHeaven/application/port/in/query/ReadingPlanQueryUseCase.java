@@ -13,6 +13,11 @@ public interface ReadingPlanQueryUseCase {
     ReadingPlanDay getTodayReading(DepartmentId departmentId);
 
     /**
+     * 현재 활성 플랜 제목 (없으면 null)
+     */
+    String getActivePlanTitle(DepartmentId departmentId);
+
+    /**
      * 부서 활성 플랜 여부
      */
     boolean isReadingEnabled(DepartmentId departmentId);

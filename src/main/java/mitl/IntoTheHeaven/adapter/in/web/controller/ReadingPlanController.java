@@ -42,17 +42,20 @@ public class ReadingPlanController {
     public ResponseEntity<TodayReadingResponse> getToday(
             @PathVariable UUID departmentId,
             @AuthenticationPrincipal String memberId) {
-        ReadingPlanDay day = readingPlanQueryUseCase.getTodayReading(DepartmentId.from(departmentId));
+        DepartmentId deptId = DepartmentId.from(departmentId);
+        ReadingPlanDay day = readingPlanQueryUseCase.getTodayReading(deptId);
         if (day == null) return ResponseEntity.noContent().build();
+
+        String planTitle = readingPlanQueryUseCase.getActivePlanTitle(deptId);
 
         boolean completed = false;
         try {
             completed = readingPlanQueryUseCase.getMyProgress(
-                    DepartmentId.from(departmentId), MemberId.from(UUID.fromString(memberId)))
+                    deptId, MemberId.from(UUID.fromString(memberId)))
                     .completedDates().contains(java.time.LocalDate.now());
         } catch (Exception ignored) {}
 
-        return ResponseEntity.ok(TodayReadingResponse.from(day, completed));
+        return ResponseEntity.ok(TodayReadingResponse.from(day, completed, planTitle));
     }
 
     @Operation(summary = "전체 일자 목록 조회 (캘린더용)")
