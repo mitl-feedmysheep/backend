@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import mitl.IntoTheHeaven.adapter.in.web.dto.*;
 import mitl.IntoTheHeaven.application.port.in.command.ReadingCompletionCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.ReadingPlanCommandUseCase;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,6 +55,35 @@ public class ReadingPlanController {
             completed = readingPlanQueryUseCase.getMyProgress(
                     deptId, MemberId.from(UUID.fromString(memberId)))
                     .completedDates().contains(java.time.LocalDate.now());
+        } catch (Exception ignored) {}
+
+        return ResponseEntity.ok(TodayReadingResponse.from(day, completed, planTitle));
+    }
+
+    @Operation(summary = "오늘 부서 완독 인원 수")
+    @GetMapping("/departments/{departmentId}/reading-plan/today/count")
+    public ResponseEntity<Integer> getTodayCount(@PathVariable UUID departmentId) {
+        return ResponseEntity.ok(
+                readingPlanQueryUseCase.getTodayCompletionCount(DepartmentId.from(departmentId)));
+    }
+
+    @Operation(summary = "특정 날짜 읽기 분량 조회")
+    @GetMapping("/departments/{departmentId}/reading-plan/by-date")
+    public ResponseEntity<TodayReadingResponse> getByDate(
+            @PathVariable UUID departmentId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal String memberId) {
+        DepartmentId deptId = DepartmentId.from(departmentId);
+        ReadingPlanDay day = readingPlanQueryUseCase.getReadingByDate(deptId, date);
+        if (day == null) return ResponseEntity.noContent().build();
+
+        String planTitle = readingPlanQueryUseCase.getActivePlanTitle(deptId);
+
+        boolean completed = false;
+        try {
+            completed = readingPlanQueryUseCase.getMyProgress(
+                    deptId, MemberId.from(UUID.fromString(memberId)))
+                    .completedDates().contains(date);
         } catch (Exception ignored) {}
 
         return ResponseEntity.ok(TodayReadingResponse.from(day, completed, planTitle));

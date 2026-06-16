@@ -78,6 +78,7 @@ class ReadingPlanQueryServiceTest {
         lenient().when(mapping.getId()).thenReturn(deptPlanUuid);
         lenient().when(mapping.getReadingPlan()).thenReturn(plan);
         lenient().when(mapping.getStartDate()).thenReturn(startDate);
+        lenient().when(mapping.getEndDate()).thenReturn(startDate.plusYears(1));
         return mapping;
     }
 

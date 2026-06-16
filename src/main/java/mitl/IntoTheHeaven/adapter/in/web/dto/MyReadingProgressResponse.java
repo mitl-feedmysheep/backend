@@ -10,7 +10,8 @@ public record MyReadingProgressResponse(
         int totalDays,
         int progressPercent,
         int streak,
-        List<LocalDate> completedDates
+        List<LocalDate> completedDates,
+        List<LocalDate> scheduledDates
 ) {
     public static MyReadingProgressResponse from(MyReadingProgress progress) {
         return new MyReadingProgressResponse(
@@ -18,7 +19,8 @@ public record MyReadingProgressResponse(
                 progress.totalDays(),
                 progress.progressPercent(),
                 progress.streak(),
-                progress.completedDates()
+                progress.completedDates(),
+                progress.scheduledDates()
         );
     }
 }

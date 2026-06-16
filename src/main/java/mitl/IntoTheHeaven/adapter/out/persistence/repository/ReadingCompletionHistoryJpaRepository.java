@@ -30,4 +30,12 @@ public interface ReadingCompletionHistoryJpaRepository extends JpaRepository<Rea
     List<UUID> findMemberIdsByDeptPlanIdAndDate(@Param("deptPlanId") UUID deptPlanId,
                                                 @Param("startOfDay") LocalDateTime startOfDay,
                                                 @Param("endOfDay") LocalDateTime endOfDay);
+
+    /** 오늘 완독한 고유 멤버 수 */
+    @Query("SELECT COUNT(DISTINCT rc.member.id) FROM ReadingCompletionHistoryJpaEntity rc " +
+           "WHERE rc.departmentReadingPlan.id = :deptPlanId " +
+           "AND rc.completedAt >= :startOfDay AND rc.completedAt < :endOfDay")
+    long countDistinctMemberByDeptPlanIdAndDate(@Param("deptPlanId") UUID deptPlanId,
+                                                @Param("startOfDay") LocalDateTime startOfDay,
+                                                @Param("endOfDay") LocalDateTime endOfDay);
 }

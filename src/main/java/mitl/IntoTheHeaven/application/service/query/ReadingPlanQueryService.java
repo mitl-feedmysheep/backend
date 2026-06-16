@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -62,6 +63,37 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     }
 
     @Override
+    public int getTodayCompletionCount(DepartmentId departmentId) {
+        return departmentReadingPlanJpaRepository
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .map(mapping -> {
+                    LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+                    LocalDateTime endOfDay = startOfDay.plusDays(1);
+                    return (int) readingCompletionHistoryJpaRepository
+                            .countDistinctMemberByDeptPlanIdAndDate(mapping.getId(), startOfDay, endOfDay);
+                })
+                .orElse(0);
+    }
+
+    @Override
+    public ReadingPlanDay getReadingByDate(DepartmentId departmentId, LocalDate date) {
+        return departmentReadingPlanJpaRepository
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), date)
+                .flatMap(mapping -> {
+                    int readingDays = mapping.getReadingPlan().getReadingDays();
+                    int dayNumber = computeDayNumber(mapping.getStartDate(), date, readingDays);
+                    if (dayNumber == 0) return Optional.empty();
+                    return readingPlanPort.findDayByPlanIdAndDayNumber(
+                            mapping.getReadingPlan().getId(), dayNumber);
+                })
+                .map(day -> {
+                    List<Media> medias = mediaPort.findByEntity(EntityType.READING_DAY, day.getId().getValue());
+                    return day.toBuilder().medias(medias).build();
+                })
+                .orElse(null);
+    }
+
+    @Override
     public List<ReadingPlanDay> getAllDays(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
@@ -74,7 +106,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         Optional<DepartmentReadingPlanJpaEntity> mappingOpt = departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now());
         if (mappingOpt.isEmpty()) {
-            return new MyReadingProgress(0, 0, 0, 0, List.of());
+            return new MyReadingProgress(0, 0, 0, 0, List.of(), List.of());
         }
 
         UUID deptPlanId = mappingOpt.get().getId();
@@ -91,7 +123,14 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         int percent = totalDays > 0 ? (int) Math.round((completions.size() * 100.0) / totalDays) : 0;
         int streak = calculateStreak(completedDates);
 
-        return new MyReadingProgress(completions.size(), totalDays, percent, streak, completedDates);
+        List<LocalDate> scheduledDates = computeScheduledDates(
+                mappingOpt.get().getStartDate(),
+                mappingOpt.get().getEndDate(),
+                mappingOpt.get().getReadingPlan().getReadingDays(),
+                totalDays
+        );
+
+        return new MyReadingProgress(completions.size(), totalDays, percent, streak, completedDates, scheduledDates);
     }
 
     @Override
@@ -134,6 +173,19 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
             d = d.plusDays(1);
         }
         return count;
+    }
+
+    private List<LocalDate> computeScheduledDates(LocalDate startDate, LocalDate endDate,
+                                                   int readingDaysMask, int totalDays) {
+        LocalDate limit = endDate.isBefore(LocalDate.now()) ? endDate : LocalDate.now();
+        List<LocalDate> scheduled = new ArrayList<>();
+        LocalDate d = startDate;
+        while (!d.isAfter(limit) && scheduled.size() < totalDays) {
+            int dayBit = 1 << (d.getDayOfWeek().getValue() - 1);
+            if ((readingDaysMask & dayBit) != 0) scheduled.add(d);
+            d = d.plusDays(1);
+        }
+        return scheduled;
     }
 
     private int calculateStreak(List<LocalDate> sortedDates) {
