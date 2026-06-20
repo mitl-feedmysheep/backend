@@ -62,6 +62,6 @@ public class PushSubscriptionPersistenceAdapter implements PushSubscriptionPort 
 
     @Override
     public void deleteByEndpoint(String endpoint) {
-        repository.softDeleteByEndpoint(endpoint);
+        repository.deleteByEndpoint(endpoint);
     }
 }

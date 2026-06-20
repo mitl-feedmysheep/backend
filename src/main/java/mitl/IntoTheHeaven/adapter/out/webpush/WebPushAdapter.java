@@ -24,11 +24,11 @@ public class WebPushAdapter implements WebPushPort {
     @Override
     public SendResult send(PushSubscription subscription, PushPayload payload) {
         try {
-            String json = objectMapper.writeValueAsString(Map.of(
-                    "title", payload.title(),
-                    "body", payload.body(),
-                    "url", payload.url()
-            ));
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("title", payload.title());
+            data.put("url", payload.url());
+            if (payload.body() != null) data.put("body", payload.body());
+            String json = objectMapper.writeValueAsString(data);
 
             Subscription sub = new Subscription(
                     subscription.getEndpoint(),

@@ -8,7 +8,9 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.push.SubscribePushRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.push.UnsubscribePushRequest;
 import mitl.IntoTheHeaven.adapter.in.web.dto.push.VapidPublicKeyResponse;
 import mitl.IntoTheHeaven.application.port.in.command.PushSubscriptionCommandUseCase;
+import mitl.IntoTheHeaven.application.port.in.command.PushSubscriptionTopicCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SubscribePushCommand;
+import mitl.IntoTheHeaven.domain.enums.PushTopic;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.global.config.WebPushConfig;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Push", description = "Web Push Subscription APIs")
@@ -25,6 +28,7 @@ import java.util.UUID;
 public class PushSubscriptionController {
 
     private final PushSubscriptionCommandUseCase pushSubscriptionCommandUseCase;
+    private final PushSubscriptionTopicCommandUseCase pushSubscriptionTopicCommandUseCase;
     private final WebPushConfig webPushConfig;
 
     @Operation(summary = "Get VAPID Public Key")
@@ -63,4 +67,36 @@ public class PushSubscriptionController {
         );
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Get subscribed topics")
+    @GetMapping("/topics")
+    public ResponseEntity<List<String>> getTopics(@AuthenticationPrincipal String memberId) {
+        List<String> topics = pushSubscriptionTopicCommandUseCase
+                .getSubscribedTopics(MemberId.from(UUID.fromString(memberId)))
+                .stream()
+                .map(Enum::name)
+                .toList();
+        return ResponseEntity.ok(topics);
+    }
+
+    @Operation(summary = "Subscribe to a topic")
+    @PostMapping("/topics/{topic}")
+    public ResponseEntity<Void> subscribeTopic(
+            @AuthenticationPrincipal String memberId,
+            @PathVariable PushTopic topic
+    ) {
+        pushSubscriptionTopicCommandUseCase.subscribe(MemberId.from(UUID.fromString(memberId)), topic);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "Unsubscribe from a topic")
+    @DeleteMapping("/topics/{topic}")
+    public ResponseEntity<Void> unsubscribeTopic(
+            @AuthenticationPrincipal String memberId,
+            @PathVariable PushTopic topic
+    ) {
+        pushSubscriptionTopicCommandUseCase.unsubscribe(MemberId.from(UUID.fromString(memberId)), topic);
+        return ResponseEntity.noContent().build();
+    }
+
 }

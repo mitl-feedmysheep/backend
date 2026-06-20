@@ -3,11 +3,12 @@ package mitl.IntoTheHeaven.application.service.command;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
-import mitl.IntoTheHeaven.application.service.query.WeeklyPrayerQueryService;
-import mitl.IntoTheHeaven.domain.model.Prayer;
+import mitl.IntoTheHeaven.domain.enums.PushTopic;
+import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.springframework.stereotype.Service;
 
@@ -31,17 +32,20 @@ public class PushNotificationSendService {
 
     private static final int POOL_SIZE = 8;
     private static final int SEND_TIMEOUT_SECONDS = 10;
-    private static final String NOTIFICATION_TITLE = "오늘도, 기도로 시작해볼까요? 🙏";
-    private static final String DEEPLINK_URL = "/prayers";
-    private static final int PREVIEW_MAX_LENGTH = 18;
+    private static final String NOTIFICATION_TITLE = "오늘도 기도로 하루를 열어요 🙏";
+    private static final String DEEPLINK_URL = "/";
+    private static final PushPayload PRAYER_PAYLOAD = new PushPayload(NOTIFICATION_TITLE, null, DEEPLINK_URL);
 
     private final PushSubscriptionPort pushSubscriptionPort;
+    private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
     private final WebPushPort webPushPort;
-    private final WeeklyPrayerQueryService weeklyPrayerQueryService;
     private final Clock clock;
 
     public void sendDailyPrayerPush() {
-        List<PushSubscription> allSubscriptions = pushSubscriptionPort.findAll();
+        List<MemberId> prayerTopicMembers = pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER);
+        if (prayerTopicMembers.isEmpty()) return;
+
+        List<PushSubscription> allSubscriptions = pushSubscriptionPort.findByMemberIds(prayerTopicMembers);
         if (allSubscriptions.isEmpty()) return;
 
         List<PushSubscription> targeted = filterByCurrentHour(allSubscriptions);
@@ -53,27 +57,17 @@ public class PushNotificationSendService {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (Map.Entry<UUID, List<PushSubscription>> entry : byMember.entrySet()) {
-            UUID memberUuid = entry.getKey();
             List<PushSubscription> subs = entry.getValue();
-            ZoneId userZone = resolveZone(subs.get(0).getTimezone());
-
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
-                    var memberId = mitl.IntoTheHeaven.domain.model.MemberId.from(memberUuid);
-                    List<Prayer> prayers = weeklyPrayerQueryService.getWeeklyPrayers(memberId, userZone);
-
-                    if (prayers.isEmpty()) return;
-
-                    PushPayload payload = buildPayload(prayers);
                     for (PushSubscription sub : subs) {
-                        SendResult result = webPushPort.send(sub, payload);
+                        SendResult result = webPushPort.send(sub, PRAYER_PAYLOAD);
                         handleResult(result, sub.getEndpoint());
                     }
                 } catch (Exception e) {
-                    log.error("Error sending push for member {}: {}", memberUuid, e.getMessage());
+                    log.error("Error sending push for member {}: {}", entry.getKey(), e.getMessage());
                 }
             }, executor);
-
             futures.add(future);
         }
 
@@ -104,19 +98,6 @@ public class PushNotificationSendService {
             map.computeIfAbsent(sub.getMemberId().getValue(), k -> new ArrayList<>()).add(sub);
         }
         return map;
-    }
-
-    private PushPayload buildPayload(List<Prayer> prayers) {
-        String firstRequest = prayers.get(0).getPrayerRequest();
-        String preview = firstRequest.length() > PREVIEW_MAX_LENGTH
-                ? firstRequest.substring(0, PREVIEW_MAX_LENGTH) + "..."
-                : firstRequest;
-
-        String body = prayers.size() == 1
-                ? "\"" + preview + "\""
-                : "\"" + preview + "\" 외 " + (prayers.size() - 1) + "개";
-
-        return new PushPayload(NOTIFICATION_TITLE, body, DEEPLINK_URL);
     }
 
     private void handleResult(SendResult result, String endpoint) {

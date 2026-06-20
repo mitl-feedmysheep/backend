@@ -3,8 +3,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.repository;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PushSubscriptionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +20,6 @@ public interface PushSubscriptionJpaRepository extends JpaRepository<PushSubscri
     List<PushSubscriptionJpaEntity> findByMemberIdIn(List<UUID> memberIds);
 
     @Modifying
-    @Query(value = "UPDATE push_subscription SET deleted_at = NOW() WHERE endpoint = :endpoint AND deleted_at IS NULL", nativeQuery = true)
-    void softDeleteByEndpoint(@Param("endpoint") String endpoint);
+    @Transactional
+    void deleteByEndpoint(String endpoint);
 }

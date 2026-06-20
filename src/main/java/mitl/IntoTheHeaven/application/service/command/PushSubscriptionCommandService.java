@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.application.port.in.command.PushSubscriptionCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.SubscribePushCommand;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.time.ZoneId;
 public class PushSubscriptionCommandService implements PushSubscriptionCommandUseCase {
 
     private final PushSubscriptionPort pushSubscriptionPort;
+    private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
 
     @Override
     @Transactional
@@ -43,6 +45,7 @@ public class PushSubscriptionCommandService implements PushSubscriptionCommandUs
     @Transactional
     public void unsubscribe(MemberId memberId, String endpoint) {
         pushSubscriptionPort.deleteByEndpoint(endpoint);
+        pushSubscriptionTopicPort.deleteAllByMemberId(memberId);
     }
 
     private void validateTimezone(String timezone) {

@@ -32,7 +32,7 @@ public class AnnouncementPushScheduler {
     private final PushSubscriptionPort pushSubscriptionPort;
     private final WebPushPort webPushPort;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void sendScheduledAnnouncements() {
         List<Announcement> pending = announcementPort.findPendingToSend(LocalDateTime.now());
         if (pending.isEmpty()) return;
