@@ -212,7 +212,7 @@ class ReadingPlanQueryServiceTest {
         @DisplayName("플랜에 오늘 day_number에 해당하는 분량이 없으면 null을 반환한다")
         void shouldReturnNullWhenNoDayForToday() {
             LocalDate monday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(monday);
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(monday, 127); // 전 요일 마스크로 요일 의존성 제거
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingPlanPort.findDayByPlanIdAndDayNumber(eq(planUuid), any(Integer.class)))
