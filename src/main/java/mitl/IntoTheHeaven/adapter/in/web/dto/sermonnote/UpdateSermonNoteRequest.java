@@ -28,6 +28,5 @@ public class UpdateSermonNoteRequest {
     @Size(max = 200, message = "Scripture must be less than 200 characters")
     private String scripture;
 
-    @NotBlank(message = "Content is required")
     private String content;
 }

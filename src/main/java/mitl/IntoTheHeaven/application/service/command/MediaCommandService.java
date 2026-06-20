@@ -171,6 +171,7 @@ public class MediaCommandService implements MediaCommandUseCase {
         return switch (mediaType) {
             case THUMBNAIL -> maxThumbnailSize;
             case MEDIUM -> maxMediumSize;
+            case ORIGINAL -> maxMediumSize;
         };
     }
 

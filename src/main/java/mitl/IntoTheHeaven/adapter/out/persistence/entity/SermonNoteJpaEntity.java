@@ -41,7 +41,7 @@ public class SermonNoteJpaEntity extends BaseEntity {
     private String scripture;
 
     /** Personal note content */
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)

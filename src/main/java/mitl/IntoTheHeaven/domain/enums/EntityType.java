@@ -4,10 +4,11 @@ package mitl.IntoTheHeaven.domain.enums;
  * 미디어가 연관된 엔티티 타입
  */
 public enum EntityType {
-    GROUP,       // GROUP
-    GATHERING,   // GATHERING
-    MEMBER,      // MEMBER
-    CHURCH,      // CHURCH
-    VISIT,       // VISIT
-    DEPARTMENT,  // DEPARTMENT
+    GROUP,          // GROUP
+    GATHERING,      // GATHERING
+    MEMBER,         // MEMBER
+    CHURCH,         // CHURCH
+    VISIT,          // VISIT
+    DEPARTMENT,     // DEPARTMENT
+    READING_DAY,    // READING_PLAN_DAY
 }
