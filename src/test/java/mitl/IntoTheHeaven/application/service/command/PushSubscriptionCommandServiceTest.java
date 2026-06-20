@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import mitl.IntoTheHeaven.application.port.in.command.dto.SubscribePushCommand;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,9 @@ class PushSubscriptionCommandServiceTest {
 
     @Mock
     private PushSubscriptionPort pushSubscriptionPort;
+
+    @Mock
+    private PushSubscriptionTopicPort pushSubscriptionTopicPort;
 
     @InjectMocks
     private PushSubscriptionCommandService service;
@@ -122,11 +126,12 @@ class PushSubscriptionCommandServiceTest {
     class Unsubscribe {
 
         @Test
-        @DisplayName("endpoint로 구독을 삭제한다")
-        void unsubscribe_deletesEndpoint() {
+        @DisplayName("endpoint 구독 삭제 + 해당 회원의 모든 토픽 구독을 삭제한다")
+        void unsubscribe_deletesEndpointAndTopics() {
             service.unsubscribe(memberId, "https://push.example.com/endpoint");
 
             verify(pushSubscriptionPort).deleteByEndpoint("https://push.example.com/endpoint");
+            verify(pushSubscriptionTopicPort).deleteAllByMemberId(memberId);
         }
     }
 }
