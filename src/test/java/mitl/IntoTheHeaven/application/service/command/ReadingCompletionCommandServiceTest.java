@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.application.service.command;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentReadingPlanJpaEntity;
+import mitl.IntoTheHeaven.adapter.out.persistence.entity.ReadingPlanJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.ReadingCompletionHistoryPort;
 import mitl.IntoTheHeaven.application.port.out.ReadingPlanPort;
@@ -15,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,9 +60,26 @@ class ReadingCompletionCommandServiceTest {
         memberId = MemberId.from(memberUuid);
     }
 
-    private DepartmentReadingPlanJpaEntity mockMappingEntity() {
+    // 2026-01-05(월) 시작, 매일 읽기(127=all days), dayNumber=1 → scheduledDate=2026-01-05
+    private static final LocalDate PLAN_START = LocalDate.of(2026, 1, 5);
+    private static final int ALL_DAYS_MASK = 127;
+
+    /** getId()만 필요한 경로용 (early return 또는 예외 발생 경로) */
+    private DepartmentReadingPlanJpaEntity mockMappingEntityMinimal() {
         DepartmentReadingPlanJpaEntity mapping = mock(DepartmentReadingPlanJpaEntity.class);
         when(mapping.getId()).thenReturn(deptPlanUuid);
+        return mapping;
+    }
+
+    /** computeScheduledDate까지 실행되는 정상 경로용 */
+    private DepartmentReadingPlanJpaEntity mockMappingEntity() {
+        ReadingPlanJpaEntity readingPlan = mock(ReadingPlanJpaEntity.class);
+        when(readingPlan.getReadingDays()).thenReturn(ALL_DAYS_MASK);
+
+        DepartmentReadingPlanJpaEntity mapping = mock(DepartmentReadingPlanJpaEntity.class);
+        when(mapping.getId()).thenReturn(deptPlanUuid);
+        when(mapping.getStartDate()).thenReturn(PLAN_START);
+        when(mapping.getReadingPlan()).thenReturn(readingPlan);
         return mapping;
     }
 
@@ -92,7 +111,7 @@ class ReadingCompletionCommandServiceTest {
         @Test
         @DisplayName("이미 완독 기록이 있으면 중복 저장하지 않는다")
         void shouldSkipWhenAlreadyCompleted() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity();
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(deptPlanUuid, dayUuid, memberUuid))
@@ -106,7 +125,7 @@ class ReadingCompletionCommandServiceTest {
         @Test
         @DisplayName("존재하지 않는 dayId면 RuntimeException이 발생한다")
         void shouldThrowWhenDayNotFound() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity();
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(any(), any(), any()))
@@ -139,7 +158,8 @@ class ReadingCompletionCommandServiceTest {
             assertThat(saved.getDepartmentReadingPlanId().getValue()).isEqualTo(deptPlanUuid);
             assertThat(saved.getReadingPlanDayId()).isEqualTo(dayId);
             assertThat(saved.getMemberId()).isEqualTo(memberId);
-            assertThat(saved.getCompletedAt()).isNotNull();
+            // dayNumber=1, startDate=2026-01-05(월), 매일 읽기 → 예정일=2026-01-05
+            assertThat(saved.getCompletedAt().toLocalDate()).isEqualTo(PLAN_START);
         }
     }
 
@@ -150,7 +170,7 @@ class ReadingCompletionCommandServiceTest {
         @Test
         @DisplayName("활성 플랜이 있으면 완독 이력을 삭제한다")
         void shouldDeleteWhenActivePlanExists() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity();
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
 

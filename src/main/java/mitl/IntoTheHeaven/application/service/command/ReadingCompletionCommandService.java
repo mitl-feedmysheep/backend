@@ -35,17 +35,34 @@ public class ReadingCompletionCommandService implements ReadingCompletionCommand
             return;
         }
 
-        readingPlanPort.findDayById(dayId.getValue())
+        var day = readingPlanPort.findDayById(dayId.getValue())
                 .orElseThrow(() -> new RuntimeException("Reading plan day not found"));
+
+        // dayNumber로 실제 예정일 역산 — completed_at을 오늘이 아닌 해당 읽기 날짜로 저장
+        LocalDate scheduledDate = computeScheduledDate(
+                mapping.getStartDate(),
+                mapping.getReadingPlan().getReadingDays(),
+                day.getDayNumber()
+        );
 
         ReadingCompletionHistory history = ReadingCompletionHistory.builder()
                 .id(ReadingCompletionHistoryId.from(UUID.randomUUID()))
                 .departmentReadingPlanId(DepartmentReadingPlanId.from(deptPlanId))
                 .readingPlanDayId(dayId)
                 .memberId(memberId)
-                .completedAt(LocalDateTime.now())
+                .completedAt(scheduledDate.atStartOfDay())
                 .build();
         readingCompletionHistoryPort.save(history);
+    }
+
+    private LocalDate computeScheduledDate(LocalDate startDate, int readingDaysMask, int dayNumber) {
+        LocalDate d = startDate;
+        int count = 0;
+        while (true) {
+            int dayBit = 1 << (d.getDayOfWeek().getValue() - 1);
+            if ((readingDaysMask & dayBit) != 0 && ++count == dayNumber) return d;
+            d = d.plusDays(1);
+        }
     }
 
     @Override
