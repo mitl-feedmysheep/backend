@@ -15,6 +15,10 @@ public interface AnnouncementPort {
 
     List<Announcement> findByEntity(String entityType, String entityId);
 
+    List<Announcement> findTop2ByEntityAndType(String entityType, String entityId, String type);
+
+    List<Announcement> findByEntityAndType(String entityType, String entityId, String type);
+
     Optional<Announcement> findById(UUID id);
 
     List<Announcement> findPendingToSend(LocalDateTime now);

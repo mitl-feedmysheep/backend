@@ -28,6 +28,16 @@ public class AnnouncementQueryService implements AnnouncementQueryUseCase {
     }
 
     @Override
+    public List<Announcement> getRecent2ByType(String entityType, String entityId, String type) {
+        return announcementPort.findTop2ByEntityAndType(entityType, entityId, type);
+    }
+
+    @Override
+    public List<Announcement> getListByType(String entityType, String entityId, String type) {
+        return announcementPort.findByEntityAndType(entityType, entityId, type);
+    }
+
+    @Override
     public Announcement getById(UUID id) {
         return announcementPort.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Announcement not found: " + id));

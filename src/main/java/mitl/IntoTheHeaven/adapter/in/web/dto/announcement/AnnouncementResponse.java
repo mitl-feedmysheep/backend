@@ -20,6 +20,7 @@ public class AnnouncementResponse {
     private final LocalDateTime sendAt;
     private final boolean isSent;
     private final LocalDateTime createdAt;
+    private final List<String> images;
 
     public static AnnouncementResponse from(Announcement announcement) {
         return AnnouncementResponse.builder()
@@ -31,6 +32,21 @@ public class AnnouncementResponse {
                 .sendAt(announcement.getSendAt())
                 .isSent(announcement.isSent())
                 .createdAt(announcement.getCreatedAt())
+                .images(List.of())
+                .build();
+    }
+
+    public static AnnouncementResponse from(Announcement announcement, List<String> images) {
+        return AnnouncementResponse.builder()
+                .id(announcement.getId().getValue())
+                .entityType(announcement.getEntityType())
+                .entityId(announcement.getEntityId())
+                .title(announcement.getTitle())
+                .body(announcement.getBody())
+                .sendAt(announcement.getSendAt())
+                .isSent(announcement.isSent())
+                .createdAt(announcement.getCreatedAt())
+                .images(images)
                 .build();
     }
 

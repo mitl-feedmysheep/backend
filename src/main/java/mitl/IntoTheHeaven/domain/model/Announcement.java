@@ -12,6 +12,7 @@ public class Announcement extends DomainEntity<Announcement, AnnouncementId> {
 
     private final String entityType;
     private final String entityId;
+    private final String type;
     private final String title;
     private final String body;
     private final LocalDateTime sendAt;

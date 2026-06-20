@@ -8,7 +8,10 @@ import mitl.IntoTheHeaven.adapter.in.web.dto.announcement.AnnouncementResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.announcement.CreateAnnouncementRequest;
 import mitl.IntoTheHeaven.application.port.in.command.AnnouncementCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.query.AnnouncementQueryUseCase;
+import mitl.IntoTheHeaven.application.port.out.MediaPort;
+import mitl.IntoTheHeaven.domain.enums.EntityType;
 import mitl.IntoTheHeaven.domain.model.Announcement;
+import mitl.IntoTheHeaven.domain.model.Media;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,22 +27,25 @@ public class AnnouncementController {
 
     private final AnnouncementQueryUseCase announcementQueryUseCase;
     private final AnnouncementCommandUseCase announcementCommandUseCase;
+    private final MediaPort mediaPort;
 
-    @Operation(summary = "Get Recent 2 Announcements", description = "Returns the 2 most recent announcements for the given entity. Used on the home screen.")
+    @Operation(summary = "Get Recent 2 Announcements", description = "Returns the 2 most recent announcements for the given entity. Used on the home screen. type defaults to ANNOUNCEMENT.")
     @GetMapping("/recent")
     public ResponseEntity<List<AnnouncementResponse>> getRecent2(
             @RequestParam("entityType") String entityType,
-            @RequestParam("entityId") String entityId) {
-        List<Announcement> announcements = announcementQueryUseCase.getRecent2(entityType, entityId);
+            @RequestParam("entityId") String entityId,
+            @RequestParam(value = "type", defaultValue = "ANNOUNCEMENT") String type) {
+        List<Announcement> announcements = announcementQueryUseCase.getRecent2ByType(entityType, entityId, type);
         return ResponseEntity.ok(AnnouncementResponse.from(announcements));
     }
 
-    @Operation(summary = "Get Announcement List", description = "Returns all announcements for the given entity, sorted by latest first.")
+    @Operation(summary = "Get Announcement List", description = "Returns announcements for the given entity filtered by type. type defaults to ANNOUNCEMENT.")
     @GetMapping
     public ResponseEntity<List<AnnouncementResponse>> getList(
             @RequestParam("entityType") String entityType,
-            @RequestParam("entityId") String entityId) {
-        List<Announcement> announcements = announcementQueryUseCase.getList(entityType, entityId);
+            @RequestParam("entityId") String entityId,
+            @RequestParam(value = "type", defaultValue = "ANNOUNCEMENT") String type) {
+        List<Announcement> announcements = announcementQueryUseCase.getListByType(entityType, entityId, type);
         return ResponseEntity.ok(AnnouncementResponse.from(announcements));
     }
 
@@ -47,7 +53,11 @@ public class AnnouncementController {
     @GetMapping("/{id}")
     public ResponseEntity<AnnouncementResponse> getById(@PathVariable("id") UUID id) {
         Announcement announcement = announcementQueryUseCase.getById(id);
-        return ResponseEntity.ok(AnnouncementResponse.from(announcement));
+        List<String> images = mediaPort.findByEntity(EntityType.ANNOUNCEMENT, id)
+                .stream()
+                .map(Media::getUrl)
+                .toList();
+        return ResponseEntity.ok(AnnouncementResponse.from(announcement, images));
     }
 
     @Operation(summary = "Create Announcement", description = "Admin only. Creates a new scheduled announcement.")

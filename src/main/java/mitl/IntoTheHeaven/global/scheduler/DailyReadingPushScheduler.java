@@ -7,11 +7,13 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPl
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingCompletionHistoryJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingPlanDayJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
 import mitl.IntoTheHeaven.application.service.query.ReadingPlanQueryService;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
+import mitl.IntoTheHeaven.domain.enums.PushTopic;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,28 +34,37 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(name = "webpush.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class DailyReadingPushScheduler {
 
-    private static final int PUSH_HOUR = 7;
+    private static final int PUSH_HOUR = 8;
 
     private final DepartmentReadingPlanJpaRepository departmentReadingPlanJpaRepository;
     private final ReadingPlanDayJpaRepository readingPlanDayJpaRepository;
     private final ReadingCompletionHistoryJpaRepository readingCompletionJpaRepository;
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
     private final PushSubscriptionPort pushSubscriptionPort;
+    private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
     private final WebPushPort webPushPort;
 
     /**
-     * 매시 실행, 구독자 timezone 기준으로 현지 7시에 발송
+     * 매시 실행, READING 토픽 구독자 중 timezone 기준 오전 8시에 발송
      */
     @Scheduled(cron = "0 0 * * * *")
     public void sendDailyReadingPush() {
         LocalDate today = LocalDate.now();
 
+        Set<UUID> readingTopicMemberIds = pushSubscriptionTopicPort
+                .findMemberIdsByTopic(PushTopic.READING)
+                .stream()
+                .map(MemberId::getValue)
+                .collect(Collectors.toSet());
+
+        if (readingTopicMemberIds.isEmpty()) return;
+
         departmentReadingPlanJpaRepository.findAllActiveByDate(today).forEach(mapping -> {
             UUID planId = mapping.getReadingPlan().getId();
+            String planTitle = mapping.getReadingPlan().getTitle();
             UUID departmentId = mapping.getDepartment().getId();
             UUID deptPlanId = mapping.getId();
 
-            // 오늘 분량 없으면 스킵 (읽기 요일 외 포함)
             int readingDays = mapping.getReadingPlan().getReadingDays();
             int dayNumber = ReadingPlanQueryService.computeDayNumber(mapping.getStartDate(), today, readingDays);
             if (dayNumber == 0) return;
@@ -61,23 +72,22 @@ public class DailyReadingPushScheduler {
             if (dayOpt.isEmpty()) return;
             var day = dayOpt.get();
 
-            // 오늘 이미 완독한 멤버 ID 집합
             Set<UUID> completedMemberIds = Set.copyOf(
                     readingCompletionJpaRepository.findMemberIdsByDeptPlanIdAndDate(
                             deptPlanId, today.atStartOfDay(), today.plusDays(1).atStartOfDay()));
 
-            // ACTIVE 멤버 중 미완독자
+            // READING 토픽 구독자 중 이 부서 ACTIVE 멤버 & 미완독자
             List<MemberId> targetMemberIds = departmentMemberJpaRepository
                     .findByDepartmentIdAndStatus(departmentId, DepartmentMemberStatus.ACTIVE)
                     .stream()
                     .map(dm -> dm.getMember().getId())
+                    .filter(id -> readingTopicMemberIds.contains(id))
                     .filter(id -> !completedMemberIds.contains(id))
                     .map(MemberId::from)
                     .toList();
 
             if (targetMemberIds.isEmpty()) return;
 
-            // timezone 기준 7시 필터 후 발송
             List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(targetMemberIds)
                     .stream()
                     .filter(sub -> isLocalHour(sub.getTimezone(), PUSH_HOUR))
@@ -86,7 +96,7 @@ public class DailyReadingPushScheduler {
             if (subscriptions.isEmpty()) return;
 
             PushPayload payload = new PushPayload(
-                    "오늘의 리딩지저스",
+                    planTitle,
                     day.getReadingRange(),
                     "/reading"
             );

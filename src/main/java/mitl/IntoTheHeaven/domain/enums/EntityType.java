@@ -11,4 +11,5 @@ public enum EntityType {
     VISIT,          // VISIT
     DEPARTMENT,     // DEPARTMENT
     READING_DAY,    // READING_PLAN_DAY
+    ANNOUNCEMENT,   // ANNOUNCEMENT
 }

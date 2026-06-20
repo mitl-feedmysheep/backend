@@ -47,6 +47,9 @@ public class AnnouncementJpaEntity extends BaseEntity {
     @Column(name = "push_enabled", nullable = false)
     private boolean pushEnabled;
 
+    @Column(name = "type", nullable = false, length = 20)
+    private String type;
+
     public void markAsSent() {
         this.isSent = true;
     }

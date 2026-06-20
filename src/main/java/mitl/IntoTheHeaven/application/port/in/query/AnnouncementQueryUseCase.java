@@ -11,5 +11,9 @@ public interface AnnouncementQueryUseCase {
 
     List<Announcement> getList(String entityType, String entityId);
 
+    List<Announcement> getRecent2ByType(String entityType, String entityId, String type);
+
+    List<Announcement> getListByType(String entityType, String entityId, String type);
+
     Announcement getById(UUID id);
 }

@@ -16,6 +16,10 @@ public interface AnnouncementJpaRepository extends JpaRepository<AnnouncementJpa
 
     List<AnnouncementJpaEntity> findByEntityTypeAndEntityIdOrderByCreatedAtDesc(String entityType, String entityId);
 
+    List<AnnouncementJpaEntity> findTop2ByEntityTypeAndEntityIdAndTypeOrderByCreatedAtDesc(String entityType, String entityId, String type);
+
+    List<AnnouncementJpaEntity> findByEntityTypeAndEntityIdAndTypeOrderByCreatedAtDesc(String entityType, String entityId, String type);
+
     List<AnnouncementJpaEntity> findBySendAtBeforeAndIsSentFalse(LocalDateTime now);
 
     @Modifying

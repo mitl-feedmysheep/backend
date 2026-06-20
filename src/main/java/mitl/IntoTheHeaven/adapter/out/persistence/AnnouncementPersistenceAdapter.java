@@ -37,6 +37,18 @@ public class AnnouncementPersistenceAdapter implements AnnouncementPort {
     }
 
     @Override
+    public List<Announcement> findTop2ByEntityAndType(String entityType, String entityId, String type) {
+        return repository.findTop2ByEntityTypeAndEntityIdAndTypeOrderByCreatedAtDesc(entityType, entityId, type)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<Announcement> findByEntityAndType(String entityType, String entityId, String type) {
+        return repository.findByEntityTypeAndEntityIdAndTypeOrderByCreatedAtDesc(entityType, entityId, type)
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
     public Optional<Announcement> findById(UUID id) {
         return repository.findById(id).map(mapper::toDomain);
     }

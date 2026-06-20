@@ -24,6 +24,7 @@ public class AnnouncementCommandService implements AnnouncementCommandUseCase {
                 .id(AnnouncementId.from(UUID.randomUUID()))
                 .entityType(entityType)
                 .entityId(entityId)
+                .type("ANNOUNCEMENT")
                 .title(title)
                 .body(body)
                 .sendAt(sendAt)
