@@ -151,6 +151,7 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
                 .readingPlanDay(dayRef)
                 .member(memberRef)
                 .completedAt(history.getCompletedAt())
+                .isCompleted(history.isCompleted())
                 .build();
         return toHistoryDomain(readingCompletionHistoryJpaRepository.save(entity));
     }
@@ -163,28 +164,20 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     }
 
     @Override
-    public boolean existsByDeptPlanIdAndDayIdAndMemberId(UUID deptPlanId, UUID dayId, UUID memberId) {
-        return readingCompletionHistoryJpaRepository
-                .existsByDepartmentReadingPlanIdAndReadingPlanDayIdAndMemberId(deptPlanId, dayId, memberId);
-    }
-
-    @Override
-    public void deleteByDeptPlanIdAndDayIdAndMemberId(UUID deptPlanId, UUID dayId, UUID memberId) {
-        readingCompletionHistoryJpaRepository
-                .findByDepartmentReadingPlanIdAndReadingPlanDayIdAndMemberId(deptPlanId, dayId, memberId)
-                .ifPresent(readingCompletionHistoryJpaRepository::delete);
+    public void setIsCompleted(UUID deptPlanId, UUID dayId, UUID memberId, boolean isCompleted) {
+        readingCompletionHistoryJpaRepository.updateIsCompleted(deptPlanId, dayId, memberId, isCompleted);
     }
 
     @Override
     public long countByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId) {
-        return readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberId(deptPlanId, memberId);
+        return readingCompletionHistoryJpaRepository
+                .countByDepartmentReadingPlanIdAndMemberIdAndIsCompletedTrue(deptPlanId, memberId);
     }
 
     @Override
-    public List<ReadingCompletionHistory> findByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId) {
+    public List<Integer> findCompletedDayNumbersByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId) {
         return readingCompletionHistoryJpaRepository
-                .findByDepartmentReadingPlanIdAndMemberId(deptPlanId, memberId)
-                .stream().map(this::toHistoryDomain).toList();
+                .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanId, memberId);
     }
 
     @Override
@@ -239,6 +232,7 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
                 .readingPlanDayId(ReadingPlanDayId.from(e.getReadingPlanDay().getId()))
                 .memberId(MemberId.from(e.getMember().getId()))
                 .completedAt(e.getCompletedAt())
+                .isCompleted(e.isCompleted())
                 .build();
     }
 }

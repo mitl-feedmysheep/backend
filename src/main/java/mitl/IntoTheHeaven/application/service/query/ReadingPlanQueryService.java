@@ -112,17 +112,6 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         UUID deptPlanId = mappingOpt.get().getId();
         int totalDays = readingPlanPort.countDaysByPlanId(mappingOpt.get().getReadingPlan().getId());
 
-        var completions = readingCompletionHistoryJpaRepository
-                .findByDepartmentReadingPlanIdAndMemberId(deptPlanId, memberId.getValue());
-
-        List<LocalDate> completedDates = completions.stream()
-                .map(rc -> rc.getCompletedAt().toLocalDate())
-                .sorted()
-                .toList();
-
-        int percent = totalDays > 0 ? (int) Math.round((completions.size() * 100.0) / totalDays) : 0;
-        int streak = calculateStreak(completedDates);
-
         List<LocalDate> scheduledDates = computeScheduledDates(
                 mappingOpt.get().getStartDate(),
                 mappingOpt.get().getEndDate(),
@@ -130,7 +119,19 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
                 totalDays
         );
 
-        return new MyReadingProgress(completions.size(), totalDays, percent, streak, completedDates, scheduledDates);
+        List<Integer> completedDayNums = readingCompletionHistoryJpaRepository
+                .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanId, memberId.getValue());
+
+        List<LocalDate> completedDates = completedDayNums.stream()
+                .filter(dn -> dn >= 1 && dn <= scheduledDates.size())
+                .map(dn -> scheduledDates.get(dn - 1))
+                .sorted()
+                .toList();
+
+        int percent = totalDays > 0 ? (int) Math.round((completedDayNums.size() * 100.0) / totalDays) : 0;
+        int streak = calculateStreak(completedDates);
+
+        return new MyReadingProgress(completedDayNums.size(), totalDays, percent, streak, completedDates, scheduledDates);
     }
 
     @Override
@@ -148,7 +149,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
                 .map(dm -> {
                     var member = dm.getMember();
                     long completed = readingCompletionHistoryJpaRepository
-                            .countByDepartmentReadingPlanIdAndMemberId(deptPlanId, member.getId());
+                            .countByDepartmentReadingPlanIdAndMemberIdAndIsCompletedTrue(deptPlanId, member.getId());
                     int percent = totalDays > 0 ? (int) Math.round((completed * 100.0) / totalDays) : 0;
                     return new MemberReadingProgress(member.getId(), member.getName(),
                             (int) completed, totalDays, percent);

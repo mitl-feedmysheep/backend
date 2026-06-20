@@ -1,7 +1,6 @@
 package mitl.IntoTheHeaven.application.service.command;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentReadingPlanJpaEntity;
-import mitl.IntoTheHeaven.adapter.out.persistence.entity.ReadingPlanJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.ReadingCompletionHistoryPort;
 import mitl.IntoTheHeaven.application.port.out.ReadingPlanPort;
@@ -16,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -60,26 +58,9 @@ class ReadingCompletionCommandServiceTest {
         memberId = MemberId.from(memberUuid);
     }
 
-    // 2026-01-05(월) 시작, 매일 읽기(127=all days), dayNumber=1 → scheduledDate=2026-01-05
-    private static final LocalDate PLAN_START = LocalDate.of(2026, 1, 5);
-    private static final int ALL_DAYS_MASK = 127;
-
-    /** getId()만 필요한 경로용 (early return 또는 예외 발생 경로) */
-    private DepartmentReadingPlanJpaEntity mockMappingEntityMinimal() {
+    private DepartmentReadingPlanJpaEntity mockMapping() {
         DepartmentReadingPlanJpaEntity mapping = mock(DepartmentReadingPlanJpaEntity.class);
         when(mapping.getId()).thenReturn(deptPlanUuid);
-        return mapping;
-    }
-
-    /** computeScheduledDate까지 실행되는 정상 경로용 */
-    private DepartmentReadingPlanJpaEntity mockMappingEntity() {
-        ReadingPlanJpaEntity readingPlan = mock(ReadingPlanJpaEntity.class);
-        when(readingPlan.getReadingDays()).thenReturn(ALL_DAYS_MASK);
-
-        DepartmentReadingPlanJpaEntity mapping = mock(DepartmentReadingPlanJpaEntity.class);
-        when(mapping.getId()).thenReturn(deptPlanUuid);
-        when(mapping.getStartDate()).thenReturn(PLAN_START);
-        when(mapping.getReadingPlan()).thenReturn(readingPlan);
         return mapping;
     }
 
@@ -87,9 +68,19 @@ class ReadingCompletionCommandServiceTest {
         return ReadingPlanDay.builder()
                 .id(dayId)
                 .readingPlanId(ReadingPlanId.from(UUID.randomUUID()))
-                
                 .dayNumber(1)
                 .readingRange("창세기 1장")
+                .build();
+    }
+
+    private ReadingCompletionHistory buildHistory(boolean isCompleted) {
+        return ReadingCompletionHistory.builder()
+                .id(ReadingCompletionHistoryId.from(UUID.randomUUID()))
+                .departmentReadingPlanId(DepartmentReadingPlanId.from(deptPlanUuid))
+                .readingPlanDayId(dayId)
+                .memberId(memberId)
+                .completedAt(java.time.LocalDateTime.now())
+                .isCompleted(isCompleted)
                 .build();
     }
 
@@ -109,27 +100,43 @@ class ReadingCompletionCommandServiceTest {
         }
 
         @Test
-        @DisplayName("이미 완독 기록이 있으면 중복 저장하지 않는다")
+        @DisplayName("이미 is_completed=true 이면 중복 저장하지 않는다")
         void shouldSkipWhenAlreadyCompleted() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
+            var mapping = mockMapping();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
-            when(readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(deptPlanUuid, dayUuid, memberUuid))
-                    .thenReturn(true);
+            when(readingCompletionHistoryPort.findByDeptPlanIdAndDayIdAndMemberId(deptPlanUuid, dayUuid, memberUuid))
+                    .thenReturn(Optional.of(buildHistory(true)));
 
             service.markComplete(departmentId, dayId, memberId);
 
+            verify(readingCompletionHistoryPort, never()).save(any());
+            verify(readingCompletionHistoryPort, never()).setIsCompleted(any(), any(), any(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("is_completed=false 상태이면 setIsCompleted(true)로 재활성화한다")
+        void shouldReactivateWhenCancelled() {
+            var mapping = mockMapping();
+            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
+                    .thenReturn(Optional.of(mapping));
+            when(readingCompletionHistoryPort.findByDeptPlanIdAndDayIdAndMemberId(deptPlanUuid, dayUuid, memberUuid))
+                    .thenReturn(Optional.of(buildHistory(false)));
+
+            service.markComplete(departmentId, dayId, memberId);
+
+            verify(readingCompletionHistoryPort).setIsCompleted(deptPlanUuid, dayUuid, memberUuid, true);
             verify(readingCompletionHistoryPort, never()).save(any());
         }
 
         @Test
         @DisplayName("존재하지 않는 dayId면 RuntimeException이 발생한다")
         void shouldThrowWhenDayNotFound() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
+            var mapping = mockMapping();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
-            when(readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(any(), any(), any()))
-                    .thenReturn(false);
+            when(readingCompletionHistoryPort.findByDeptPlanIdAndDayIdAndMemberId(any(), any(), any()))
+                    .thenReturn(Optional.empty());
             when(readingPlanPort.findDayById(dayUuid)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.markComplete(departmentId, dayId, memberId))
@@ -138,28 +145,27 @@ class ReadingCompletionCommandServiceTest {
         }
 
         @Test
-        @DisplayName("정상 완독 체크 시 완독 이력이 저장된다")
-        void shouldSaveCompletionHistory() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity();
+        @DisplayName("최초 완독 시 is_completed=true, completed_at=실제 시간으로 저장된다")
+        void shouldSaveWithIsCompletedTrueAndRealTime() {
+            var mapping = mockMapping();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
-            when(readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(any(), any(), any()))
-                    .thenReturn(false);
+            when(readingCompletionHistoryPort.findByDeptPlanIdAndDayIdAndMemberId(any(), any(), any()))
+                    .thenReturn(Optional.empty());
             when(readingPlanPort.findDayById(dayUuid)).thenReturn(Optional.of(buildDay()));
             when(readingCompletionHistoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
+            var before = java.time.LocalDateTime.now().minusSeconds(1);
             service.markComplete(departmentId, dayId, memberId);
+            var after = java.time.LocalDateTime.now().plusSeconds(1);
 
             ArgumentCaptor<ReadingCompletionHistory> captor = ArgumentCaptor.forClass(ReadingCompletionHistory.class);
             verify(readingCompletionHistoryPort).save(captor.capture());
 
             ReadingCompletionHistory saved = captor.getValue();
-            assertThat(saved.getId()).isNotNull();
+            assertThat(saved.isCompleted()).isTrue();
+            assertThat(saved.getCompletedAt()).isBetween(before, after);
             assertThat(saved.getDepartmentReadingPlanId().getValue()).isEqualTo(deptPlanUuid);
-            assertThat(saved.getReadingPlanDayId()).isEqualTo(dayId);
-            assertThat(saved.getMemberId()).isEqualTo(memberId);
-            // dayNumber=1, startDate=2026-01-05(월), 매일 읽기 → 예정일=2026-01-05
-            assertThat(saved.getCompletedAt().toLocalDate()).isEqualTo(PLAN_START);
         }
     }
 
@@ -168,28 +174,26 @@ class ReadingCompletionCommandServiceTest {
     class UnmarkCompleteTests {
 
         @Test
-        @DisplayName("활성 플랜이 있으면 완독 이력을 삭제한다")
-        void shouldDeleteWhenActivePlanExists() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntityMinimal();
+        @DisplayName("활성 플랜이 있으면 setIsCompleted(false)를 호출한다")
+        void shouldSetIsCompletedFalseWhenActivePlanExists() {
+            var mapping = mockMapping();
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
 
             service.unmarkComplete(departmentId, dayId, memberId);
 
-            verify(readingCompletionHistoryPort)
-                    .deleteByDeptPlanIdAndDayIdAndMemberId(deptPlanUuid, dayUuid, memberUuid);
+            verify(readingCompletionHistoryPort).setIsCompleted(deptPlanUuid, dayUuid, memberUuid, false);
         }
 
         @Test
-        @DisplayName("활성 플랜이 없으면 삭제를 시도하지 않는다")
+        @DisplayName("활성 플랜이 없으면 아무것도 하지 않는다")
         void shouldDoNothingWhenNoActivePlan() {
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.empty());
 
             service.unmarkComplete(departmentId, dayId, memberId);
 
-            verify(readingCompletionHistoryPort, never())
-                    .deleteByDeptPlanIdAndDayIdAndMemberId(any(), any(), any());
+            verify(readingCompletionHistoryPort, never()).setIsCompleted(any(), any(), any(), anyBoolean());
         }
     }
 }

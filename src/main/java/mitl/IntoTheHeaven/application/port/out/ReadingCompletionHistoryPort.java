@@ -13,13 +13,11 @@ public interface ReadingCompletionHistoryPort {
 
     Optional<ReadingCompletionHistory> findByDeptPlanIdAndDayIdAndMemberId(UUID deptPlanId, UUID dayId, UUID memberId);
 
-    boolean existsByDeptPlanIdAndDayIdAndMemberId(UUID deptPlanId, UUID dayId, UUID memberId);
-
-    void deleteByDeptPlanIdAndDayIdAndMemberId(UUID deptPlanId, UUID dayId, UUID memberId);
+    void setIsCompleted(UUID deptPlanId, UUID dayId, UUID memberId, boolean isCompleted);
 
     long countByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId);
 
-    List<ReadingCompletionHistory> findByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId);
+    List<Integer> findCompletedDayNumbersByDeptPlanIdAndMemberId(UUID deptPlanId, UUID memberId);
 
     /** 특정 날짜에 이미 완독한 멤버 ID 목록 (푸시 미완독 필터) */
     List<UUID> findCompletedMemberIdsByDeptPlanIdAndDate(UUID deptPlanId, LocalDate date);

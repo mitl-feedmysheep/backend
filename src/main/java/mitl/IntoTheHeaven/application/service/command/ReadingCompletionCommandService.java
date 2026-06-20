@@ -30,46 +30,35 @@ public class ReadingCompletionCommandService implements ReadingCompletionCommand
 
         UUID deptPlanId = mapping.getId();
 
-        if (readingCompletionHistoryPort.existsByDeptPlanIdAndDayIdAndMemberId(
-                deptPlanId, dayId.getValue(), memberId.getValue())) {
+        var existing = readingCompletionHistoryPort
+                .findByDeptPlanIdAndDayIdAndMemberId(deptPlanId, dayId.getValue(), memberId.getValue());
+
+        if (existing.isPresent()) {
+            if (existing.get().isCompleted()) return; // 이미 완독
+            // 취소 상태였으면 다시 완독으로 전환
+            readingCompletionHistoryPort.setIsCompleted(deptPlanId, dayId.getValue(), memberId.getValue(), true);
             return;
         }
 
-        var day = readingPlanPort.findDayById(dayId.getValue())
+        readingPlanPort.findDayById(dayId.getValue())
                 .orElseThrow(() -> new RuntimeException("Reading plan day not found"));
-
-        // dayNumber로 실제 예정일 역산 — completed_at을 오늘이 아닌 해당 읽기 날짜로 저장
-        LocalDate scheduledDate = computeScheduledDate(
-                mapping.getStartDate(),
-                mapping.getReadingPlan().getReadingDays(),
-                day.getDayNumber()
-        );
 
         ReadingCompletionHistory history = ReadingCompletionHistory.builder()
                 .id(ReadingCompletionHistoryId.from(UUID.randomUUID()))
                 .departmentReadingPlanId(DepartmentReadingPlanId.from(deptPlanId))
                 .readingPlanDayId(dayId)
                 .memberId(memberId)
-                .completedAt(scheduledDate.atStartOfDay())
+                .completedAt(LocalDateTime.now())
+                .isCompleted(true)
                 .build();
         readingCompletionHistoryPort.save(history);
-    }
-
-    private LocalDate computeScheduledDate(LocalDate startDate, int readingDaysMask, int dayNumber) {
-        LocalDate d = startDate;
-        int count = 0;
-        while (true) {
-            int dayBit = 1 << (d.getDayOfWeek().getValue() - 1);
-            if ((readingDaysMask & dayBit) != 0 && ++count == dayNumber) return d;
-            d = d.plusDays(1);
-        }
     }
 
     @Override
     public void unmarkComplete(DepartmentId departmentId, ReadingPlanDayId dayId, MemberId memberId) {
         departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
-                .ifPresent(mapping -> readingCompletionHistoryPort.deleteByDeptPlanIdAndDayIdAndMemberId(
-                        mapping.getId(), dayId.getValue(), memberId.getValue()));
+                .ifPresent(mapping -> readingCompletionHistoryPort.setIsCompleted(
+                        mapping.getId(), dayId.getValue(), memberId.getValue(), false));
     }
 }

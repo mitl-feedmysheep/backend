@@ -16,4 +16,5 @@ public class ReadingCompletionHistory extends DomainEntity<ReadingCompletionHist
     private final ReadingPlanDayId readingPlanDayId;
     private final MemberId memberId;
     private final LocalDateTime completedAt;
+    private final boolean isCompleted;
 }

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * 멤버 완독 기록 이력 — 활성화 기간(DepartmentReadingPlan) 단위로 구분.
- * unmark 시 hard delete. deleted_at 컬럼은 DDL 일관성 용도이며 실제 사용하지 않음.
+ * unmark 시 is_completed=false 소프트 토글. deleted_at 컬럼은 DDL 일관성 용도.
  */
 @Entity
 @Table(name = "reading_completion_history",
@@ -38,4 +38,7 @@ public class ReadingCompletionHistoryJpaEntity extends BaseEntity {
 
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
+
+    @Column(name = "is_completed", nullable = false)
+    private boolean isCompleted;
 }

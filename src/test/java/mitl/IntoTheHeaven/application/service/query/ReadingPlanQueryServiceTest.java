@@ -3,7 +3,6 @@ package mitl.IntoTheHeaven.application.service.query;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentMemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentReadingPlanJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
-import mitl.IntoTheHeaven.adapter.out.persistence.entity.ReadingCompletionHistoryJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ReadingPlanJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
@@ -82,11 +81,9 @@ class ReadingPlanQueryServiceTest {
         return mapping;
     }
 
-    private ReadingCompletionHistoryJpaEntity mockCompletion(LocalDateTime completedAt) {
-        ReadingCompletionHistoryJpaEntity entity = mock(ReadingCompletionHistoryJpaEntity.class);
-        when(entity.getCompletedAt()).thenReturn(completedAt);
-        return entity;
-    }
+    // 모든 날 읽기(127) + startDate=today.minusDays(29) → day N = today.minusDays(29 - N + 1)
+    private static final int ALL_DAYS_MASK = 127;
+    private static final LocalDate PROGRESS_START = LocalDate.now().minusDays(29);
 
     private DepartmentMemberJpaEntity mockDepartmentMember(UUID memberUuid, String name) {
         MemberJpaEntity member = mock(MemberJpaEntity.class);
@@ -286,17 +283,15 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("완독 수와 진도율을 올바르게 계산한다")
         void shouldCalculateProgressCorrectly() {
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now());
-            ReadingCompletionHistoryJpaEntity c1 = mockCompletion(LocalDateTime.now().minusDays(2));
-            ReadingCompletionHistoryJpaEntity c2 = mockCompletion(LocalDateTime.now().minusDays(1));
-            ReadingCompletionHistoryJpaEntity c3 = mockCompletion(LocalDateTime.now());
+            // ALL_DAYS_MASK=127: 매일 읽기. dayNumber 28,29,30 = today-2, today-1, today
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(PROGRESS_START, ALL_DAYS_MASK);
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
-                    .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
-                    .thenReturn(List.of(c1, c2, c3));
+                    .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
+                    .thenReturn(List.of(28, 29, 30));
 
             ReadingPlanQueryUseCase.MyReadingProgress result = service.getMyProgress(departmentId, memberId);
 
@@ -309,18 +304,15 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("연속 완독 스트릭을 올바르게 계산한다")
         void shouldCalculateStreakCorrectly() {
-            LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
-            ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.atStartOfDay());
-            ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(1).atStartOfDay());
-            ReadingCompletionHistoryJpaEntity c3 = mockCompletion(today.minusDays(2).atStartOfDay());
+            // dayNumber 28,29,30 → today-2, today-1, today → streak=3
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(PROGRESS_START, ALL_DAYS_MASK);
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
-                    .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
-                    .thenReturn(List.of(c1, c2, c3));
+                    .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
+                    .thenReturn(List.of(28, 29, 30));
 
             ReadingPlanQueryUseCase.MyReadingProgress result = service.getMyProgress(departmentId, memberId);
 
@@ -330,17 +322,15 @@ class ReadingPlanQueryServiceTest {
         @Test
         @DisplayName("오늘 완독 기록이 없으면 streak이 0이다")
         void shouldReturnZeroStreakWhenTodayNotCompleted() {
-            LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
-            ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.minusDays(1).atStartOfDay());
-            ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(2).atStartOfDay());
+            // dayNumber 27,28 → today-3, today-2 (오늘 없음) → streak=0
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(PROGRESS_START, ALL_DAYS_MASK);
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(30);
             when(readingCompletionHistoryJpaRepository
-                    .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
-                    .thenReturn(List.of(c1, c2));
+                    .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
+                    .thenReturn(List.of(27, 28));
 
             ReadingPlanQueryUseCase.MyReadingProgress result = service.getMyProgress(departmentId, memberId);
 
@@ -351,17 +341,15 @@ class ReadingPlanQueryServiceTest {
         @DisplayName("완독 날짜 목록이 오름차순으로 정렬된다")
         void shouldReturnCompletedDatesSorted() {
             LocalDate today = LocalDate.now();
-            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today);
-            ReadingCompletionHistoryJpaEntity c1 = mockCompletion(today.atStartOfDay());
-            ReadingCompletionHistoryJpaEntity c2 = mockCompletion(today.minusDays(3).atStartOfDay());
-            ReadingCompletionHistoryJpaEntity c3 = mockCompletion(today.minusDays(1).atStartOfDay());
+            // startDate=today-9, mask=127: dayNumber 7=today-3, 9=today-1, 10=today
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(today.minusDays(9), ALL_DAYS_MASK);
 
             when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
                     .thenReturn(Optional.of(mapping));
             when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(10);
             when(readingCompletionHistoryJpaRepository
-                    .findByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
-                    .thenReturn(List.of(c1, c2, c3));
+                    .findCompletedDayNumbersByDeptPlanIdAndMemberId(deptPlanUuid, memberId.getValue()))
+                    .thenReturn(List.of(10, 7, 9));
 
             ReadingPlanQueryUseCase.MyReadingProgress result = service.getMyProgress(departmentId, memberId);
 
@@ -398,9 +386,9 @@ class ReadingPlanQueryServiceTest {
             when(readingPlanPort.countDaysByPlanId(planUuid)).thenReturn(10);
             when(departmentMemberJpaRepository.findByDepartmentIdAndStatus(deptUuid, DepartmentMemberStatus.ACTIVE))
                     .thenReturn(List.of(dmA, dmB));
-            when(readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberAId))
+            when(readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberIdAndIsCompletedTrue(deptPlanUuid, memberAId))
                     .thenReturn(7L);
-            when(readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberId(deptPlanUuid, memberBId))
+            when(readingCompletionHistoryJpaRepository.countByDepartmentReadingPlanIdAndMemberIdAndIsCompletedTrue(deptPlanUuid, memberBId))
                     .thenReturn(5L);
 
             List<ReadingPlanQueryUseCase.MemberReadingProgress> result = service.getDepartmentProgress(departmentId);
