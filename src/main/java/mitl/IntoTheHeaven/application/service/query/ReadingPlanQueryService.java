@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -67,10 +66,16 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
         return departmentReadingPlanJpaRepository
                 .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
                 .map(mapping -> {
-                    LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-                    LocalDateTime endOfDay = startOfDay.plusDays(1);
-                    return (int) readingCompletionHistoryJpaRepository
-                            .countDistinctMemberByDeptPlanIdAndDate(mapping.getId(), startOfDay, endOfDay);
+                    int dayNumber = computeDayNumber(
+                            mapping.getStartDate(), LocalDate.now(),
+                            mapping.getReadingPlan().getReadingDays());
+                    if (dayNumber == 0) return 0;
+                    return readingPlanPort.findDayByPlanIdAndDayNumber(
+                                    mapping.getReadingPlan().getId(), dayNumber)
+                            .map(day -> (int) readingCompletionHistoryJpaRepository
+                                    .countDistinctMemberByDeptPlanIdAndDayId(
+                                            mapping.getId(), day.getId().getValue()))
+                            .orElse(0);
                 })
                 .orElse(0);
     }

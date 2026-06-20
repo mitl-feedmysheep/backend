@@ -4,6 +4,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentMemberJpaEnti
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentReadingPlanJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.MemberJpaEntity;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.ReadingPlanJpaEntity;
+import mitl.IntoTheHeaven.application.port.out.MediaPort;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingCompletionHistoryJpaRepository;
@@ -36,6 +37,9 @@ class ReadingPlanQueryServiceTest {
 
     @Mock
     private ReadingPlanPort readingPlanPort;
+
+    @Mock
+    private MediaPort mediaPort;
 
     @Mock
     private DepartmentReadingPlanJpaRepository departmentReadingPlanJpaRepository;
@@ -355,6 +359,80 @@ class ReadingPlanQueryServiceTest {
 
             assertThat(result.completedDates()).isSorted();
             assertThat(result.completedDates().get(0)).isEqualTo(today.minusDays(3));
+        }
+    }
+
+    @Nested
+    @DisplayName("getTodayCompletionCount - 오늘 분량 완독 인원 수")
+    class GetTodayCompletionCountTests {
+
+        @Test
+        @DisplayName("활성 플랜이 없으면 0을 반환한다")
+        void shouldReturnZeroWhenNoActivePlan() {
+            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
+                    .thenReturn(Optional.empty());
+
+            assertThat(service.getTodayCompletionCount(departmentId)).isZero();
+        }
+
+        @Test
+        @DisplayName("오늘이 읽기 요일이 아니면 0을 반환한다")
+        void shouldReturnZeroWhenTodayIsNotReadingDay() {
+            // 오늘이 일요일(bit6)일 때 월~토 마스크(63)이면 오늘은 읽기 요일 아님
+            // 대신 플랜 시작일을 미래로 설정해서 computeDayNumber=0을 유도
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now().plusDays(1));
+            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
+                    .thenReturn(Optional.of(mapping));
+
+            assertThat(service.getTodayCompletionCount(departmentId)).isZero();
+        }
+
+        @Test
+        @DisplayName("오늘 분량(dayNumber)을 완독한 멤버 수를 반환한다")
+        void shouldCountMembersWhoCompletedTodayDay() {
+            // ALL_DAYS_MASK + startDate=today → dayNumber=1 → 오늘 day
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now(), ALL_DAYS_MASK);
+            UUID todayDayId = UUID.randomUUID();
+            ReadingPlanDay todayDay = ReadingPlanDay.builder()
+                    .id(ReadingPlanDayId.from(todayDayId))
+                    .readingPlanId(ReadingPlanId.from(planUuid))
+                    .dayNumber(1)
+                    .readingRange("창세기 1장")
+                    .build();
+
+            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
+                    .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.findDayByPlanIdAndDayNumber(planUuid, 1))
+                    .thenReturn(Optional.of(todayDay));
+            when(readingCompletionHistoryJpaRepository
+                    .countDistinctMemberByDeptPlanIdAndDayId(deptPlanUuid, todayDayId))
+                    .thenReturn(5L);
+
+            assertThat(service.getTodayCompletionCount(departmentId)).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("다른 날 분량을 오늘 완독해도 오늘 카운트에 포함되지 않는다")
+        void shouldNotCountCompletionsForOtherDays() {
+            // dayNumber=1(오늘)에 대한 count는 0, 다른 dayId에 대한 count는 무관
+            DepartmentReadingPlanJpaEntity mapping = mockMappingEntity(LocalDate.now(), ALL_DAYS_MASK);
+            UUID todayDayId = UUID.randomUUID();
+            ReadingPlanDay todayDay = ReadingPlanDay.builder()
+                    .id(ReadingPlanDayId.from(todayDayId))
+                    .readingPlanId(ReadingPlanId.from(planUuid))
+                    .dayNumber(1)
+                    .readingRange("창세기 1장")
+                    .build();
+
+            when(departmentReadingPlanJpaRepository.findActiveByDepartmentIdAndDate(eq(deptUuid), any()))
+                    .thenReturn(Optional.of(mapping));
+            when(readingPlanPort.findDayByPlanIdAndDayNumber(planUuid, 1))
+                    .thenReturn(Optional.of(todayDay));
+            when(readingCompletionHistoryJpaRepository
+                    .countDistinctMemberByDeptPlanIdAndDayId(deptPlanUuid, todayDayId))
+                    .thenReturn(0L); // 오늘 day 완독자 없음 (다른 날 읽은 사람만 있음)
+
+            assertThat(service.getTodayCompletionCount(departmentId)).isZero();
         }
     }
 
