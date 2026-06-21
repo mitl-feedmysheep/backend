@@ -81,7 +81,7 @@ public class AnnouncementPushScheduler {
     }
 
     private PushPayload buildPayload(Announcement announcement) {
-        String body = announcement.getBody();
+        String body = announcement.getBody() != null ? announcement.getBody() : announcement.getTitle();
         String preview = body.length() > PREVIEW_MAX_LENGTH
                 ? body.substring(0, PREVIEW_MAX_LENGTH) + "..."
                 : body;
