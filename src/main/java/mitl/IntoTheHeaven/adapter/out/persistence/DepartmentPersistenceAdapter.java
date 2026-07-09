@@ -252,4 +252,12 @@ public class DepartmentPersistenceAdapter implements DepartmentPort {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<MemberId> findAdminsByDepartmentId(UUID departmentId) {
+        return departmentMemberJpaRepository.findByDepartment_IdAndRole(departmentId, DepartmentRole.ADMIN)
+                .stream()
+                .map(dm -> MemberId.from(dm.getMember().getId()))
+                .toList();
+    }
 }

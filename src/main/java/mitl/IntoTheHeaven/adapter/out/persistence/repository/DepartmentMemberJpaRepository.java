@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.adapter.out.persistence.repository;
 
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.DepartmentMemberJpaEntity;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
+import mitl.IntoTheHeaven.domain.enums.DepartmentRole;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -24,4 +25,7 @@ public interface DepartmentMemberJpaRepository extends JpaRepository<DepartmentM
 
     @EntityGraph(attributePaths = {"department", "department.church"})
     List<DepartmentMemberJpaEntity> findByMember_IdAndDepartment_Church_Id(UUID memberId, UUID churchId);
+
+    @EntityGraph(attributePaths = {"member"})
+    List<DepartmentMemberJpaEntity> findByDepartment_IdAndRole(UUID departmentId, DepartmentRole role);
 }

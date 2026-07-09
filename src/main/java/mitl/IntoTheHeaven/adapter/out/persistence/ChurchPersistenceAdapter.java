@@ -16,6 +16,7 @@ import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberPersistence
 import mitl.IntoTheHeaven.adapter.out.persistence.mapper.ChurchMemberRequestPersistenceMapper;
 import mitl.IntoTheHeaven.application.dto.MemberWithGroups;
 import mitl.IntoTheHeaven.application.port.out.ChurchPort;
+import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.RequestStatus;
 import mitl.IntoTheHeaven.domain.model.Church;
@@ -237,5 +238,13 @@ public class ChurchPersistenceAdapter implements ChurchPort {
                                                         .build();
                                 })
                                 .collect(Collectors.toList());
+        }
+
+        @Override
+        public List<MemberId> findMemberIdsByChurchIdAndRole(UUID churchId, ChurchRole role) {
+                return churchMemberJpaRepository.findAllByChurchIdAndRole(churchId, role)
+                        .stream()
+                        .map(cm -> MemberId.from(cm.getMember().getId()))
+                        .toList();
         }
 }

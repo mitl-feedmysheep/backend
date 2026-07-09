@@ -41,4 +41,6 @@ public interface ChurchPort {
     ChurchMember findChurchMemberByMemberIdAndChurchId(MemberId memberId, ChurchId churchId);
 
     List<MemberWithGroups> findMembersByChurchIdAndSearch(UUID churchId, String searchText);
+
+    List<MemberId> findMemberIdsByChurchIdAndRole(UUID churchId, ChurchRole role);
 }

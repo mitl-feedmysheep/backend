@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.adapter.out.persistence.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,4 +18,7 @@ public interface ChurchMemberJpaRepository extends JpaRepository<ChurchMemberJpa
     ChurchMemberJpaEntity findByMemberIdAndChurchId(UUID memberId, UUID churchId);
 
     List<ChurchMemberJpaEntity> findAllByMemberIdAndRole(UUID memberId, ChurchRole role);
+
+    @EntityGraph(attributePaths = {"member"})
+    List<ChurchMemberJpaEntity> findAllByChurchIdAndRole(UUID churchId, ChurchRole role);
 }
