@@ -21,8 +21,10 @@ public class ReportDetailResponse {
     private final String content;
     private final UUID reporterId;
     private final String reporterName;
+    private final String reporterAffiliation;
     private final LocalDateTime createdAt;
     private final List<ReportCommentResponse> comments;
+    private final List<String> mediaUrls;
 
     public static ReportDetailResponse from(ReportDetail detail, MemberId callerId) {
         return ReportDetailResponse.builder()
@@ -32,8 +34,10 @@ public class ReportDetailResponse {
                 .content(detail.getReport().getContent())
                 .reporterId(detail.getReport().getReporterId().getValue())
                 .reporterName(detail.getReport().getReporterName())
+                .reporterAffiliation(detail.getReport().getReporterAffiliation())
                 .createdAt(detail.getReport().getCreatedAt())
                 .comments(ReportCommentResponse.from(detail.getComments(), callerId))
+                .mediaUrls(detail.getMediaUrls())
                 .build();
     }
 }

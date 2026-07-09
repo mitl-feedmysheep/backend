@@ -19,6 +19,7 @@ public class ReportResponse {
     private final ReportStatus status;
     private final String content;
     private final String reporterName;
+    private final String reporterAffiliation;
     private final LocalDateTime createdAt;
 
     public static ReportResponse from(Report report) {
@@ -28,6 +29,7 @@ public class ReportResponse {
                 .status(report.getStatus())
                 .content(report.getContent())
                 .reporterName(report.getReporterName())
+                .reporterAffiliation(report.getReporterAffiliation())
                 .createdAt(report.getCreatedAt())
                 .build();
     }

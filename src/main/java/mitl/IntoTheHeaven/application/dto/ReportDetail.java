@@ -13,4 +13,5 @@ public class ReportDetail {
 
     private final Report report;
     private final List<ReportComment> comments;
+    private final List<String> mediaUrls;
 }

@@ -12,6 +12,7 @@ import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
 import mitl.IntoTheHeaven.domain.enums.ReportStatus;
+import mitl.IntoTheHeaven.domain.enums.ReportType;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -43,6 +45,11 @@ public class ReportCommandService implements ReportCommandUseCase {
     @Value("${report.system-admin-member-id}")
     private String systemAdminMemberId;
 
+    private static final Map<ReportType, String> REPORT_CREATED_TITLE = Map.of(
+            ReportType.BUG, "버그가 접수되었어요 🐛",
+            ReportType.FEATURE_REQUEST, "기능 요청이 접수되었어요 🆕",
+            ReportType.QUESTION, "질문이 접수되었어요 🙋‍♂️");
+
     @Override
     public ReportId create(CreateReportCommand command) {
         Report report = Report.builder()
@@ -55,13 +62,12 @@ public class ReportCommandService implements ReportCommandUseCase {
         Report saved = reportPort.save(report);
 
         if (!isSystemAdmin(command.getReporterId())) {
-            String body = truncate(command.getContent());
             notifyAndPush(
                     MemberId.from(UUID.fromString(systemAdminMemberId)),
                     command.getReporterId(),
                     NotificationType.REPORT_CREATED,
-                    "새 리포트가 도착했어요",
-                    body,
+                    REPORT_CREATED_TITLE.get(command.getType()),
+                    null,
                     saved.getId());
         }
 
