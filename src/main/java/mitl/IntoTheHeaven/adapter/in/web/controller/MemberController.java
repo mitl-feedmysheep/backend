@@ -17,6 +17,7 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,11 +38,14 @@ public class MemberController {
     private final MemberCommandUseCase memberCommandUseCase;
     private final HomeQueryUseCase homeQueryUseCase;
 
+    @Value("${report.system-admin-member-id}")
+    private String systemAdminMemberId;
+
     @Operation(summary = "Get My Info", description = "Retrieves the information of the currently logged-in user.")
     @GetMapping("/me")
     public ResponseEntity<MeResponse> getMe(@AuthenticationPrincipal String memberId) {
         Member member = memberQueryUseCase.getMemberById(MemberId.from(UUID.fromString(memberId)));
-        MeResponse response = MeResponse.from(member);
+        MeResponse response = MeResponse.from(member, memberId.equals(systemAdminMemberId));
         return ResponseEntity.ok(response);
     }
 
@@ -99,7 +103,7 @@ public class MemberController {
         }
 
         Member updated = memberCommandUseCase.updateMyProfile(request.toCommand());
-        return ResponseEntity.ok(MeResponse.from(updated));
+        return ResponseEntity.ok(MeResponse.from(updated, principalMemberId.equals(systemAdminMemberId)));
     }
 
 }

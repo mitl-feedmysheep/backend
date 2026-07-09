@@ -26,6 +26,8 @@ Java 17 / Spring Boot 3.3.5 / Gradle / MySQL
 | EducationProgram | 교육 커리큘럼 (그룹당 1개) |
 | EducationProgress | 교육 이수 기록 (유일하게 hard delete) |
 | Verification | 이메일/SMS 인증 코드 |
+| Report | 버그 신고/기능 요청/질문 (유형: BUG/FEATURE_REQUEST/QUESTION, 상태: RECEIVED/CONFIRMED/IN_PROGRESS/RESOLVED). `SYSTEM_ADMIN_MEMBER_ID` 계정에게만 알림 |
+| ReportComment | 리포트 댓글 스레드 (유저-관리자 간). 댓글 등록 시에만 상대방에게 알림 |
 
 ## 아키텍처 (Hexagonal / DDD)
 
