@@ -119,7 +119,7 @@ public class ChurchCommandService implements ChurchCommandUseCase {
             }
 
             List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(targets);
-            PushPayload payload = new PushPayload("새 편입 요청", body, "/notifications");
+            PushPayload payload = new PushPayload("교회 편입 요청이 왔어요 🎉", body, "/notifications");
             for (PushSubscription sub : subscriptions) {
                 WebPushPort.SendResult result = webPushPort.send(sub, payload);
                 if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {

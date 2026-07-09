@@ -22,6 +22,7 @@ public class ChurchMemberRequestPersistenceMapper {
                 .departmentId(entity.getDepartment() != null ? DepartmentId.from(entity.getDepartment().getId()) : null)
                 .status(entity.getStatus())
                 .churchName(entity.getChurch().getName())
+                .departmentName(entity.getDepartment() != null ? entity.getDepartment().getName() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .deletedAt(entity.getDeletedAt())

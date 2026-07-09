@@ -14,14 +14,16 @@ public class JoinRequestResponse {
     private final UUID id;
     private final UUID churchId;
     private final String churchName;
+    private final String departmentName;
     private final RequestStatus status;
     private final LocalDateTime createdAt;
 
     @Builder
-    public JoinRequestResponse(UUID id, UUID churchId, String churchName, RequestStatus status, LocalDateTime createdAt) {
+    public JoinRequestResponse(UUID id, UUID churchId, String churchName, String departmentName, RequestStatus status, LocalDateTime createdAt) {
         this.id = id;
         this.churchId = churchId;
         this.churchName = churchName;
+        this.departmentName = departmentName;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -31,6 +33,7 @@ public class JoinRequestResponse {
                 .id(request.getId().getValue())
                 .churchId(request.getChurchId().getValue())
                 .churchName(request.getChurchName())
+                .departmentName(request.getDepartmentName())
                 .status(request.getStatus())
                 .createdAt(request.getCreatedAt())
                 .build();

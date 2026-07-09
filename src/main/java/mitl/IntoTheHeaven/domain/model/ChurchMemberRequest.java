@@ -16,6 +16,7 @@ public class ChurchMemberRequest extends DomainEntity<ChurchMemberRequest, Churc
     private final DepartmentId departmentId;
     private final RequestStatus status;
     private final String churchName;
+    private final String departmentName;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime deletedAt;
