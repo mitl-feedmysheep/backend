@@ -3,6 +3,8 @@ package mitl.IntoTheHeaven.adapter.out.persistence.repository;
 import mitl.IntoTheHeaven.adapter.out.persistence.entity.PushSubscriptionTopicJpaEntity;
 import mitl.IntoTheHeaven.domain.enums.PushTopic;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +13,8 @@ public interface PushSubscriptionTopicJpaRepository extends JpaRepository<PushSu
 
     List<PushSubscriptionTopicJpaEntity> findByMemberId(UUID memberId);
 
-    List<UUID> findMemberIdByTopic(PushTopic topic);
+    @Query("SELECT t.memberId FROM PushSubscriptionTopicJpaEntity t WHERE t.topic = :topic")
+    List<UUID> findMemberIdByTopic(@Param("topic") PushTopic topic);
 
     boolean existsByMemberIdAndTopic(UUID memberId, PushTopic topic);
 

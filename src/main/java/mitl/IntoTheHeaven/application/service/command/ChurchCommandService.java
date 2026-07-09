@@ -92,7 +92,7 @@ public class ChurchCommandService implements ChurchCommandUseCase {
 
             if (targets.isEmpty()) return;
 
-            String body = memberName + "님이 " + deptName + " 가입을 신청했어요. 어드민에서 확인해주세요.";
+            String body = memberName + "님이 " + deptName + " 가입을 신청했어요.\n어드민에서 확인해주세요.";
             String requestId = request.getId().getValue().toString();
 
             for (MemberId targetId : targets) {
