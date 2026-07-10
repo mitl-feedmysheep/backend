@@ -11,13 +11,13 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "webpush.scheduler.enabled", havingValue = "true", matchIfMissing = true)
-public class HourlyPrayerPushScheduler {
+public class DailyPrayerPushScheduler {
 
     private final PushNotificationSendService pushNotificationSendService;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     public void sendPrayerPush() {
-        log.info("Hourly prayer push scheduler triggered");
+        log.info("Daily prayer push scheduler triggered");
         pushNotificationSendService.sendDailyPrayerPush();
     }
 }

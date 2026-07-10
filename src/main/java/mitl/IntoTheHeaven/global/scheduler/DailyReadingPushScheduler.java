@@ -21,7 +21,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(name = "webpush.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class DailyReadingPushScheduler {
 
-    private static final int PUSH_HOUR = 8;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final DepartmentReadingPlanJpaRepository departmentReadingPlanJpaRepository;
     private final ReadingPlanDayJpaRepository readingPlanDayJpaRepository;
@@ -45,11 +44,11 @@ public class DailyReadingPushScheduler {
     private final WebPushPort webPushPort;
 
     /**
-     * 매시 실행, READING 토픽 구독자 중 timezone 기준 오전 8시에 발송
+     * 매일 오전 8시(KST), READING 토픽 구독자에게 발송
      */
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Seoul")
     public void sendDailyReadingPush() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST);
 
         Set<UUID> readingTopicMemberIds = pushSubscriptionTopicPort
                 .findMemberIdsByTopic(PushTopic.READING)
@@ -88,16 +87,13 @@ public class DailyReadingPushScheduler {
 
             if (targetMemberIds.isEmpty()) return;
 
-            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(targetMemberIds)
-                    .stream()
-                    .filter(sub -> isLocalHour(sub.getTimezone(), PUSH_HOUR))
-                    .collect(Collectors.toList());
+            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(targetMemberIds);
 
             if (subscriptions.isEmpty()) return;
 
             PushPayload payload = new PushPayload(
-                    planTitle,
-                    day.getReadingRange(),
+                    "오늘의 말씀, 같이 읽어요 📖",
+                    planTitle + " · " + day.getReadingRange(),
                     "/reading"
             );
 
@@ -111,14 +107,5 @@ public class DailyReadingPushScheduler {
 
             log.info("Reading push sent for department {}: {} subscription(s)", departmentId, subscriptions.size());
         });
-    }
-
-    private boolean isLocalHour(String timezone, int targetHour) {
-        try {
-            ZoneId zoneId = ZoneId.of(timezone);
-            return LocalTime.now(zoneId).getHour() == targetHour;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

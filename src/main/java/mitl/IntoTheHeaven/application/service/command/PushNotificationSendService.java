@@ -12,9 +12,6 @@ import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +36,6 @@ public class PushNotificationSendService {
     private final PushSubscriptionPort pushSubscriptionPort;
     private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
     private final WebPushPort webPushPort;
-    private final Clock clock;
 
     public void sendDailyPrayerPush() {
         List<MemberId> prayerTopicMembers = pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER);
@@ -48,10 +44,7 @@ public class PushNotificationSendService {
         List<PushSubscription> allSubscriptions = pushSubscriptionPort.findByMemberIds(prayerTopicMembers);
         if (allSubscriptions.isEmpty()) return;
 
-        List<PushSubscription> targeted = filterByCurrentHour(allSubscriptions);
-        if (targeted.isEmpty()) return;
-
-        Map<UUID, List<PushSubscription>> byMember = groupByMember(targeted);
+        Map<UUID, List<PushSubscription>> byMember = groupByMember(allSubscriptions);
 
         ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
         List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -83,15 +76,6 @@ public class PushNotificationSendService {
         log.info("Daily prayer push completed: {} members targeted", byMember.size());
     }
 
-    private List<PushSubscription> filterByCurrentHour(List<PushSubscription> subscriptions) {
-        return subscriptions.stream()
-                .filter(sub -> {
-                    ZoneId zone = resolveZone(sub.getTimezone());
-                    return ZonedDateTime.now(clock).withZoneSameInstant(zone).getHour() == 9;
-                })
-                .toList();
-    }
-
     private Map<UUID, List<PushSubscription>> groupByMember(List<PushSubscription> subscriptions) {
         Map<UUID, List<PushSubscription>> map = new LinkedHashMap<>();
         for (PushSubscription sub : subscriptions) {
@@ -106,16 +90,8 @@ public class PushNotificationSendService {
                 log.info("Removing expired subscription: {}", endpoint);
                 pushSubscriptionPort.deleteByEndpoint(endpoint);
             }
-            case TRANSIENT_FAIL -> log.warn("Transient push failure, will retry next cycle: {}", endpoint);
+            case TRANSIENT_FAIL -> log.warn("Transient push failure, will retry tomorrow: {}", endpoint);
             case SUCCESS -> {}
-        }
-    }
-
-    private ZoneId resolveZone(String timezone) {
-        try {
-            return ZoneId.of(timezone);
-        } catch (Exception e) {
-            return ZoneId.of("Asia/Seoul");
         }
     }
 }

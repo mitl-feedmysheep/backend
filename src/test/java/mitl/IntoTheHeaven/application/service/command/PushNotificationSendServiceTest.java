@@ -16,9 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,14 +36,11 @@ class PushNotificationSendServiceTest {
     @Mock
     private WebPushPort webPushPort;
 
-    // 2026-04-21T00:00:00Z → Asia/Seoul은 09:00, America/Los_Angeles는 17:00(전날)
-    private static final Instant FIXED_INSTANT = Instant.parse("2026-04-21T00:00:00Z");
     private PushNotificationSendService service;
 
     @BeforeEach
     void setUp() {
-        Clock fixedClock = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC);
-        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, webPushPort, fixedClock);
+        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, webPushPort);
     }
 
     private PushSubscription buildSub(UUID memberUuid, String timezone) {
@@ -61,15 +55,15 @@ class PushNotificationSendServiceTest {
     }
 
     @Nested
-    @DisplayName("타임존 필터")
-    class TimezoneFilter {
+    @DisplayName("발송 대상")
+    class SendTargets {
 
         @Test
-        @DisplayName("Asia/Seoul(UTC+9)은 UTC 00:00에 09:00이므로 발송 대상이다")
-        void seoulAt9am_isIncluded() {
+        @DisplayName("PRAYER 토픽 구독자는 등록된 timezone과 무관하게 발송 대상이다")
+        void allSubscribersAreTargeted_regardlessOfTimezone() {
             UUID memberUuid = UUID.randomUUID();
             MemberId memberId = MemberId.from(memberUuid);
-            PushSubscription sub = buildSub(memberUuid, "Asia/Seoul");
+            PushSubscription sub = buildSub(memberUuid, "America/Los_Angeles");
 
             when(pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER)).thenReturn(List.of(memberId));
             when(pushSubscriptionPort.findByMemberIds(List.of(memberId))).thenReturn(List.of(sub));
@@ -78,21 +72,6 @@ class PushNotificationSendServiceTest {
             service.sendDailyPrayerPush();
 
             verify(webPushPort).send(eq(sub), any());
-        }
-
-        @Test
-        @DisplayName("America/Los_Angeles(UTC-7)은 UTC 00:00에 17:00이므로 발송 대상이 아니다")
-        void losAngelesAt17_isExcluded() {
-            UUID memberUuid = UUID.randomUUID();
-            MemberId memberId = MemberId.from(memberUuid);
-            PushSubscription sub = buildSub(memberUuid, "America/Los_Angeles");
-
-            when(pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER)).thenReturn(List.of(memberId));
-            when(pushSubscriptionPort.findByMemberIds(List.of(memberId))).thenReturn(List.of(sub));
-
-            service.sendDailyPrayerPush();
-
-            verify(webPushPort, never()).send(any(), any());
         }
     }
 

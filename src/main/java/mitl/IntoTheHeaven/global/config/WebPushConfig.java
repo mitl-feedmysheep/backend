@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.security.Security;
-import java.time.Clock;
 
 @Configuration
 @ConfigurationProperties(prefix = "webpush.vapid")
@@ -27,10 +26,5 @@ public class WebPushConfig {
             Security.addProvider(new BouncyCastleProvider());
         }
         return new PushService(publicKey, privateKey, subject);
-    }
-
-    @Bean
-    public Clock clock() {
-        return Clock.systemUTC();
     }
 }
