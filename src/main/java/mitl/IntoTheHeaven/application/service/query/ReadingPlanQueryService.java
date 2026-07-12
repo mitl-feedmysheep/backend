@@ -15,12 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReadingPlanPort readingPlanPort;
     private final MediaPort mediaPort;
@@ -31,7 +34,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public String getActivePlanTitle(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .map(mapping -> mapping.getReadingPlan().getTitle())
                 .orElse(null);
     }
@@ -39,17 +42,17 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public boolean isReadingEnabled(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .isPresent();
     }
 
     @Override
     public ReadingPlanDay getTodayReading(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .flatMap(mapping -> {
                     int readingDays = mapping.getReadingPlan().getReadingDays();
-                    int dayNumber = computeDayNumber(mapping.getStartDate(), LocalDate.now(), readingDays);
+                    int dayNumber = computeDayNumber(mapping.getStartDate(), LocalDate.now(KST), readingDays);
                     if (dayNumber == 0) return Optional.empty();
                     return readingPlanPort.findDayByPlanIdAndDayNumber(
                             mapping.getReadingPlan().getId(), dayNumber);
@@ -64,10 +67,10 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public int getTodayCompletionCount(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .map(mapping -> {
                     int dayNumber = computeDayNumber(
-                            mapping.getStartDate(), LocalDate.now(),
+                            mapping.getStartDate(), LocalDate.now(KST),
                             mapping.getReadingPlan().getReadingDays());
                     if (dayNumber == 0) return 0;
                     return readingPlanPort.findDayByPlanIdAndDayNumber(
@@ -101,7 +104,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public List<ReadingPlanDay> getAllDays(DepartmentId departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .map(mapping -> readingPlanPort.findDaysByPlanId(mapping.getReadingPlan().getId()))
                 .orElse(List.of());
     }
@@ -109,7 +112,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public MyReadingProgress getMyProgress(DepartmentId departmentId, MemberId memberId) {
         Optional<DepartmentReadingPlanJpaEntity> mappingOpt = departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now());
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST));
         if (mappingOpt.isEmpty()) {
             return new MyReadingProgress(0, 0, 0, 0, List.of(), List.of());
         }
@@ -142,7 +145,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     @Override
     public List<MemberReadingProgress> getDepartmentProgress(DepartmentId departmentId) {
         Optional<DepartmentReadingPlanJpaEntity> mappingOpt = departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now());
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST));
         if (mappingOpt.isEmpty()) return List.of();
 
         UUID deptPlanId = mappingOpt.get().getId();
@@ -183,7 +186,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
 
     private List<LocalDate> computeScheduledDates(LocalDate startDate, LocalDate endDate,
                                                    int readingDaysMask, int totalDays) {
-        LocalDate limit = endDate.isBefore(LocalDate.now()) ? endDate : LocalDate.now();
+        LocalDate limit = endDate.isBefore(LocalDate.now(KST)) ? endDate : LocalDate.now(KST);
         List<LocalDate> scheduled = new ArrayList<>();
         LocalDate d = startDate;
         while (!d.isAfter(limit) && scheduled.size() < totalDays) {
@@ -197,7 +200,7 @@ public class ReadingPlanQueryService implements ReadingPlanQueryUseCase {
     private int calculateStreak(List<LocalDate> sortedDates) {
         if (sortedDates.isEmpty()) return 0;
         Set<LocalDate> dateSet = new HashSet<>(sortedDates);
-        LocalDate check = LocalDate.now();
+        LocalDate check = LocalDate.now(KST);
         int streak = 0;
         while (dateSet.contains(check)) {
             streak++;

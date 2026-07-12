@@ -11,12 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class ReadingCompletionCommandService implements ReadingCompletionCommandUseCase {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReadingCompletionHistoryPort readingCompletionHistoryPort;
     private final ReadingPlanPort readingPlanPort;
@@ -25,7 +28,7 @@ public class ReadingCompletionCommandService implements ReadingCompletionCommand
     @Override
     public void markComplete(DepartmentId departmentId, ReadingPlanDayId dayId, MemberId memberId) {
         var mapping = departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .orElseThrow(() -> new RuntimeException("No active reading plan for department"));
 
         UUID deptPlanId = mapping.getId();
@@ -48,7 +51,7 @@ public class ReadingCompletionCommandService implements ReadingCompletionCommand
                 .departmentReadingPlanId(DepartmentReadingPlanId.from(deptPlanId))
                 .readingPlanDayId(dayId)
                 .memberId(memberId)
-                .completedAt(LocalDateTime.now())
+                .completedAt(LocalDateTime.now(KST))
                 .isCompleted(true)
                 .build();
         readingCompletionHistoryPort.save(history);
@@ -57,7 +60,7 @@ public class ReadingCompletionCommandService implements ReadingCompletionCommand
     @Override
     public void unmarkComplete(DepartmentId departmentId, ReadingPlanDayId dayId, MemberId memberId) {
         departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId.getValue(), LocalDate.now(KST))
                 .ifPresent(mapping -> readingCompletionHistoryPort.setIsCompleted(
                         mapping.getId(), dayId.getValue(), memberId.getValue(), false));
     }

@@ -9,6 +9,7 @@ import mitl.IntoTheHeaven.domain.model.*;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCompletionHistoryPort {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReadingPlanJpaRepository readingPlanJpaRepository;
     private final ReadingPlanDayJpaRepository readingPlanDayJpaRepository;
@@ -120,13 +123,13 @@ public class ReadingPlanPersistenceAdapter implements ReadingPlanPort, ReadingCo
     @Override
     public Optional<DepartmentReadingPlan> findActiveMappingByDepartmentId(UUID departmentId) {
         return departmentReadingPlanJpaRepository
-                .findActiveByDepartmentIdAndDate(departmentId, LocalDate.now())
+                .findActiveByDepartmentIdAndDate(departmentId, LocalDate.now(KST))
                 .map(this::toMappingDomain);
     }
 
     @Override
     public List<DepartmentReadingPlan> findAllActiveMappings() {
-        return departmentReadingPlanJpaRepository.findAllActiveByDate(LocalDate.now())
+        return departmentReadingPlanJpaRepository.findAllActiveByDate(LocalDate.now(KST))
                 .stream().map(this::toMappingDomain).toList();
     }
 

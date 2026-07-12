@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 public class ReadingPlanController {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ReadingPlanQueryUseCase readingPlanQueryUseCase;
     private final ReadingPlanCommandUseCase readingPlanCommandUseCase;
@@ -54,7 +57,7 @@ public class ReadingPlanController {
         try {
             completed = readingPlanQueryUseCase.getMyProgress(
                     deptId, MemberId.from(UUID.fromString(memberId)))
-                    .completedDates().contains(java.time.LocalDate.now());
+                    .completedDates().contains(LocalDate.now(KST));
         } catch (Exception ignored) {}
 
         return ResponseEntity.ok(TodayReadingResponse.from(day, completed, planTitle));
