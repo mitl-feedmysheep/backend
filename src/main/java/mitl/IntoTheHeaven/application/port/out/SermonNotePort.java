@@ -15,4 +15,6 @@ public interface SermonNotePort {
     SermonNote save(SermonNote sermonNote);
 
     List<String> findDistinctServiceTypesByMemberId(UUID memberId);
+
+    List<String> findDistinctPreachersByMemberId(UUID memberId);
 }

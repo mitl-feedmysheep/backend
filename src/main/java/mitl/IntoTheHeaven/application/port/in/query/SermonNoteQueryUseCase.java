@@ -13,4 +13,6 @@ public interface SermonNoteQueryUseCase {
     SermonNote getSermonNoteById(SermonNoteId sermonNoteId);
 
     List<String> getMyServiceTypes(MemberId memberId);
+
+    List<String> getMyPreachers(MemberId memberId);
 }

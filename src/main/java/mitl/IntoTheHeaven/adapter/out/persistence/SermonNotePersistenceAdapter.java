@@ -60,6 +60,20 @@ public class SermonNotePersistenceAdapter implements SermonNotePort {
                 .fetch();
     }
 
+    @Override
+    public List<String> findDistinctPreachersByMemberId(UUID memberId) {
+        return queryFactory
+                .selectDistinct(sermonNoteJpaEntity.preacher)
+                .from(sermonNoteJpaEntity)
+                .where(
+                        sermonNoteJpaEntity.member.id.eq(memberId)
+                                .and(sermonNoteJpaEntity.preacher.isNotNull())
+                                .and(sermonNoteJpaEntity.preacher.ne(""))
+                )
+                .orderBy(sermonNoteJpaEntity.preacher.asc())
+                .fetch();
+    }
+
     private SermonNote toDomain(SermonNoteJpaEntity entity) {
         return SermonNote.builder()
                 .id(SermonNoteId.from(entity.getId()))

@@ -61,15 +61,13 @@ public class ReportCommandService implements ReportCommandUseCase {
                 .build();
         Report saved = reportPort.save(report);
 
-        if (!isSystemAdmin(command.getReporterId())) {
-            notifyAndPush(
-                    MemberId.from(UUID.fromString(systemAdminMemberId)),
-                    command.getReporterId(),
-                    NotificationType.REPORT_CREATED,
-                    REPORT_CREATED_TITLE.get(command.getType()),
-                    null,
-                    saved.getId());
-        }
+        notifyAndPush(
+                MemberId.from(UUID.fromString(systemAdminMemberId)),
+                command.getReporterId(),
+                NotificationType.REPORT_CREATED,
+                REPORT_CREATED_TITLE.get(command.getType()),
+                null,
+                saved.getId());
 
         return saved.getId();
     }

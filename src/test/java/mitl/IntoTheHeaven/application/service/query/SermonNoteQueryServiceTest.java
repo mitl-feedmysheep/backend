@@ -148,4 +148,38 @@ class SermonNoteQueryServiceTest {
             assertThat(result).isEmpty();
         }
     }
+
+    @Nested
+    @DisplayName("getMyPreachers")
+    class GetMyPreachers {
+
+        @Test
+        @DisplayName("내 설교자 목록 조회")
+        void shouldReturnDistinctPreachers() {
+            MemberId memberId = MemberId.from(UUID.randomUUID());
+            List<String> preachers = List.of("김목사", "이목사", "박목사");
+
+            when(sermonNotePort.findDistinctPreachersByMemberId(memberId.getValue()))
+                    .thenReturn(preachers);
+
+            List<String> result = sermonNoteQueryService.getMyPreachers(memberId);
+
+            assertThat(result).hasSize(3);
+            assertThat(result).containsExactly("김목사", "이목사", "박목사");
+            verify(sermonNotePort).findDistinctPreachersByMemberId(memberId.getValue());
+        }
+
+        @Test
+        @DisplayName("설교자가 없으면 빈 리스트 반환")
+        void shouldReturnEmptyListWhenNoPreachers() {
+            MemberId memberId = MemberId.from(UUID.randomUUID());
+
+            when(sermonNotePort.findDistinctPreachersByMemberId(memberId.getValue()))
+                    .thenReturn(List.of());
+
+            List<String> result = sermonNoteQueryService.getMyPreachers(memberId);
+
+            assertThat(result).isEmpty();
+        }
+    }
 }

@@ -102,14 +102,22 @@ class ReportCommandServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 본인이 제출하면 알림을 보내지 않는다")
-        void create_bySystemAdmin_skipsNotification() {
+        @DisplayName("관리자 본인이 제출해도 관리자에게 알림과 푸시가 간다")
+        void create_bySystemAdmin_stillNotifiesAdmin() {
             CreateReportCommand command = new CreateReportCommand(adminMemberId, ReportType.QUESTION, "테스트");
+            PushSubscription subscription = PushSubscription.builder()
+                    .memberId(adminMemberId)
+                    .endpoint("https://push.example.com/admin")
+                    .build();
+            when(pushSubscriptionPort.findByMemberId(adminMemberId)).thenReturn(List.of(subscription));
+            when(webPushPort.send(any(), any())).thenReturn(WebPushPort.SendResult.SUCCESS);
 
             service.create(command);
 
-            verify(notificationPort, never()).save(any());
-            verify(webPushPort, never()).send(any(), any());
+            ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+            verify(notificationPort).save(notificationCaptor.capture());
+            assertThat(notificationCaptor.getValue().getReceiverId()).isEqualTo(adminMemberId);
+            verify(webPushPort).send(eq(subscription), any());
         }
     }
 

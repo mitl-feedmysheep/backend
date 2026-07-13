@@ -33,4 +33,9 @@ public class SermonNoteQueryService implements SermonNoteQueryUseCase {
     public List<String> getMyServiceTypes(MemberId memberId) {
         return sermonNotePort.findDistinctServiceTypesByMemberId(memberId.getValue());
     }
+
+    @Override
+    public List<String> getMyPreachers(MemberId memberId) {
+        return sermonNotePort.findDistinctPreachersByMemberId(memberId.getValue());
+    }
 }

@@ -55,6 +55,14 @@ public class SermonNoteController {
         return ResponseEntity.ok(serviceTypes);
     }
 
+    @Operation(summary = "Get My Preachers", description = "Retrieves distinct preacher names the user has previously used, for autocomplete suggestions.")
+    @GetMapping("/preachers")
+    public ResponseEntity<List<String>> getMyPreachers(@AuthenticationPrincipal String memberId) {
+        List<String> preachers = sermonNoteQueryUseCase.getMyPreachers(
+                MemberId.from(UUID.fromString(memberId)));
+        return ResponseEntity.ok(preachers);
+    }
+
     @Operation(summary = "Create Sermon Note", description = "Creates a new personal sermon note.")
     @PostMapping
     public ResponseEntity<SermonNoteResponse> createSermonNote(

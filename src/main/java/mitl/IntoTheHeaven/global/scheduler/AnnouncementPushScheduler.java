@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +35,9 @@ public class AnnouncementPushScheduler {
 
     @Scheduled(cron = "0 */5 * * * *")
     public void sendScheduledAnnouncements() {
-        List<Announcement> pending = announcementPort.findPendingToSend(LocalDateTime.now());
+        // send_at은 hibernate.jdbc.time_zone=UTC 설정으로 UTC 인스턴트가 그대로 저장되므로,
+        // 비교 기준도 반드시 UTC여야 함 (KST로 바꾸면 9시간 일찍 발송됨)
+        List<Announcement> pending = announcementPort.findPendingToSend(LocalDateTime.now(ZoneOffset.UTC));
         if (pending.isEmpty()) return;
 
         log.info("Announcement push scheduler: {} pending announcement(s)", pending.size());
