@@ -28,6 +28,7 @@ class ChurchPersistenceMapperTest {
                 .number("02-1234-5678")
                 .homepageUrl("https://church.example.com")
                 .description("열린교회입니다")
+                .isHidden(true)
                 .createdAt(now)
                 .updatedAt(now.plusHours(1))
                 .deletedAt(now.plusDays(1))
@@ -41,6 +42,7 @@ class ChurchPersistenceMapperTest {
         assertThat(domain.getNumber()).isEqualTo("02-1234-5678");
         assertThat(domain.getHomepageUrl()).isEqualTo("https://church.example.com");
         assertThat(domain.getDescription()).isEqualTo("열린교회입니다");
+        assertThat(domain.isHidden()).isTrue();
         assertThat(domain.getCreatedAt()).isEqualTo(now);
         assertThat(domain.getUpdatedAt()).isEqualTo(now.plusHours(1));
         assertThat(domain.getDeletedAt()).isEqualTo(now.plusDays(1));
@@ -58,6 +60,7 @@ class ChurchPersistenceMapperTest {
                 .number("051-987-6543")
                 .homepageUrl("https://newlight.church")
                 .description("새빛교회 설명")
+                .isHidden(true)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .deletedAt(LocalDateTime.now())
@@ -71,6 +74,7 @@ class ChurchPersistenceMapperTest {
         assertThat(entity.getNumber()).isEqualTo("051-987-6543");
         assertThat(entity.getHomepageUrl()).isEqualTo("https://newlight.church");
         assertThat(entity.getDescription()).isEqualTo("새빛교회 설명");
+        assertThat(entity.getIsHidden()).isTrue();
         assertThat(entity.getCreatedAt()).isNull();
         assertThat(entity.getUpdatedAt()).isNull();
         assertThat(entity.getDeletedAt()).isNull();

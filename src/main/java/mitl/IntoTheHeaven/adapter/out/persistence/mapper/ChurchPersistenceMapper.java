@@ -16,6 +16,7 @@ public class ChurchPersistenceMapper {
                 .number(entity.getNumber())
                 .homepageUrl(entity.getHomepageUrl())
                 .description(entity.getDescription())
+                .isHidden(entity.getIsHidden())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .deletedAt(entity.getDeletedAt())
@@ -30,6 +31,7 @@ public class ChurchPersistenceMapper {
                 .number(domain.getNumber())
                 .homepageUrl(domain.getHomepageUrl())
                 .description(domain.getDescription())
+                .isHidden(domain.isHidden())
                 .build();
     }
 }

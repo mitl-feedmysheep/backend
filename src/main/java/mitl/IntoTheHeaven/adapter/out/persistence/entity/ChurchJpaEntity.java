@@ -55,6 +55,13 @@ public class ChurchJpaEntity extends BaseEntity {
     @Column(length = 100)
     private String description;
 
+    /**
+     * 숨김 여부 (교회 편입 요청 목록에서 제외)
+     */
+    @Column(name = "is_hidden", nullable = false)
+    @Builder.Default
+    private Boolean isHidden = false;
+
     @OneToMany(mappedBy = "church", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupJpaEntity> groups = new ArrayList<>();

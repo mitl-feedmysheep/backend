@@ -97,7 +97,7 @@ public class ChurchPersistenceAdapter implements ChurchPort {
 
         @Override
         public List<Church> findAllChurches() {
-                return churchJpaRepository.findAll()
+                return churchJpaRepository.findAllByIsHiddenFalse()
                                 .stream()
                                 .map(churchPersistenceMapper::toDomain)
                                 .toList();

@@ -15,6 +15,7 @@ public class Church extends AggregateRoot<Church, ChurchId> {
     private final String number;
     private final String homepageUrl;
     private final String description;
+    private final boolean isHidden;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime deletedAt;
