@@ -67,6 +67,14 @@ public class NotificationPersistenceAdapter implements NotificationPort {
     }
 
     @Override
+    public void markAllAsReadByReceiverAndEntity(UUID receiverId, String entityType, String entityId) {
+        List<NotificationJpaEntity> entities = notificationJpaRepository
+                .findAllByReceiverIdAndEntityTypeAndEntityIdAndIsReadFalse(receiverId, entityType, entityId);
+        entities.forEach(NotificationJpaEntity::markAsRead);
+        notificationJpaRepository.saveAll(entities);
+    }
+
+    @Override
     public boolean existsUnreadByReceiverAndTypeAndEntity(UUID receiverId, String type, String entityType, String entityId) {
         return notificationJpaRepository.existsByReceiverIdAndTypeAndEntityTypeAndEntityIdAndIsReadFalse(
                 receiverId, type, entityType, entityId);

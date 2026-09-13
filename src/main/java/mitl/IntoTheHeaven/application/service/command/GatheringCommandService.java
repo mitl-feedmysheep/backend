@@ -297,7 +297,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
 
         try {
             List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(pushTargets);
-            PushPayload payload = new PushPayload("리더 코멘트가 등록됐어요", desc, targetUrl);
+            PushPayload payload = new PushPayload("리더 코멘트가 등록되었어요 😊", desc, targetUrl);
             for (PushSubscription sub : subscriptions) {
                 WebPushPort.SendResult result = webPushPort.send(sub, payload);
                 if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {

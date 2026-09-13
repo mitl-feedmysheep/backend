@@ -28,4 +28,9 @@ public class NotificationCommandService implements NotificationCommandUseCase {
 
         notificationPort.markAsRead(notificationId);
     }
+
+    @Override
+    public void markAllAsReadByEntity(MemberId receiverId, String entityType, String entityId) {
+        notificationPort.markAllAsReadByReceiverAndEntity(receiverId.getValue(), entityType, entityId);
+    }
 }

@@ -57,4 +57,15 @@ public class NotificationController {
                 MemberId.from(UUID.fromString(memberId)));
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "Mark All As Read By Entity", description = "Marks every unread notification the current user has for a given entity as read (e.g. viewing the entity directly, bypassing the notification list).")
+    @PatchMapping("/read-by-entity")
+    public ResponseEntity<Void> markAllAsReadByEntity(
+            @AuthenticationPrincipal String memberId,
+            @RequestParam String entityType,
+            @RequestParam String entityId) {
+        notificationCommandUseCase.markAllAsReadByEntity(
+                MemberId.from(UUID.fromString(memberId)), entityType, entityId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -20,4 +20,7 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationJpa
 
     boolean existsByReceiverIdAndTypeAndEntityTypeAndEntityIdAndIsReadFalse(
             UUID receiverId, String type, String entityType, String entityId);
+
+    List<NotificationJpaEntity> findAllByReceiverIdAndEntityTypeAndEntityIdAndIsReadFalse(
+            UUID receiverId, String entityType, String entityId);
 }

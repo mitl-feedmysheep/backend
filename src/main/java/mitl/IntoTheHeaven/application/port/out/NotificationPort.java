@@ -22,5 +22,7 @@ public interface NotificationPort {
 
     void markAsRead(UUID notificationId);
 
+    void markAllAsReadByReceiverAndEntity(UUID receiverId, String entityType, String entityId);
+
     boolean existsUnreadByReceiverAndTypeAndEntity(UUID receiverId, String type, String entityType, String entityId);
 }

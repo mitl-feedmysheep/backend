@@ -86,4 +86,14 @@ class NotificationCommandServiceTest {
 
         verify(notificationPort, never()).markAsRead(any());
     }
+
+    @Test
+    @DisplayName("엔티티 기준 일괄 읽음 처리 - 수신자/엔티티로 위임한다")
+    void markAllAsReadByEntity_delegatesToPort() {
+        String entityId = UUID.randomUUID().toString();
+
+        notificationCommandService.markAllAsReadByEntity(receiverId, "GATHERING", entityId);
+
+        verify(notificationPort).markAllAsReadByReceiverAndEntity(receiverUuid, "GATHERING", entityId);
+    }
 }
