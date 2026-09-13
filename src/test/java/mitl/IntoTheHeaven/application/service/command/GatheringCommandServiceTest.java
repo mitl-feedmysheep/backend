@@ -3,9 +3,12 @@ package mitl.IntoTheHeaven.application.service.command;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
+import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
@@ -44,6 +47,15 @@ class GatheringCommandServiceTest {
 
     @Mock
     private NotificationPort notificationPort;
+
+    @Mock
+    private DepartmentPort departmentPort;
+
+    @Mock
+    private PushSubscriptionPort pushSubscriptionPort;
+
+    @Mock
+    private WebPushPort webPushPort;
 
     @InjectMocks
     private GatheringCommandService gatheringCommandService;
@@ -478,6 +490,141 @@ class GatheringCommandServiceTest {
             assertThatThrownBy(() -> gatheringCommandService.updateGathering(command))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessage("Gathering not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("updateGathering - leaderComment 변경 시 Department ADMIN 알림/푸시")
+    class LeaderCommentNotificationTests {
+
+        private DepartmentId departmentId;
+        private Gathering existingGathering;
+        private MemberId adminMemberId;
+
+        @BeforeEach
+        void setUpExistingGathering() {
+            departmentId = DepartmentId.from(UUID.randomUUID());
+            adminMemberId = MemberId.from(UUID.randomUUID());
+
+            existingGathering = Gathering.builder()
+                    .id(gatheringId)
+                    .group(Group.builder().id(groupId).name("1목장").departmentId(departmentId).build())
+                    .name("기존 모임")
+                    .date(LocalDate.of(2025, 6, 1))
+                    .leaderComment("기존 리더 코멘트")
+                    .gatheringMembers(List.of())
+                    .build();
+        }
+
+        @Test
+        @DisplayName("leaderComment가 변경되면 Department ADMIN에게 알림을 전송한다")
+        void shouldSendNotificationToDepartmentAdminsWhenLeaderCommentChanged() {
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "새로운 리더 코멘트", null);
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(departmentPort.findAdminsByDepartmentId(departmentId.getValue())).thenReturn(List.of(adminMemberId));
+            when(notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                    eq(adminMemberId.getValue()),
+                    eq(NotificationType.LEADER_COMMENT.getValue()),
+                    eq("GATHERING"),
+                    any())).thenReturn(false);
+            when(pushSubscriptionPort.findByMemberIds(List.of(adminMemberId))).thenReturn(List.of());
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(notificationPort, times(1)).save(any(Notification.class));
+        }
+
+        @Test
+        @DisplayName("Department ADMIN의 구독이 있으면 웹푸시를 전송한다")
+        void shouldSendWebPushToDepartmentAdminSubscriptions() {
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "새로운 리더 코멘트", null);
+
+            PushSubscription subscription = PushSubscription.of(adminMemberId, "endpoint", "p256dh", "auth", "ua", "Asia/Seoul");
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(departmentPort.findAdminsByDepartmentId(departmentId.getValue())).thenReturn(List.of(adminMemberId));
+            when(notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                    eq(adminMemberId.getValue()),
+                    eq(NotificationType.LEADER_COMMENT.getValue()),
+                    eq("GATHERING"),
+                    any())).thenReturn(false);
+            when(pushSubscriptionPort.findByMemberIds(List.of(adminMemberId))).thenReturn(List.of(subscription));
+            when(webPushPort.send(eq(subscription), any())).thenReturn(WebPushPort.SendResult.SUCCESS);
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(webPushPort, times(1)).send(eq(subscription), any());
+            verify(pushSubscriptionPort, never()).deleteByEndpoint(any());
+        }
+
+        @Test
+        @DisplayName("빈 문자열/공백 leaderComment는 알림을 전송하지 않는다")
+        void shouldNotSendNotificationForBlankLeaderComment() {
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "   ", null);
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(notificationPort, never()).save(any());
+            verifyNoInteractions(webPushPort);
+        }
+
+        @Test
+        @DisplayName("기존과 동일한 leaderComment는 알림을 전송하지 않는다")
+        void shouldNotSendNotificationWhenLeaderCommentSame() {
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "기존 리더 코멘트", null);
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(notificationPort, never()).save(any());
+            verifyNoInteractions(webPushPort);
+        }
+
+        @Test
+        @DisplayName("그룹에 소속 Department가 없으면 알림을 전송하지 않는다")
+        void shouldNotSendNotificationWhenGroupHasNoDepartment() {
+            Gathering gatheringWithoutDepartment = existingGathering.toBuilder()
+                    .group(Group.builder().id(groupId).name("1목장").build())
+                    .build();
+
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "새로운 리더 코멘트", null);
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(gatheringWithoutDepartment));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(notificationPort, never()).save(any());
+            verifyNoInteractions(departmentPort, webPushPort);
+        }
+
+        @Test
+        @DisplayName("Department ADMIN이 없으면 알림을 전송하지 않는다")
+        void shouldNotSendNotificationWhenNoDepartmentAdmins() {
+            UpdateGatheringCommand command = new UpdateGatheringCommand(
+                    gatheringId, null, null, null, null, null, null, "새로운 리더 코멘트", null);
+
+            when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
+            when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(departmentPort.findAdminsByDepartmentId(departmentId.getValue())).thenReturn(List.of());
+
+            gatheringCommandService.updateGathering(command);
+
+            verify(notificationPort, never()).save(any());
+            verifyNoInteractions(webPushPort);
         }
     }
 }

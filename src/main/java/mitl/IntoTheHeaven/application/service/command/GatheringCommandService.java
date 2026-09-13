@@ -1,13 +1,18 @@
 package mitl.IntoTheHeaven.application.service.command;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.application.port.in.command.GatheringCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateGatheringCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringMemberCommand;
 import mitl.IntoTheHeaven.application.port.in.command.dto.UpdateGatheringCommand;
+import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
+import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.port.out.WebPushPort;
+import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
@@ -22,6 +27,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -30,6 +36,9 @@ public class GatheringCommandService implements GatheringCommandUseCase {
     private final GatheringPort gatheringPort;
     private final MemberPort memberPort;
     private final NotificationPort notificationPort;
+    private final DepartmentPort departmentPort;
+    private final PushSubscriptionPort pushSubscriptionPort;
+    private final WebPushPort webPushPort;
 
     @Override
     public Gathering createGathering(CreateGatheringCommand command) {
@@ -232,7 +241,72 @@ public class GatheringCommandService implements GatheringCommandUseCase {
                     });
         }
 
+        // Send notification + push to Department ADMIN(s) when leaderComment is changed
+        boolean leaderCommentChanged = command.getLeaderComment() != null
+                && !command.getLeaderComment().isBlank()
+                && !command.getLeaderComment().equals(existingGathering.getLeaderComment());
+
+        if (leaderCommentChanged) {
+            notifyDepartmentAdmins(existingGathering, command.getGatheringId().getValue());
+        }
+
         return saved;
+    }
+
+    private void notifyDepartmentAdmins(Gathering existingGathering, UUID gatheringIdValue) {
+        DepartmentId departmentId = existingGathering.getGroup().getDepartmentId();
+        if (departmentId == null) return;
+
+        UUID groupId = existingGathering.getGroup().getId().getValue();
+        String gatheringId = gatheringIdValue.toString();
+        List<MemberId> admins = departmentPort.findAdminsByDepartmentId(departmentId.getValue());
+        if (admins.isEmpty()) return;
+
+        String groupName = existingGathering.getGroup().getName();
+        String desc = groupName + " · " + formatDate(existingGathering.getDate())
+                + " 모임에 리더 코멘트가 등록됐어요.\n어드민에서 확인해주세요.";
+        String targetUrl = "/notifications";
+
+        List<MemberId> pushTargets = new ArrayList<>();
+        for (MemberId admin : admins) {
+            boolean alreadyExists = notificationPort.existsUnreadByReceiverAndTypeAndEntity(
+                    admin.getValue(),
+                    NotificationType.LEADER_COMMENT.getValue(),
+                    "GATHERING",
+                    gatheringId);
+
+            if (!alreadyExists) {
+                Notification notification = Notification.builder()
+                        .id(NotificationId.from(UUID.randomUUID()))
+                        .receiverId(admin)
+                        .senderId(null)
+                        .departmentId(departmentId)
+                        .type(NotificationType.LEADER_COMMENT)
+                        .description(desc)
+                        .entityType("GATHERING")
+                        .entityId(gatheringId)
+                        .targetUrl(targetUrl)
+                        .isRead(false)
+                        .build();
+                notificationPort.save(notification);
+                pushTargets.add(admin);
+            }
+        }
+
+        if (pushTargets.isEmpty()) return;
+
+        try {
+            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(pushTargets);
+            PushPayload payload = new PushPayload("리더 코멘트가 등록됐어요", desc, targetUrl);
+            for (PushSubscription sub : subscriptions) {
+                WebPushPort.SendResult result = webPushPort.send(sub, payload);
+                if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {
+                    pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to send leader comment push for gathering {}: {}", gatheringId, e.getMessage());
+        }
     }
 
     private String formatDate(java.time.LocalDate date) {
