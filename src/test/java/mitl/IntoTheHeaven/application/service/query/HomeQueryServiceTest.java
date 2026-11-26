@@ -1,6 +1,7 @@
 package mitl.IntoTheHeaven.application.service.query;
 
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeGoalResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeMyPrayerResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomePrayerResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeSummaryResponse;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
@@ -19,12 +20,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -40,6 +43,16 @@ class HomeQueryServiceTest {
 
     @InjectMocks
     private HomeQueryService homeQueryService;
+
+    private static Prayer myPrayer(MemberId memberId, String text, boolean answered, LocalDateTime createdAt) {
+        return Prayer.builder()
+                .id(PrayerId.from(UUID.randomUUID()))
+                .memberId(memberId)
+                .prayerRequest(text)
+                .isAnswered(answered)
+                .createdAt(createdAt)
+                .build();
+    }
 
     @Nested
     @DisplayName("getHomeSummary - 홈 요약 조회")
@@ -57,7 +70,36 @@ class HomeQueryServiceTest {
 
             assertThat(result.getGoals()).isEmpty();
             assertThat(result.getPrayers()).isEmpty();
-            verifyNoInteractions(prayerPort);
+            assertThat(result.getMyPrayers()).isEmpty();
+            assertThat(result.getMyPrayerCount()).isZero();
+            verify(prayerPort, never()).findByGatheringMemberIds(any());
+        }
+
+        @Test
+        @DisplayName("모임이 없어도 나의 기도는 반환한다 (미응답만, 최근순 최대 3개 + 전체 개수)")
+        void shouldReturnMyPrayersEvenWithoutGatherings() {
+            MemberId memberId = MemberId.from(UUID.randomUUID());
+            when(gatheringPort.findRecentGatheringMemberData(eq(memberId.getValue()), any(LocalDate.class), any(LocalDate.class)))
+                    .thenReturn(List.of());
+
+            LocalDateTime now = LocalDateTime.now();
+            Prayer my1 = myPrayer(memberId, "나의 기도 1", false, now);
+            Prayer my2 = myPrayer(memberId, "나의 기도 2", false, now.minusDays(1));
+            Prayer answered = myPrayer(memberId, "응답됨", true, now.minusDays(2));
+            Prayer my3 = myPrayer(memberId, "나의 기도 3", false, now.minusDays(3));
+            Prayer my4 = myPrayer(memberId, "나의 기도 4", false, now.minusDays(4));
+            Prayer gatheringPrayer = myPrayer(memberId, "모임 기도", false, now).toBuilder()
+                    .gatheringMemberId(GatheringMemberId.from(UUID.randomUUID()))
+                    .build();
+            when(prayerPort.findAllByMemberId(memberId.getValue()))
+                    .thenReturn(List.of(my1, gatheringPrayer, my2, answered, my3, my4));
+
+            HomeSummaryResponse result = homeQueryService.getHomeSummary(memberId);
+
+            assertThat(result.getMyPrayers())
+                    .extracting(HomeMyPrayerResponse::getPrayerRequest)
+                    .containsExactly("나의 기도 1", "나의 기도 2", "나의 기도 3");
+            assertThat(result.getMyPrayerCount()).isEqualTo(4);
         }
 
         @Test

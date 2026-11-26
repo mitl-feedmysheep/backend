@@ -9,6 +9,10 @@ public class PrayerId extends BaseId {
         super(value);
     }
 
+    public static PrayerId newId() {
+        return new PrayerId(UUID.randomUUID());
+    }
+
     public static PrayerId from(UUID value) {
         return new PrayerId(value);
     }

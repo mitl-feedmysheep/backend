@@ -26,6 +26,30 @@ public class Prayer extends DomainEntity<Prayer, PrayerId> {
     private final String groupName;
     private final LocalDate gatheringDate;
 
+    /** 모임/심방과 무관하게 본인이 직접 작성한 "나의 기도" */
+    public boolean isPersonal() {
+        return gatheringMemberId == null && visitMemberId == null;
+    }
+
+    public boolean isOwnedBy(MemberId memberId) {
+        return this.memberId != null && this.memberId.equals(memberId);
+    }
+
+    public static Prayer createPersonal(MemberId memberId, String prayerRequest) {
+        return Prayer.builder()
+                .id(PrayerId.newId())
+                .memberId(memberId)
+                .prayerRequest(prayerRequest.trim())
+                .isAnswered(false)
+                .build();
+    }
+
+    public Prayer updateContent(String prayerRequest) {
+        return this.toBuilder()
+                .prayerRequest(prayerRequest.trim())
+                .build();
+    }
+
     public Prayer delete() {
         return this.toBuilder()
                 .deletedAt(LocalDateTime.now())

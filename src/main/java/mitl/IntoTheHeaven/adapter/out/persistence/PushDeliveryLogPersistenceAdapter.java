@@ -8,7 +8,11 @@ import mitl.IntoTheHeaven.domain.model.PushDeliveryLog;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import mitl.IntoTheHeaven.domain.enums.PushType;
+import mitl.IntoTheHeaven.domain.model.MemberId;
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -31,6 +35,25 @@ public class PushDeliveryLogPersistenceAdapter implements PushDeliveryLogPort {
                 .sentAt(log.getSentAt())
                 .clickedAt(log.getClickedAt())
                 .build());
+    }
+
+    @Override
+    public List<PushDeliveryLog> findByMemberIdsAndTypeSince(List<UUID> memberIds, PushType type, LocalDateTime since) {
+        if (memberIds.isEmpty()) return List.of();
+        return repository.findByMemberIdInAndPushTypeAndSentAtGreaterThanEqual(memberIds, type, since).stream()
+                .map(e -> PushDeliveryLog.builder()
+                        .id(e.getId())
+                        .memberId(MemberId.from(e.getMemberId()))
+                        .subscriptionId(e.getSubscriptionId())
+                        .pushType(e.getPushType())
+                        .templateKey(e.getTemplateKey())
+                        .entityType(e.getEntityType())
+                        .entityId(e.getEntityId())
+                        .sendResult(e.getSendResult())
+                        .sentAt(e.getSentAt())
+                        .clickedAt(e.getClickedAt())
+                        .build())
+                .toList();
     }
 
     @Override

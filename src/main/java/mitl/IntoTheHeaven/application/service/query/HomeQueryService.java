@@ -2,6 +2,7 @@ package mitl.IntoTheHeaven.application.service.query;
 
 import lombok.RequiredArgsConstructor;
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeGoalResponse;
+import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeMyPrayerResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomePrayerResponse;
 import mitl.IntoTheHeaven.adapter.in.web.dto.home.HomeSummaryResponse;
 import mitl.IntoTheHeaven.application.port.in.query.HomeQueryUseCase;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HomeQueryService implements HomeQueryUseCase {
 
+    static final int HOME_MY_PRAYER_LIMIT = 3;
+
     private final GatheringPort gatheringPort;
     private final PrayerPort prayerPort;
 
@@ -41,8 +44,27 @@ public class HomeQueryService implements HomeQueryUseCase {
         List<HomeSummaryData> data = gatheringPort.findRecentGatheringMemberData(
                 memberId.getValue(), sunday, saturday);
 
+        // findAllByMemberId는 createdAt desc 정렬
+        List<Prayer> activeMyPrayers = prayerPort.findAllByMemberId(memberId.getValue()).stream()
+                .filter(Prayer::isPersonal)
+                .filter(p -> !p.isAnswered())
+                .toList();
+        List<HomeMyPrayerResponse> myPrayers = activeMyPrayers.stream()
+                .limit(HOME_MY_PRAYER_LIMIT)
+                .map(p -> HomeMyPrayerResponse.builder()
+                        .id(p.getId().getValue())
+                        .prayerRequest(p.getPrayerRequest())
+                        .createdAt(p.getCreatedAt())
+                        .build())
+                .toList();
+
         if (data.isEmpty()) {
-            return HomeSummaryResponse.builder().goals(List.of()).prayers(List.of()).build();
+            return HomeSummaryResponse.builder()
+                    .goals(List.of())
+                    .prayers(List.of())
+                    .myPrayers(myPrayers)
+                    .myPrayerCount(activeMyPrayers.size())
+                    .build();
         }
 
         List<HomeGoalResponse> goals = data.stream()
@@ -73,6 +95,11 @@ public class HomeQueryService implements HomeQueryUseCase {
                         .build())
                 .toList();
 
-        return HomeSummaryResponse.builder().goals(goals).prayers(prayerResponses).build();
+        return HomeSummaryResponse.builder()
+                .goals(goals)
+                .prayers(prayerResponses)
+                .myPrayers(myPrayers)
+                .myPrayerCount(activeMyPrayers.size())
+                .build();
     }
 }

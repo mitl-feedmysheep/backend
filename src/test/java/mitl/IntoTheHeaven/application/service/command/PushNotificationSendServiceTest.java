@@ -1,6 +1,11 @@
 package mitl.IntoTheHeaven.application.service.command;
 
+import mitl.IntoTheHeaven.application.port.out.PrayerPort;
+import mitl.IntoTheHeaven.application.port.out.PrayerPushCandidate;
 import mitl.IntoTheHeaven.application.port.out.PushDeliveryLogPort;
+import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
+import org.mockito.ArgumentCaptor;
+import java.time.LocalDateTime;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
@@ -20,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -40,12 +46,15 @@ class PushNotificationSendServiceTest {
     @Mock
     private PushDeliveryLogPort pushDeliveryLogPort;
 
+    @Mock
+    private PrayerPort prayerPort;
+
     private PushNotificationSendService service;
 
     @BeforeEach
     void setUp() {
         PushDispatchService dispatchService = new PushDispatchService(webPushPort, pushSubscriptionPort, pushDeliveryLogPort);
-        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, dispatchService);
+        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, dispatchService, prayerPort, pushDeliveryLogPort);
     }
 
     private PushSubscription buildSub(UUID memberUuid, String timezone) {
@@ -77,6 +86,41 @@ class PushNotificationSendServiceTest {
             service.sendDailyPrayerPush();
 
             verify(webPushPort).send(eq(sub), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원별 내용")
+    class PerMemberContent {
+
+        @Test
+        @DisplayName("회원마다 자신의 기도제목으로 알림을 만들고, 기도제목이 없는 회원은 적어보기 알림을 받는다")
+        void eachMemberGetsOwnContent() {
+            UUID withPrayer = UUID.randomUUID();
+            UUID withoutPrayer = UUID.randomUUID();
+            PushSubscription subA = buildSub(withPrayer, "Asia/Seoul");
+            PushSubscription subB = buildSub(withoutPrayer, "Asia/Seoul");
+            UUID prayerId = UUID.randomUUID();
+
+            when(pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER))
+                    .thenReturn(List.of(MemberId.from(withPrayer), MemberId.from(withoutPrayer)));
+            when(pushSubscriptionPort.findByMemberIds(any())).thenReturn(List.of(subA, subB));
+            when(prayerPort.findUnansweredForPush(any(), any())).thenReturn(List.of(
+                    new PrayerPushCandidate(prayerId, withPrayer, "부모님 건강", true, null, LocalDateTime.now())));
+            when(pushDeliveryLogPort.findByMemberIdsAndTypeSince(any(), eq(mitl.IntoTheHeaven.domain.enums.PushType.DAILY_PRAYER), any()))
+                    .thenReturn(List.of());
+            when(webPushPort.send(any(), any())).thenReturn(SendResult.SUCCESS);
+
+            service.sendDailyPrayerPush();
+
+            ArgumentCaptor<PushPayload> payloadA = ArgumentCaptor.forClass(PushPayload.class);
+            verify(webPushPort).send(eq(subA), payloadA.capture());
+            assertThat(payloadA.getValue().body()).isEqualTo("부모님 건강");
+            assertThat(payloadA.getValue().url()).startsWith("/prayers?highlight=" + prayerId);
+
+            ArgumentCaptor<PushPayload> payloadB = ArgumentCaptor.forClass(PushPayload.class);
+            verify(webPushPort).send(eq(subB), payloadB.capture());
+            assertThat(payloadB.getValue().url()).startsWith("/prayers?write=1");
         }
     }
 

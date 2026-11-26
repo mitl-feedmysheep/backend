@@ -16,7 +16,9 @@ public record MyPrayerResponse(
         boolean isAnswered,
         LocalDateTime createdAt,
         String groupName,
-        LocalDate gatheringDate
+        LocalDate gatheringDate,
+        /** MY: 나의 기도(직접 작성), GATHERING: 모임 기도제목 */
+        String source
 ) {
     public static MyPrayerResponse from(Prayer prayer) {
         return MyPrayerResponse.builder()
@@ -27,6 +29,7 @@ public record MyPrayerResponse(
                 .createdAt(prayer.getCreatedAt())
                 .groupName(prayer.getGroupName())
                 .gatheringDate(prayer.getGatheringDate())
+                .source(prayer.isPersonal() ? "MY" : "GATHERING")
                 .build();
     }
 
