@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.AnnouncementPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.model.Announcement;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
@@ -31,7 +31,7 @@ public class AnnouncementPushScheduler {
     private final AnnouncementPort announcementPort;
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
     private final PushSubscriptionPort pushSubscriptionPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     @Scheduled(cron = "0 */5 * * * *")
     public void sendScheduledAnnouncements() {
@@ -68,27 +68,21 @@ public class AnnouncementPushScheduler {
         List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(memberIds);
         if (subscriptions.isEmpty()) return;
 
-        PushPayload payload = buildPayload(announcement);
-
-        for (PushSubscription sub : subscriptions) {
-            SendResult result = webPushPort.send(sub, payload);
-            if (result == SendResult.GONE || result == SendResult.INVALID) {
-                log.info("Removing expired subscription: {}", sub.getEndpoint());
-                pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
-            } else if (result == SendResult.TRANSIENT_FAIL) {
-                log.warn("Transient push failure for announcement {}: {}", announcement.getId().getValue(), sub.getEndpoint());
-            }
-        }
+        pushDispatchService.sendToSubscriptions(subscriptions, buildMessage(announcement));
 
         log.info("Announcement {} sent to {} subscription(s)", announcement.getId().getValue(), subscriptions.size());
     }
 
-    private PushPayload buildPayload(Announcement announcement) {
+    private PushMessage buildMessage(Announcement announcement) {
         String body = announcement.getBody() != null ? announcement.getBody() : announcement.getTitle();
         String preview = body.length() > PREVIEW_MAX_LENGTH
                 ? body.substring(0, PREVIEW_MAX_LENGTH) + "..."
                 : body;
         String url = "/announcements/" + announcement.getId().getValue();
-        return new PushPayload(announcement.getTitle(), preview, url);
+        PushType type = "PUSH_BROADCAST".equals(announcement.getEntityType())
+                ? PushType.PUSH_BROADCAST
+                : PushType.ANNOUNCEMENT;
+        return PushMessage.of(type, announcement.getTitle(), preview, url)
+                .withEntity("ANNOUNCEMENT", announcement.getId().getValue().toString());
     }
 }

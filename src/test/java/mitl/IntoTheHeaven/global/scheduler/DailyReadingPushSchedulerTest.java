@@ -10,7 +10,9 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentMemberJpa
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.DepartmentReadingPlanJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingCompletionHistoryJpaRepository;
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingPlanDayJpaRepository;
+import mitl.IntoTheHeaven.application.port.out.PushDeliveryLogPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
@@ -60,6 +62,8 @@ class DailyReadingPushSchedulerTest {
     private PushSubscriptionTopicPort pushSubscriptionTopicPort;
     @Mock
     private WebPushPort webPushPort;
+    @Mock
+    private PushDeliveryLogPort pushDeliveryLogPort;
 
     private DailyReadingPushScheduler scheduler;
 
@@ -72,7 +76,7 @@ class DailyReadingPushSchedulerTest {
                 departmentMemberJpaRepository,
                 pushSubscriptionPort,
                 pushSubscriptionTopicPort,
-                webPushPort);
+                new PushDispatchService(webPushPort, pushSubscriptionPort, pushDeliveryLogPort));
     }
 
     @Nested

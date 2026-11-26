@@ -7,9 +7,8 @@ import mitl.IntoTheHeaven.application.port.out.ChurchPort;
 import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
-import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.enums.ChurchRole;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
 import mitl.IntoTheHeaven.domain.model.Church;
@@ -22,7 +21,6 @@ import mitl.IntoTheHeaven.domain.model.Member;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
-import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import mitl.IntoTheHeaven.domain.enums.RequestStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +38,7 @@ public class ChurchCommandService implements ChurchCommandUseCase {
     private final DepartmentPort departmentPort;
     private final MemberPort memberPort;
     private final NotificationPort notificationPort;
-    private final PushSubscriptionPort pushSubscriptionPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     @Override
     public ChurchMemberRequest createJoinRequest(MemberId memberId, ChurchId churchId, DepartmentId departmentId) {
@@ -118,14 +115,9 @@ public class ChurchCommandService implements ChurchCommandUseCase {
                 }
             }
 
-            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(targets);
-            PushPayload payload = new PushPayload("교회 편입 요청이 왔어요 🎉", body, "/notifications");
-            for (PushSubscription sub : subscriptions) {
-                WebPushPort.SendResult result = webPushPort.send(sub, payload);
-                if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {
-                    pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
-                }
-            }
+            pushDispatchService.sendToMembers(targets,
+                    PushMessage.of(PushType.JOIN_REQUEST, "교회 편입 요청이 왔어요 🎉", body, "/notifications")
+                            .withEntity("CHURCH_MEMBER_REQUEST", requestId));
         } catch (Exception e) {
             log.error("Failed to notify admins for join request: {}", e.getMessage());
         }

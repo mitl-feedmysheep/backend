@@ -5,18 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.application.port.in.command.ReportCommandUseCase;
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateReportCommand;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
-import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.ReportCommentPort;
 import mitl.IntoTheHeaven.application.port.out.ReportPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
 import mitl.IntoTheHeaven.domain.enums.ReportStatus;
 import mitl.IntoTheHeaven.domain.enums.ReportType;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.Notification;
 import mitl.IntoTheHeaven.domain.model.NotificationId;
-import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import mitl.IntoTheHeaven.domain.model.Report;
 import mitl.IntoTheHeaven.domain.model.ReportComment;
 import mitl.IntoTheHeaven.domain.model.ReportCommentId;
@@ -39,8 +37,7 @@ public class ReportCommandService implements ReportCommandUseCase {
     private final ReportPort reportPort;
     private final ReportCommentPort reportCommentPort;
     private final NotificationPort notificationPort;
-    private final PushSubscriptionPort pushSubscriptionPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     @Value("${report.system-admin-member-id}")
     private String systemAdminMemberId;
@@ -132,14 +129,12 @@ public class ReportCommandService implements ReportCommandUseCase {
                 .build());
 
         try {
-            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberId(receiverId);
-            PushPayload payload = new PushPayload(title, body, targetUrl);
-            for (PushSubscription sub : subscriptions) {
-                WebPushPort.SendResult result = webPushPort.send(sub, payload);
-                if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {
-                    pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
-                }
-            }
+            PushType pushType = type == NotificationType.REPORT_CREATED
+                    ? PushType.REPORT_CREATED
+                    : PushType.REPORT_COMMENT_ADDED;
+            pushDispatchService.sendToMember(receiverId,
+                    PushMessage.of(pushType, title, body, targetUrl)
+                            .withEntity("REPORT", reportId.getValue().toString()));
         } catch (Exception e) {
             log.error("Failed to send report push to member {}: {}", receiverId.getValue(), e.getMessage());
         }

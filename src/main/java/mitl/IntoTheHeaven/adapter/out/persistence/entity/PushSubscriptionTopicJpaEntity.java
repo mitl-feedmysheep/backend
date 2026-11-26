@@ -17,7 +17,10 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "push_subscription_topic",
-        indexes = @Index(name = "idx_push_subscription_topic_member_id", columnList = "member_id"),
+        indexes = {
+                @Index(name = "idx_push_subscription_topic_member_id", columnList = "member_id"),
+                @Index(name = "idx_pst_topic", columnList = "topic")
+        },
         uniqueConstraints = @UniqueConstraint(name = "uq_member_topic", columnNames = {"member_id", "topic"})
 )
 @Getter

@@ -2,10 +2,8 @@ package mitl.IntoTheHeaven.application.service.command;
 
 import mitl.IntoTheHeaven.application.port.in.command.dto.CreateReportCommand;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
-import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.ReportCommentPort;
 import mitl.IntoTheHeaven.application.port.out.ReportPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.domain.enums.ReportStatus;
 import mitl.IntoTheHeaven.domain.enums.ReportType;
 import mitl.IntoTheHeaven.domain.model.MemberId;
@@ -47,10 +45,7 @@ class ReportCommandServiceTest {
     private NotificationPort notificationPort;
 
     @Mock
-    private PushSubscriptionPort pushSubscriptionPort;
-
-    @Mock
-    private WebPushPort webPushPort;
+    private PushDispatchService pushDispatchService;
 
     @InjectMocks
     private ReportCommandService service;
@@ -67,7 +62,6 @@ class ReportCommandServiceTest {
         ReflectionTestUtils.setField(service, "systemAdminMemberId", adminMemberIdValue.toString());
 
         lenient().when(reportPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        lenient().when(pushSubscriptionPort.findByMemberId(any())).thenReturn(List.of());
     }
 
     @Nested
@@ -78,12 +72,6 @@ class ReportCommandServiceTest {
         @DisplayName("일반 유저가 제출하면 관리자에게 알림과 푸시가 간다")
         void create_byRegularUser_notifiesAdmin() {
             CreateReportCommand command = new CreateReportCommand(reporterId, ReportType.BUG, "화면이 멈춰요");
-            PushSubscription subscription = PushSubscription.builder()
-                    .memberId(adminMemberId)
-                    .endpoint("https://push.example.com/admin")
-                    .build();
-            when(pushSubscriptionPort.findByMemberId(adminMemberId)).thenReturn(List.of(subscription));
-            when(webPushPort.send(any(), any())).thenReturn(WebPushPort.SendResult.SUCCESS);
 
             ReportId reportId = service.create(command);
 
@@ -98,26 +86,20 @@ class ReportCommandServiceTest {
             verify(notificationPort).save(notificationCaptor.capture());
             assertThat(notificationCaptor.getValue().getReceiverId()).isEqualTo(adminMemberId);
 
-            verify(webPushPort).send(eq(subscription), any());
+            verify(pushDispatchService).sendToMember(eq(adminMemberId), any());
         }
 
         @Test
         @DisplayName("관리자 본인이 제출해도 관리자에게 알림과 푸시가 간다")
         void create_bySystemAdmin_stillNotifiesAdmin() {
             CreateReportCommand command = new CreateReportCommand(adminMemberId, ReportType.QUESTION, "테스트");
-            PushSubscription subscription = PushSubscription.builder()
-                    .memberId(adminMemberId)
-                    .endpoint("https://push.example.com/admin")
-                    .build();
-            when(pushSubscriptionPort.findByMemberId(adminMemberId)).thenReturn(List.of(subscription));
-            when(webPushPort.send(any(), any())).thenReturn(WebPushPort.SendResult.SUCCESS);
 
             service.create(command);
 
             ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
             verify(notificationPort).save(notificationCaptor.capture());
             assertThat(notificationCaptor.getValue().getReceiverId()).isEqualTo(adminMemberId);
-            verify(webPushPort).send(eq(subscription), any());
+            verify(pushDispatchService).sendToMember(eq(adminMemberId), any());
         }
     }
 
@@ -198,7 +180,7 @@ class ReportCommandServiceTest {
 
             verify(reportPort).updateStatus(report.getId().getValue(), ReportStatus.IN_PROGRESS);
             verifyNoInteractions(notificationPort);
-            verifyNoInteractions(webPushPort);
+            verifyNoInteractions(pushDispatchService);
         }
 
         @Test

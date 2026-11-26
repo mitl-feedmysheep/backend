@@ -7,8 +7,6 @@ import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
-import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
@@ -52,10 +50,7 @@ class GatheringCommandServiceTest {
     private DepartmentPort departmentPort;
 
     @Mock
-    private PushSubscriptionPort pushSubscriptionPort;
-
-    @Mock
-    private WebPushPort webPushPort;
+    private PushDispatchService pushDispatchService;
 
     @InjectMocks
     private GatheringCommandService gatheringCommandService;
@@ -530,7 +525,6 @@ class GatheringCommandServiceTest {
                     eq(NotificationType.LEADER_COMMENT.getValue()),
                     eq("GATHERING"),
                     any())).thenReturn(false);
-            when(pushSubscriptionPort.findByMemberIds(List.of(adminMemberId))).thenReturn(List.of());
 
             gatheringCommandService.updateGathering(command);
 
@@ -538,12 +532,10 @@ class GatheringCommandServiceTest {
         }
 
         @Test
-        @DisplayName("Department ADMIN의 구독이 있으면 웹푸시를 전송한다")
+        @DisplayName("Department ADMIN에게 웹푸시를 전송한다")
         void shouldSendWebPushToDepartmentAdminSubscriptions() {
             UpdateGatheringCommand command = new UpdateGatheringCommand(
                     gatheringId, null, null, null, null, null, null, "새로운 리더 코멘트", null);
-
-            PushSubscription subscription = PushSubscription.of(adminMemberId, "endpoint", "p256dh", "auth", "ua", "Asia/Seoul");
 
             when(gatheringPort.findDetailById(gatheringUuid)).thenReturn(Optional.of(existingGathering));
             when(gatheringPort.save(any(Gathering.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -553,13 +545,10 @@ class GatheringCommandServiceTest {
                     eq(NotificationType.LEADER_COMMENT.getValue()),
                     eq("GATHERING"),
                     any())).thenReturn(false);
-            when(pushSubscriptionPort.findByMemberIds(List.of(adminMemberId))).thenReturn(List.of(subscription));
-            when(webPushPort.send(eq(subscription), any())).thenReturn(WebPushPort.SendResult.SUCCESS);
 
             gatheringCommandService.updateGathering(command);
 
-            verify(webPushPort, times(1)).send(eq(subscription), any());
-            verify(pushSubscriptionPort, never()).deleteByEndpoint(any());
+            verify(pushDispatchService, times(1)).sendToMembers(eq(List.of(adminMemberId)), any());
         }
 
         @Test
@@ -574,7 +563,7 @@ class GatheringCommandServiceTest {
             gatheringCommandService.updateGathering(command);
 
             verify(notificationPort, never()).save(any());
-            verifyNoInteractions(webPushPort);
+            verifyNoInteractions(pushDispatchService);
         }
 
         @Test
@@ -589,7 +578,7 @@ class GatheringCommandServiceTest {
             gatheringCommandService.updateGathering(command);
 
             verify(notificationPort, never()).save(any());
-            verifyNoInteractions(webPushPort);
+            verifyNoInteractions(pushDispatchService);
         }
 
         @Test
@@ -608,7 +597,7 @@ class GatheringCommandServiceTest {
             gatheringCommandService.updateGathering(command);
 
             verify(notificationPort, never()).save(any());
-            verifyNoInteractions(departmentPort, webPushPort);
+            verifyNoInteractions(departmentPort, pushDispatchService);
         }
 
         @Test
@@ -624,7 +613,7 @@ class GatheringCommandServiceTest {
             gatheringCommandService.updateGathering(command);
 
             verify(notificationPort, never()).save(any());
-            verifyNoInteractions(webPushPort);
+            verifyNoInteractions(pushDispatchService);
         }
     }
 }

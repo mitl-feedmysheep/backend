@@ -72,6 +72,8 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/actuator/**"
                 ).permitAll()
+                // 서비스워커에서 호출하는 푸시 클릭 수집 (토큰 접근 불가)
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/push/deliveries/*/click").permitAll()
                 .anyRequest().authenticated()); // All other requests require authentication
 
         http

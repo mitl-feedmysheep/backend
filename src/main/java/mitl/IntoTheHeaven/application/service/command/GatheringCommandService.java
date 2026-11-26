@@ -10,9 +10,8 @@ import mitl.IntoTheHeaven.application.port.out.DepartmentPort;
 import mitl.IntoTheHeaven.application.port.out.GatheringPort;
 import mitl.IntoTheHeaven.application.port.out.MemberPort;
 import mitl.IntoTheHeaven.application.port.out.NotificationPort;
-import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberRole;
 import mitl.IntoTheHeaven.domain.enums.GroupMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.NotificationType;
@@ -37,8 +36,7 @@ public class GatheringCommandService implements GatheringCommandUseCase {
     private final MemberPort memberPort;
     private final NotificationPort notificationPort;
     private final DepartmentPort departmentPort;
-    private final PushSubscriptionPort pushSubscriptionPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     @Override
     public Gathering createGathering(CreateGatheringCommand command) {
@@ -296,14 +294,9 @@ public class GatheringCommandService implements GatheringCommandUseCase {
         if (pushTargets.isEmpty()) return;
 
         try {
-            List<PushSubscription> subscriptions = pushSubscriptionPort.findByMemberIds(pushTargets);
-            PushPayload payload = new PushPayload("리더 코멘트가 등록되었어요 😊", desc, targetUrl);
-            for (PushSubscription sub : subscriptions) {
-                WebPushPort.SendResult result = webPushPort.send(sub, payload);
-                if (result == WebPushPort.SendResult.GONE || result == WebPushPort.SendResult.INVALID) {
-                    pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
-                }
-            }
+            pushDispatchService.sendToMembers(pushTargets,
+                    PushMessage.of(PushType.LEADER_COMMENT, "리더 코멘트가 등록되었어요 😊", desc, targetUrl)
+                            .withEntity("GATHERING", gatheringId));
         } catch (Exception e) {
             log.error("Failed to send leader comment push for gathering {}: {}", gatheringId, e.getMessage());
         }

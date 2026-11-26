@@ -8,12 +8,12 @@ import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingCompletionHi
 import mitl.IntoTheHeaven.adapter.out.persistence.repository.ReadingPlanDayJpaRepository;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
 import mitl.IntoTheHeaven.application.service.query.ReadingPlanQueryService;
 import mitl.IntoTheHeaven.domain.enums.DepartmentMemberStatus;
 import mitl.IntoTheHeaven.domain.enums.PushTopic;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -41,7 +41,7 @@ public class DailyReadingPushScheduler {
     private final DepartmentMemberJpaRepository departmentMemberJpaRepository;
     private final PushSubscriptionPort pushSubscriptionPort;
     private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     /**
      * 매일 오전 8시(KST), READING 토픽 구독자에게 발송
@@ -91,19 +91,14 @@ public class DailyReadingPushScheduler {
 
             if (subscriptions.isEmpty()) return;
 
-            PushPayload payload = new PushPayload(
+            PushMessage message = PushMessage.of(
+                    PushType.DAILY_READING,
                     "오늘의 말씀, 같이 읽어요 📖",
                     planTitle + " · " + day.getReadingRange(),
                     "/reading"
-            );
+            ).withEntity("DEPARTMENT_READING_PLAN", deptPlanId.toString());
 
-            for (PushSubscription sub : subscriptions) {
-                SendResult result = webPushPort.send(sub, payload);
-                if (result == SendResult.GONE || result == SendResult.INVALID) {
-                    log.info("Removing expired reading push subscription: {}", sub.getEndpoint());
-                    pushSubscriptionPort.deleteByEndpoint(sub.getEndpoint());
-                }
-            }
+            pushDispatchService.sendToSubscriptions(subscriptions, message);
 
             log.info("Reading push sent for department {}: {} subscription(s)", departmentId, subscriptions.size());
         });

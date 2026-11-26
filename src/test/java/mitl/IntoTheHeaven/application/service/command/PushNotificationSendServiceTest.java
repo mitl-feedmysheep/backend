@@ -1,5 +1,6 @@
 package mitl.IntoTheHeaven.application.service.command;
 
+import mitl.IntoTheHeaven.application.port.out.PushDeliveryLogPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
 import mitl.IntoTheHeaven.application.port.out.WebPushPort;
@@ -36,11 +37,15 @@ class PushNotificationSendServiceTest {
     @Mock
     private WebPushPort webPushPort;
 
+    @Mock
+    private PushDeliveryLogPort pushDeliveryLogPort;
+
     private PushNotificationSendService service;
 
     @BeforeEach
     void setUp() {
-        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, webPushPort);
+        PushDispatchService dispatchService = new PushDispatchService(webPushPort, pushSubscriptionPort, pushDeliveryLogPort);
+        service = new PushNotificationSendService(pushSubscriptionPort, pushSubscriptionTopicPort, dispatchService);
     }
 
     private PushSubscription buildSub(UUID memberUuid, String timezone) {

@@ -28,6 +28,8 @@ public class WebPushAdapter implements WebPushPort {
             data.put("title", payload.title());
             data.put("url", payload.url());
             if (payload.body() != null) data.put("body", payload.body());
+            if (payload.deliveryId() != null) data.put("deliveryId", payload.deliveryId());
+            if (payload.type() != null) data.put("type", payload.type());
             String json = objectMapper.writeValueAsString(data);
 
             Subscription sub = new Subscription(

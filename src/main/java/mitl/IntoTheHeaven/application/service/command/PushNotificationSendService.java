@@ -4,9 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionPort;
 import mitl.IntoTheHeaven.application.port.out.PushSubscriptionTopicPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.PushPayload;
-import mitl.IntoTheHeaven.application.port.out.WebPushPort.SendResult;
+import mitl.IntoTheHeaven.application.service.command.PushDispatchService.PushMessage;
+import mitl.IntoTheHeaven.domain.enums.PushType;
 import mitl.IntoTheHeaven.domain.enums.PushTopic;
 import mitl.IntoTheHeaven.domain.model.MemberId;
 import mitl.IntoTheHeaven.domain.model.PushSubscription;
@@ -31,11 +30,12 @@ public class PushNotificationSendService {
     private static final int SEND_TIMEOUT_SECONDS = 10;
     private static final String NOTIFICATION_TITLE = "오늘도 기도로 하루를 열어요 🙏";
     private static final String DEEPLINK_URL = "/";
-    private static final PushPayload PRAYER_PAYLOAD = new PushPayload(NOTIFICATION_TITLE, null, DEEPLINK_URL);
+    private static final PushMessage PRAYER_MESSAGE =
+            PushMessage.of(PushType.DAILY_PRAYER, NOTIFICATION_TITLE, null, DEEPLINK_URL).withTemplate("PRAYER_LEGACY");
 
     private final PushSubscriptionPort pushSubscriptionPort;
     private final PushSubscriptionTopicPort pushSubscriptionTopicPort;
-    private final WebPushPort webPushPort;
+    private final PushDispatchService pushDispatchService;
 
     public void sendDailyPrayerPush() {
         List<MemberId> prayerTopicMembers = pushSubscriptionTopicPort.findMemberIdsByTopic(PushTopic.PRAYER);
@@ -53,10 +53,7 @@ public class PushNotificationSendService {
             List<PushSubscription> subs = entry.getValue();
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
-                    for (PushSubscription sub : subs) {
-                        SendResult result = webPushPort.send(sub, PRAYER_PAYLOAD);
-                        handleResult(result, sub.getEndpoint());
-                    }
+                    pushDispatchService.sendToSubscriptions(subs, PRAYER_MESSAGE);
                 } catch (Exception e) {
                     log.error("Error sending push for member {}: {}", entry.getKey(), e.getMessage());
                 }
@@ -82,16 +79,5 @@ public class PushNotificationSendService {
             map.computeIfAbsent(sub.getMemberId().getValue(), k -> new ArrayList<>()).add(sub);
         }
         return map;
-    }
-
-    private void handleResult(SendResult result, String endpoint) {
-        switch (result) {
-            case GONE, INVALID -> {
-                log.info("Removing expired subscription: {}", endpoint);
-                pushSubscriptionPort.deleteByEndpoint(endpoint);
-            }
-            case TRANSIENT_FAIL -> log.warn("Transient push failure, will retry tomorrow: {}", endpoint);
-            case SUCCESS -> {}
-        }
     }
 }
